@@ -1,6 +1,6 @@
 # Launch Post: I asked a linter to review my own AI skill. It called me fat.
 
-**TL;DR**: I built a linter that audits agent skills. It roasts your code because it cares. It's called Talking CLI, and it just shipped v0.1.0.
+**TL;DR**: I built a linter that audits agent skills across four dimensions. It roasts your code because it cares. It's called Talking CLI, and it just shipped v0.3.0 (H1–H4).
 
 ```bash
 npx talking-cli audit ./my-skill
@@ -35,10 +35,12 @@ Ouch. Fair.
 
 ## What Talking CLI Does
 
-It's a linter for the **skill/tool contract**, not your Python quality. It checks two things today (more coming):
+It's a linter for the **skill/tool contract**, not your Python quality. It checks four things:
 
-1. **H1 · Line Count**: Is your SKILL.md under 150 lines? If not, you're probably stuffing tool-level guidance into a static document.
-2. **H2 · Hint Coverage**: Do your tools have fixtures that prove they "speak back" — returning structured hints, not just raw data?
+1. **H1 · Document Budget**: Is your SKILL.md under 150 lines? If not, you're stuffing tool-level guidance into a static document.
+2. **H2 · Fixture Coverage**: Do your tools have fixtures that prove they handle error and empty-result scenarios?
+3. **H3 · Structured Hints**: Do your tool outputs actually *contain* hint fields — `hints`, `suggestions`, `guidance` — or just raw data?
+4. **H4 · Actionable Guidance**: Are those hints *useful*? "Try again" is too short. "Try broadening your query with fewer filters" is actionable.
 
 It outputs in three modes:
 - **Coach** (default): A sarcastic-but-helpful critic who tells you exactly what's wrong and how to fix it
@@ -47,13 +49,17 @@ It outputs in three modes:
 
 ## The Fix
 
-After following the optimization plan (adding hints to tool output, moving post-call guidance out of SKILL.md):
+After following the optimization plan:
 
 ```
 Score: 50/100
 ```
 
-Not perfect. But 50 points better than mute. And the path to 80+ is now clear.
+Not perfect. But 50 points better than mute. And the path to 80+ is now clear:
+- H1: Cut SKILL.md from 457 → 150 lines by moving post-call guidance into tool hints
+- H2: Add fixtures for the 5 mute tools
+- H3: Make every tool return a `hints` field
+- H4: Write hints that actually tell the agent what to do next
 
 ## Try It
 
@@ -67,6 +73,10 @@ npx talking-cli audit ./my-skill --ci
 # Generate a fix plan
 npx talking-cli optimize ./my-skill
 ```
+
+## Roadmap
+
+P3 is in progress. `optimize --apply` (auto-fix with git branch safety) and the 9-step complex skill workflow are coming next.
 
 ## The Bigger Picture
 

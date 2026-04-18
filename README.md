@@ -5,11 +5,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 
-Every guide on agent skills tells you to optimize your `SKILL.md`. **Nobody talks about the silent return values of your tools.**
+**Your CLI is mute. That's half your prompt problem.**
 
-When an agent calls your CLI, it runs, returns raw data, and says nothing. No hint. No cue. No guidance. All of that gets shoved back into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can follow.
+Every guide on agent skills tells you to optimize your `SKILL.md` — the long, one-way monologue you write once and hope the agent remembers. Nobody talks about the other half of your prompt surface: the silent return values of your tools.
 
-**Talking CLI** audits your skill + tool combo and tells you exactly where the prompt budget is leaking. With a coach who roasts your code because they care.
+When an agent calls your CLI today, the tool runs, returns raw data, and says nothing. No hint about the next step. No signal when results are ambiguous. No cue that "zero hits" means "broaden the query." All of that guidance gets shoved back upstream into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can reliably follow.
+
+**Talking CLI** is a design methodology for agent tools that speak back. It treats `SKILL.md` and tool output as **one shared prompt surface with one shared budget**, and gives you concrete rules for deciding what belongs in which channel.
+
+Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
 ---
 
@@ -49,6 +53,15 @@ H2 · Hint Coverage · FAIL
 → Add talking-cli-fixtures for [search]. One error scenario, one empty/zero-result scenario.
   Make them return a "hints" field.
 
+H3 · Structured Hints · FAIL
+0/0 passed fixtures contain hint fields.
+→ Make your tools return a "hints" or "suggestions" field alongside raw data.
+
+H4 · Actionable Guidance · FAIL
+0/0 hint fields have actionable content.
+→ Hints should be specific. "Try again" is too short.
+  "Try broadening your query with fewer filters" is actionable.
+
 ---
 Fix the issues above, then run npx talking-cli audit again to see your new score.
 ```
@@ -68,13 +81,14 @@ Talking CLI is more than a linter. It's a design philosophy:
 
 ## Status
 
-**P1 MVP complete.** `audit` (H1 + H2) and `optimize` (plan-only) are working.
+**P3 in progress.** Four heuristics active. `audit` and `optimize` (plan-only) are working.
 
 - ✅ H1: `SKILL.md` line-count budget (150 lines)
 - ✅ H2: Fixture-driven hint coverage detection
-- ✅ Coach / CI / JSON renderers
-- ⏳ H3 + H4: Deferred to P3 (needs real-world corpus calibration)
-- ⏳ `optimize --workflow`: Complex skill transformation pipeline
+- ✅ H3: Structured hint fields (`hints`, `suggestions`, `guidance`, etc.)
+- ✅ H4: Actionable guidance content (length + specificity)
+- ⏳ `optimize --apply`: Auto-fix with safety rules (branch + backup)
+- ⏳ `optimize --workflow`: 9-step complex skill transformation pipeline
 
 The methodology is stable. The CLI surface may still evolve before v1.0.0.
 
