@@ -105,6 +105,44 @@ describe('runAudit', () => {
       rmSync(dir, { recursive: true });
     }
   });
+
+  it('uses --persona nba-coach for custom voice', async () => {
+    const dir = createSkillDir({
+      skillLines: 200,
+      tools: ['search'],
+      fixtures: [
+        { tool: 'search', scenario: 'error' },
+        { tool: 'search', scenario: 'empty' },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runAudit(dir, { persona: 'nba-coach' });
+      expect(logSpy).toHaveBeenCalled();
+      const output = logSpy.mock.calls[0][0] as string;
+      expect(output).toContain('playbook');
+    } finally {
+      logSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('rejects invalid --persona with error', async () => {
+    const dir = createSkillDir({ skillLines: 100 });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    try {
+      await runAudit(dir, { persona: 'invalid-persona' });
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown persona'));
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally {
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+      exitSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
 });
 
 describe('runOptimize', () => {

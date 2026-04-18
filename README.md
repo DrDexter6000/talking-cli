@@ -58,7 +58,7 @@ graph TD
 ## Quick Start
 
 ```bash
-# Audit your skill — default coach mode (plain language, roast included)
+# Audit your skill — default coach mode (plain language, actionable)
 npx talking-cli audit ./my-skill
 
 # CI mode — machine-readable, exit code driven
@@ -66,6 +66,11 @@ npx talking-cli audit ./my-skill --ci
 
 # JSON mode — structured output for tooling
 npx talking-cli audit ./my-skill --json
+
+# Persona mode — same audit, different voice
+npx talking-cli audit ./my-skill --persona nba-coach
+npx talking-cli audit ./my-skill --persona british-critic
+npx talking-cli audit ./my-skill --persona zen-master
 
 # Generate optimization plan (plan-only, never touches source files)
 npx talking-cli optimize ./my-skill

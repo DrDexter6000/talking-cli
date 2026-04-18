@@ -6,13 +6,14 @@ import { discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js
 import { runEngine } from './engine.js';
 import { runApply } from './optimize/applier.js';
 import { generatePlan } from './optimize/plan-generator.js';
+import { getPersona, isValidPersona, PERSONA_KEYS } from './personas/index.js';
 import { getExitCode, renderCI } from './renderers/ci.js';
 import { renderCoach } from './renderers/coach.js';
 import { renderJSON } from './renderers/json.js';
 
 export async function runAudit(
   skillDir: string,
-  options: { ci?: boolean; json?: boolean },
+  options: { ci?: boolean; json?: boolean; persona?: string },
 ): Promise<void> {
   const skillMdPath = discoverSkillMd(skillDir);
   const tools = discoverTools(skillDir);
@@ -30,7 +31,15 @@ export async function runAudit(
     console.log(renderCI(engineOutput));
     process.exitCode = getExitCode(engineOutput);
   } else {
-    console.log(renderCoach(engineOutput));
+    const personaKey = options.persona;
+    if (personaKey && !isValidPersona(personaKey)) {
+      console.error(`Unknown persona: "${personaKey}". Available: ${PERSONA_KEYS.join(', ')}`);
+      process.exit(1);
+    }
+    const persona = getPersona(
+      personaKey as 'default' | 'nba-coach' | 'british-critic' | 'zen-master' | undefined,
+    );
+    console.log(renderCoach(engineOutput, persona));
   }
 }
 
@@ -68,7 +77,8 @@ program
   .description('Audit a skill directory')
   .option('--ci', 'machine-readable CI mode')
   .option('--json', 'JSON output')
-  .action(async (skillDir: string, options: { ci?: boolean; json?: boolean }) => {
+  .option('--persona <name>', 'coach persona: default, nba-coach, british-critic, zen-master')
+  .action(async (skillDir: string, options: { ci?: boolean; json?: boolean; persona?: string }) => {
     try {
       await runAudit(skillDir, options);
     } catch (err) {

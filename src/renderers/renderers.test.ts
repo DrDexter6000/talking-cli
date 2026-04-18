@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { defaultPersona } from '../personas/default.js';
 import type { EngineOutput } from '../types.js';
 import { getExitCode, renderCI } from './ci.js';
 import { renderCoach } from './coach.js';
@@ -20,7 +21,7 @@ function makeOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
 describe('Coach Renderer', () => {
   it('celebrates perfect score', () => {
     const out = makeOutput();
-    const result = renderCoach(out);
+    const result = renderCoach(out, defaultPersona);
     expect(result).toContain('100/100');
     expect(result).toContain('Flawless');
     expect(result).toMatchSnapshot('perfect-score');
@@ -42,7 +43,7 @@ describe('Coach Renderer', () => {
       },
       totalScore: 0,
     });
-    const result = renderCoach(out);
+    const result = renderCoach(out, defaultPersona);
     expect(result).toContain('0/100');
     expect(result).toContain('Yikes');
     expect(result).toContain('457 lines');
@@ -65,7 +66,7 @@ describe('Coach Renderer', () => {
       },
       totalScore: 75,
     });
-    const result = renderCoach(out);
+    const result = renderCoach(out, defaultPersona);
     expect(result).toContain('PARTIAL');
     expect(result).toContain('write');
   });
