@@ -49,6 +49,8 @@ This is not a metaphor. It is a concrete architectural claim:
 
 Agent-native tooling does not just read prompts. It writes them, mid-loop.
 
+We call this **prompt-on-call**. It is progressive disclosure applied to the agent–tool boundary: guidance is not pre-announced in a global document; it is surfaced locally, at the moment of invocation, based on what actually happened.
+
 ---
 
 ## The Four Channels
@@ -86,7 +88,7 @@ The Handshake is everything the CLI can do deterministically before any reasonin
 
 *"Here is what you should know, right now."*
 
-The Voice is the most underdeveloped channel in today's agent stacks, and the one Talking CLI exists to make respectable.
+The Voice is the mechanism of **prompt-on-call** — the most underdeveloped channel in today's agent stacks, and the one Talking CLI exists to make respectable.
 
 A tool's Voice is the set of short, invocation-scoped hints it returns alongside its data. It tells the agent what just happened in a way the data alone cannot: that results were sparse, that a query was ambiguous, that an aggregation-style question cannot be answered by the evidence returned, that zero results likely mean the date window was too narrow.
 
@@ -214,7 +216,9 @@ Talking CLI does not invent a new channel. It names, budgets, and disciplines on
 
 Run `npx talking-cli audit <skill-dir>` to get a scored report on your skill's prompt surface health. The linter checks:
 - H1: Is your `SKILL.md` under 150 lines?
-- H2: Do your tools emit hints on error and empty-result paths?
+- H2: Do your tools have fixtures covering error and empty-result paths?
+- H3: Do your tool outputs contain structured hint fields (`hints`, `suggestions`, `guidance`)?
+- H4: Are those hints actionable (specific, non-empty, ≥ 10 chars)?
 
 Fix the findings it surfaces, then re-audit to watch your score climb.
 
@@ -233,7 +237,7 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 ## Reference
 
 - **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor. Talking CLI is its public-facing synthesis.
-- **`talking-cli` linter** — P1 MVP complete. `npx talking-cli audit <skill-dir>` runs H1–H2 heuristics; `optimize` generates actionable fix plans. See `README.md` for usage.
+- **`talking-cli` linter** — P3 in progress. `npx talking-cli audit <skill-dir>` runs H1–H4 heuristics; `optimize` generates actionable fix plans. See `README.md` for usage.
 
 ---
 

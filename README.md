@@ -15,6 +15,8 @@ When an agent calls your CLI today, the tool runs, returns raw data, and says no
 
 Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
+We call this **prompt-on-call**: instead of pre-loading every scenario into SKILL.md, your tool discloses guidance progressively — at the exact moment it matters.
+
 ---
 
 ## How it works
