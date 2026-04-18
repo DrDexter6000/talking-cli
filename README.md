@@ -1,25 +1,15 @@
 # Talking CLI
 
-*A design methodology for agent tools that speak back.*
+> **Make it embarrassing to ship a mute CLI.**
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 
-> **Your CLI is mute. That's half your prompt problem.**
+Every guide on agent skills tells you to optimize your `SKILL.md`. **Nobody talks about the silent return values of your tools.**
 
-Every guide on agent skills tells you to optimize your `SKILL.md` — the long, one-way monologue you write once and hope the agent remembers. Nobody talks about the other half of your prompt surface: the silent return values of your tools.
+When an agent calls your CLI, it runs, returns raw data, and says nothing. No hint. No cue. No guidance. All of that gets shoved back into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can follow.
 
-When an agent calls your CLI today, the tool runs, returns raw data, and says nothing. No hint about the next step. No signal when results are ambiguous. No cue that "zero hits" means "broaden the query." All of that guidance gets shoved back upstream into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can reliably follow.
-
-**Talking CLI** is a design methodology for agent tools that speak back. It treats `SKILL.md` and tool output as **one shared prompt surface with one shared budget**, and gives you concrete rules for deciding what belongs in which channel.
-
-Stop writing everything into `SKILL.md`. Give your CLI a voice.
-
----
-
-## Read next
-
-- **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
-- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*). Talking CLI is its public-facing synthesis.
+**Talking CLI** audits your skill + tool combo and tells you exactly where the prompt budget is leaking. With a coach who roasts your code because they care.
 
 ---
 
@@ -40,21 +30,53 @@ npx talking-cli optimize ./my-skill
 # → writes TALKING-CLI-OPTIMIZATION.md at the skill root
 ```
 
+---
+
+## What it looks like
+
+Coach mode running against a bloated, mute skill:
+
+```
+Score: 0/100
+Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.
+
+H1 · Line Count · FAIL
+Your SKILL.md is 165 lines. The budget is 150.
+→ Just 15 lines over. Tighten the prose and migrate post-call guidance to tool hints.
+
+H2 · Hint Coverage · FAIL
+1 tool(s) have zero fixtures. They don't speak at all: search
+→ Add talking-cli-fixtures for [search]. One error scenario, one empty/zero-result scenario.
+  Make them return a "hints" field.
+
+---
+Fix the issues above, then run npx talking-cli audit again to see your new score.
+```
+
+(The real output is colored. We just can't show chalk in a code block.)
+
+---
+
+## The Methodology
+
+Talking CLI is more than a linter. It's a design philosophy:
+
+- **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
+- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
+
+---
+
 ## Status
 
-**P1 MVP complete.** The `talking-cli` linter is runnable: `audit` (H1 + H2 heuristics) and `optimize` (plan-only) are working.
+**P1 MVP complete.** `audit` (H1 + H2) and `optimize` (plan-only) are working.
 
 - ✅ H1: `SKILL.md` line-count budget (150 lines)
 - ✅ H2: Fixture-driven hint coverage detection
 - ✅ Coach / CI / JSON renderers
 - ⏳ H3 + H4: Deferred to P3 (needs real-world corpus calibration)
-- ⏳ `optimize --workflow`: Complex skill transformation pipeline — see PRD §11
+- ⏳ `optimize --workflow`: Complex skill transformation pipeline
 
-The methodology (`PHILOSOPHY.md` + `CN-001`) is stable. The CLI surface may still evolve before v1.0.0.
-
-## Contributing
-
-Issues and discussion are welcome. PRs accepted for bug fixes and P3 roadmap items. See `.internal/PRD.md` for the full product spec (internal).
+The methodology is stable. The CLI surface may still evolve before v1.0.0.
 
 ## License
 
