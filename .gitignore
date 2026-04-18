@@ -3,6 +3,10 @@
 Thumbs.db
 desktop.ini
 
+# Local AI CLI launchers (per-user, not project artifacts)
+Kimi_here.bat
+*_here.bat
+
 # Editors
 .vscode/
 .idea/
