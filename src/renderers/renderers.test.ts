@@ -10,6 +10,8 @@ function makeOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
     skillLineCount: 200,
     h1: { verdict: 'PASS', score: 100, raw: { lineCount: 100, maxLines: 150 } },
     h2: { verdict: 'PASS', score: 100, raw: { tools: [] } },
+    h3: { verdict: 'PASS', score: 100, raw: { withHints: 2, passed: 2, total: 2 } },
+    h4: { verdict: 'PASS', score: 100, raw: { actionable: 2, passed: 2, total: 2 } },
     totalScore: 100,
     ...overrides,
   };

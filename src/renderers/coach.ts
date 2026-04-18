@@ -91,6 +91,26 @@ function renderH2(h2: HeuristicResult): string {
   return lines.join('\n');
 }
 
+function renderH3(h3: HeuristicResult): string {
+  const raw = h3.raw as { withHints: number; passed: number; total: number };
+  return [
+    chalk.bold('H3 · Structured Hints · ') + chalk.red(h3.verdict),
+    `${raw.withHints}/${raw.passed} passed fixtures contain hint fields (hints, suggestions, guidance, next_steps, recommendations).`,
+    chalk.cyan('→ ') +
+      'Make your tools return a "hints" or "suggestions" field alongside raw data.',
+  ].join('\n');
+}
+
+function renderH4(h4: HeuristicResult): string {
+  const raw = h4.raw as { actionable: number; passed: number; total: number };
+  return [
+    chalk.bold('H4 · Actionable Guidance · ') + chalk.red(h4.verdict),
+    `${raw.actionable}/${raw.passed} hint fields have actionable content (string ≥ 10 chars or non-empty array).`,
+    chalk.cyan('→ ') +
+      'Hints should be specific. "Try again" is too short. "Try broadening your query with fewer filters" is actionable.',
+  ].join('\n');
+}
+
 function renderFooter(): string {
   return (
     chalk.dim('---\nFix the issues above, then run ') +
@@ -108,6 +128,14 @@ export function renderCoach(output: EngineOutput): string {
 
   if (output.h2.verdict !== 'PASS' && output.h2.verdict !== 'NOT_APPLICABLE') {
     sections.push(renderH2(output.h2));
+  }
+
+  if (output.h3.verdict !== 'PASS' && output.h3.verdict !== 'NOT_APPLICABLE') {
+    sections.push(renderH3(output.h3));
+  }
+
+  if (output.h4.verdict !== 'PASS' && output.h4.verdict !== 'NOT_APPLICABLE') {
+    sections.push(renderH4(output.h4));
   }
 
   if (output.totalScore === 100) {

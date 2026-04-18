@@ -14,7 +14,9 @@ export interface EngineOutput {
   skillLineCount: number;
   h1: HeuristicResult;
   h2: HeuristicResult;
-  totalScore: number; // P1: simple average of h1.score and h2.score
+  h3: HeuristicResult;
+  h4: HeuristicResult;
+  totalScore: number; // P3: average of h1.score, h2.score, h3.score, h4.score
 }
 
 export interface Fixture {

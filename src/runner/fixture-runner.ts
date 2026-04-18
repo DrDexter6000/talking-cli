@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import type { Fixture } from '../types.js';
 
 export type FixtureRunResult =
-  | { status: 'passed'; fixture: Fixture }
+  | { status: 'passed'; fixture: Fixture; stdout: string; parsed: unknown }
   | { status: 'assertion-failed'; fixture: Fixture; reason: string }
   | { status: 'broken'; fixture: Fixture; reason: string };
 
@@ -80,7 +80,7 @@ export function runFixture(fixture: Fixture, cwd: string): Promise<FixtureRunRes
         return;
       }
 
-      resolve({ status: 'passed', fixture });
+      resolve({ status: 'passed', fixture, stdout, parsed });
     });
   });
 }

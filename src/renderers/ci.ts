@@ -22,6 +22,18 @@ export function renderCI(output: EngineOutput): string {
     }
   }
 
+  if (output.h3.verdict !== 'PASS' && output.h3.verdict !== 'NOT_APPLICABLE') {
+    const raw = output.h3.raw as { withHints: number; passed: number };
+    lines.push(
+      `H3: ${output.h3.verdict} — ${raw.withHints}/${raw.passed} fixtures have hint fields`,
+    );
+  }
+
+  if (output.h4.verdict !== 'PASS' && output.h4.verdict !== 'NOT_APPLICABLE') {
+    const raw = output.h4.raw as { actionable: number; passed: number };
+    lines.push(`H4: ${output.h4.verdict} — ${raw.actionable}/${raw.passed} hints are actionable`);
+  }
+
   if (output.totalScore === 100) {
     lines.push('All checks passed.');
   }

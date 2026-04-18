@@ -93,7 +93,7 @@ describe('runEngine', () => {
     });
     try {
       const result = await runEngine(discovery);
-      expect(result.totalScore).toBe(25);
+      expect(result.totalScore).toBe(63);
       expect(result.h1.verdict).toBe('FAIL');
       expect(result.h2.verdict).toBe('PARTIAL');
     } finally {
@@ -132,6 +132,8 @@ describe('runEngine', () => {
       expect(result).toHaveProperty('skillLineCount');
       expect(result).toHaveProperty('h1');
       expect(result).toHaveProperty('h2');
+      expect(result).toHaveProperty('h3');
+      expect(result).toHaveProperty('h4');
       expect(result).toHaveProperty('totalScore');
       expect(typeof result.totalScore).toBe('number');
     } finally {
