@@ -122,17 +122,11 @@ describe('runOptimize', () => {
     }
   });
 
-  it('exits with error for --apply', async () => {
+  it('rejects with ApplyError for --apply outside git repo', async () => {
     const dir = createSkillDir({ skillLines: 100 });
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called');
-    });
     try {
-      await expect(runOptimize(dir, { apply: true })).rejects.toThrow('process.exit called');
+      await expect(runOptimize(dir, { apply: true })).rejects.toThrow('Not a git repository');
     } finally {
-      errorSpy.mockRestore();
-      exitSpy.mockRestore();
       rmSync(dir, { recursive: true });
     }
   });

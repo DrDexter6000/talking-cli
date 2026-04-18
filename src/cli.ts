@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { Command } from 'commander';
 import { discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js';
 import { runEngine } from './engine.js';
+import { runApply } from './optimize/applier.js';
 import { generatePlan } from './optimize/plan-generator.js';
 import { getExitCode, renderCI } from './renderers/ci.js';
 import { renderCoach } from './renderers/coach.js';
@@ -34,11 +35,6 @@ export async function runAudit(
 }
 
 export async function runOptimize(skillDir: string, options: { apply?: boolean }): Promise<void> {
-  if (options.apply) {
-    console.error('Error: --apply is not implemented in P1. Deferred to P3.');
-    process.exit(1);
-  }
-
   const skillMdPath = discoverSkillMd(skillDir);
   const tools = discoverTools(skillDir);
   const fixtures = discoverFixtures(skillDir);
@@ -48,6 +44,11 @@ export async function runOptimize(skillDir: string, options: { apply?: boolean }
     tools,
     fixtures,
   });
+
+  if (options.apply) {
+    await runApply(skillDir, engineOutput);
+    return;
+  }
 
   const plan = generatePlan(engineOutput);
   const planPath = resolve(skillDir, 'TALKING-CLI-OPTIMIZATION.md');
