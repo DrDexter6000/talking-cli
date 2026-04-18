@@ -31,6 +31,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DrDexter6000/talking-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DrDexter6000/talking-cli/issues"
+  },
+  "homepage": "https://github.com/DrDexter6000/talking-cli#readme",
   "engines": {
     "node": ">=18.0.0"
   },
