@@ -17,6 +17,42 @@ Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
 ---
 
+## How it works
+
+### The Prompt Budget Shift
+
+```mermaid
+graph LR
+    subgraph Before ["❌ Before: Mute CLI"]
+        A1[SKILL.md<br/>400+ lines] --> A2[Agent]
+        A3[Tool returns<br/>raw JSON only] --> A2
+        A1 -.->|repeated guidance<br/>shoved upstream| A3
+    end
+
+    subgraph After ["✅ After: Talking CLI"]
+        B1[SKILL.md<br/>&lt; 150 lines] --> B2[Agent]
+        B3[Tool returns<br/>JSON + hints] --> B2
+    end
+
+    Before -->|Audit + Optimize| After
+```
+
+### Four Heuristics, Full Coverage
+
+```mermaid
+graph TD
+    H1[H1 · Document Budget<br/>SKILL.md ≤ 150 lines]
+    H2[H2 · Fixture Coverage<br/>error + empty scenarios]
+    H3[H3 · Structured Hints<br/>hints / suggestions / guidance]
+    H4[H4 · Actionable Guidance<br/>specific, actionable content]
+
+    H1 & H2 & H3 & H4 --> Score[Total Score<br/>0–100]
+    Score -->|≥ 80| Pass[✅ PASS<br/>Ship it]
+    Score -->|< 80| Fail[❌ FAIL<br/>Fix it]
+```
+
+---
+
 ## Quick Start
 
 ```bash
