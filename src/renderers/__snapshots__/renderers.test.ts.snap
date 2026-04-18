@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Coach Renderer > celebrates perfect score > perfect-score 1`] = `
+"Score: 100/100
+Flawless. Your CLI actually talks back. I'm almost proud.
+
+Nothing to fix. Go ship it."
+`;
+
+exports[`Coach Renderer > roasts H1 + H2 failures with actionable fixes > h1-fail-h2-fail 1`] = `
+"Score: 0/100
+Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.
+
+H1 · Line Count · FAIL
+Your SKILL.md is 457 lines. The budget is 150.
+→ This is not a SKILL.md, it's a manifesto. Delete 307 lines minimum. Move every \\"if the tool returns X, do Y\\" paragraph into the tool's response as a hint.
+
+H2 · Hint Coverage · FAIL
+1 tool(s) have zero fixtures. They don't speak at all: search
+→ Add talking-cli-fixtures for [search]. One error scenario, one empty/zero-result scenario. Make them return a \\"hints\\" field.
+1 tool(s) are half-covered: write
+→ Check which scenario is missing (error vs empty-result) and add the missing fixture.
+
+---
+Fix the issues above, then run npx talking-cli audit again to see your new score."
+`;

@@ -23,16 +23,39 @@ Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
 ---
 
+## Quick Start
+
+```bash
+# Audit your skill — default coach mode (plain language, roast included)
+npx talking-cli audit ./my-skill
+
+# CI mode — machine-readable, exit code driven
+npx talking-cli audit ./my-skill --ci
+
+# JSON mode — structured output for tooling
+npx talking-cli audit ./my-skill --json
+
+# Generate optimization plan (plan-only, never touches source files)
+npx talking-cli optimize ./my-skill
+# → writes TALKING-CLI-OPTIMIZATION.md at the skill root
+```
+
 ## Status
 
-**Draft.** The methodology is being formalized. A companion linter — the `talking-cli` CLI — is planned but not yet built.
+**P1 MVP complete.** The `talking-cli` linter is runnable: `audit` (H1 + H2 heuristics) and `optimize` (plan-only) are working.
 
-The shape of the ideas is stable enough to share and argue about. The wording is not.
+- ✅ H1: `SKILL.md` line-count budget (150 lines)
+- ✅ H2: Fixture-driven hint coverage detection
+- ✅ Coach / CI / JSON renderers
+- ⏳ H3 + H4: Deferred to P3 (needs real-world corpus calibration)
+- ⏳ `optimize --workflow`: Complex skill transformation pipeline — see PRD §11
+
+The methodology (`PHILOSOPHY.md` + `CN-001`) is stable. The CLI surface may still evolve before v1.0.0.
 
 ## Contributing
 
-Not accepting PRs yet — the surface is still being set. Issues and discussion are welcome.
+Issues and discussion are welcome. PRs accepted for bug fixes and P3 roadmap items. See `.internal/PRD.md` for the full product spec (internal).
 
 ## License
 
-TBD.
+MIT

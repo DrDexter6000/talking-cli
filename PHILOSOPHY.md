@@ -210,9 +210,13 @@ Talking CLI does not invent a new channel. It names, budgets, and disciplines on
 
 ## Start Here
 
-### 1. Audit
+### 1. Audit (with `talking-cli`)
 
-Count lines in your `SKILL.md`. Identify how many describe what to do after a specific tool returns. (This is usually most of them.) That is your C3 debt.
+Run `npx talking-cli audit <skill-dir>` to get a scored report on your skill's prompt surface health. The linter checks:
+- H1: Is your `SKILL.md` under 150 lines?
+- H2: Do your tools emit hints on error and empty-result paths?
+
+Fix the findings it surfaces, then re-audit to watch your score climb.
 
 ### 2. Move one rule
 
@@ -229,7 +233,7 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 ## Reference
 
 - **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor. Talking CLI is its public-facing synthesis.
-- **`talking-cli` linter** (planned) — will operationalize the heuristics above.
+- **`talking-cli` linter** — P1 MVP complete. `npx talking-cli audit <skill-dir>` runs H1–H2 heuristics; `optimize` generates actionable fix plans. See `README.md` for usage.
 
 ---
 

@@ -39,3 +39,6 @@ __pycache__/
 *.py[cod]
 .venv/
 .pytest_cache/
+
+# Internal planning docs (SSOT, handoffs, roadmaps — dev-only, not public)
+.internal/
