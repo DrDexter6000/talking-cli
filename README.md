@@ -13,9 +13,9 @@ When an agent calls your CLI today, the tool runs, returns raw data, and says no
 
 **Talking CLI** is a design methodology for agent tools that speak back. It treats `SKILL.md` and tool output as **one shared prompt surface with one shared budget**, and gives you concrete rules for deciding what belongs in which channel.
 
-Stop writing everything into `SKILL.md`. Give your CLI a voice.
+**Prompt-on-call** — progressive disclosure taken one level deeper. Instead of pre-loading every scenario into SKILL.md, your tool speaks up when called — triggered by what it actually sees, not by what the designer predicted.
 
-We call this **prompt-on-call**: instead of pre-loading every scenario into SKILL.md, your tool discloses guidance progressively — at the exact moment it matters.
+Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
 ---
 
