@@ -119,13 +119,13 @@ Talking CLI is more than a linter. It's a design philosophy:
 
 ## Status
 
-**P3 in progress.** Four heuristics active. `audit` and `optimize` (plan-only) are working.
+**P3 in progress.** Four heuristics active. `audit` and `optimize` (plan-only and `--apply`) are working.
 
 - ✅ H1: `SKILL.md` line-count budget (150 lines)
 - ✅ H2: Fixture-driven hint coverage detection
 - ✅ H3: Structured hint fields (`hints`, `suggestions`, `guidance`, etc.)
 - ✅ H4: Actionable guidance content (length + specificity)
-- ⏳ `optimize --apply`: Auto-fix with safety rules (branch + backup)
+- ✅ `optimize --apply`: Auto-fix with safety rules (git branch + backup)
 - ⏳ `optimize --workflow`: 9-step complex skill transformation pipeline
 
 The methodology is stable. The CLI surface may still evolve before v1.0.0.
