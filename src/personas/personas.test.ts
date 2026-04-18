@@ -3,6 +3,7 @@ import type { HeuristicResult } from '../types.js';
 import {
   britishCriticPersona,
   defaultPersona,
+  emotionalDamageDadPersona,
   getPersona,
   isValidPersona,
   nbaCoachPersona,
@@ -22,6 +23,7 @@ describe('Persona selector', () => {
     expect(getPersona('nba-coach')).toBe(nbaCoachPersona);
     expect(getPersona('british-critic')).toBe(britishCriticPersona);
     expect(getPersona('zen-master')).toBe(zenMasterPersona);
+    expect(getPersona('emotional-damage-dad')).toBe(emotionalDamageDadPersona);
   });
 
   it('isValidPersona recognizes all keys', () => {
@@ -29,6 +31,7 @@ describe('Persona selector', () => {
     expect(isValidPersona('nba-coach')).toBe(true);
     expect(isValidPersona('british-critic')).toBe(true);
     expect(isValidPersona('zen-master')).toBe(true);
+    expect(isValidPersona('emotional-damage-dad')).toBe(true);
     expect(isValidPersona('invalid')).toBe(false);
   });
 });
@@ -102,5 +105,35 @@ describe('Zen Master persona', () => {
     const text = zenMasterPersona.renderH1(makeH1('FAIL', 457));
     expect(text).toContain('scroll');
     expect(text).toContain('457');
+  });
+});
+
+describe('Emotional Damage Dad persona', () => {
+  it('uses Chinglish and cousin comparison at 100', () => {
+    const text = emotionalDamageDadPersona.renderHeader(100);
+    expect(text).toContain('cousin');
+    expect(text).toContain("Don't get cocky");
+  });
+
+  it('shouts EMOTIONAL DAMAGE at low scores', () => {
+    const text = emotionalDamageDadPersona.renderHeader(25);
+    expect(text).toContain('EMOTIONAL DAMAGE');
+    expect(text).toContain('shame');
+  });
+
+  it('brags about youth in H1', () => {
+    const text = emotionalDamageDadPersona.renderH1(makeH1('FAIL', 457));
+    expect(text).toContain('When I was your age');
+    expect(text).toContain('ONE NAPKIN');
+    expect(text).toContain('457');
+  });
+
+  it('calls tools "kids" and fixtures "homework"', () => {
+    const text = emotionalDamageDadPersona.renderH2({
+      verdict: 'FAIL',
+      score: 0,
+      raw: { tools: [{ name: 'search', verdict: 'FAIL', score: 0 }] },
+    });
+    expect(text).toContain('kid(s) no do homework');
   });
 });

@@ -71,6 +71,7 @@ npx talking-cli audit ./my-skill --json
 npx talking-cli audit ./my-skill --persona nba-coach
 npx talking-cli audit ./my-skill --persona british-critic
 npx talking-cli audit ./my-skill --persona zen-master
+npx talking-cli audit ./my-skill --persona emotional-damage-dad
 
 # Generate optimization plan (plan-only, never touches source files)
 npx talking-cli optimize ./my-skill

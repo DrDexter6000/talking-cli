@@ -1,6 +1,11 @@
 import type { HeuristicResult } from '../types.js';
 
-export type PersonaKey = 'default' | 'nba-coach' | 'british-critic' | 'zen-master';
+export type PersonaKey =
+  | 'default'
+  | 'nba-coach'
+  | 'british-critic'
+  | 'zen-master'
+  | 'emotional-damage-dad';
 
 export interface PersonaRenderer {
   readonly key: PersonaKey;
