@@ -1,13 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  mkdtempSync,
-  writeFileSync,
-  mkdirSync,
-  rmSync,
-  existsSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
 import { runAudit, runOptimize } from './cli.js';
 import { DiscoveryError } from './discovery.js';
 
@@ -35,7 +29,7 @@ function createSkillDir(opts: {
   for (const name of tools) {
     writeFileSync(
       join(dir, 'tools', `${name}.js`),
-      `console.log(JSON.stringify({ hints: ['hint'] }));`
+      `console.log(JSON.stringify({ hints: ['hint'] }));`,
     );
   }
 
@@ -121,9 +115,7 @@ describe('runOptimize', () => {
       await runOptimize(dir, {});
       const planPath = join(dir, 'TALKING-CLI-OPTIMIZATION.md');
       expect(existsSync(planPath)).toBe(true);
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Optimization plan written to')
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Optimization plan written to'));
     } finally {
       logSpy.mockRestore();
       rmSync(dir, { recursive: true });

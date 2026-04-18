@@ -1,21 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  type HeuristicResult,
+  assertFixture,
+  type DiscoveryResult,
   type EngineOutput,
   type Fixture,
-  type DiscoveryResult,
+  type HeuristicResult,
   isValidFixture,
-  assertFixture,
 } from './types.js';
 
 describe('HeuristicResult', () => {
   it('accepts valid verdicts at compile time', () => {
-    const results: HeuristicResult['verdict'][] = [
-      'PASS',
-      'FAIL',
-      'PARTIAL',
-      'NOT_APPLICABLE',
-    ];
+    const results: HeuristicResult['verdict'][] = ['PASS', 'FAIL', 'PARTIAL', 'NOT_APPLICABLE'];
     expect(results).toHaveLength(4);
   });
 
@@ -78,7 +73,12 @@ describe('Fixture runtime validation', () => {
   });
 
   it('rejects non-string command elements', () => {
-    const bad = { tool: 'search', scenario: 'x', command: ['a', 1], assert: { output_has_field: 'hints' } };
+    const bad = {
+      tool: 'search',
+      scenario: 'x',
+      command: ['a', 1],
+      assert: { output_has_field: 'hints' },
+    };
     expect(isValidFixture(bad)).toBe(false);
   });
 
@@ -96,7 +96,14 @@ describe('DiscoveryResult', () => {
     const d: DiscoveryResult = {
       skillMdPath: '/tmp/skill/SKILL.md',
       tools: [{ name: 'search', ext: '.js', path: '/tmp/skill/tools/search.js' }],
-      fixtures: [{ name: 'search.error.fixture.json', tool: 'search', scenario: 'error', path: '/tmp/skill/fixtures/search.error.fixture.json' }],
+      fixtures: [
+        {
+          name: 'search.error.fixture.json',
+          tool: 'search',
+          scenario: 'error',
+          path: '/tmp/skill/fixtures/search.error.fixture.json',
+        },
+      ],
     };
     expect(d.tools).toHaveLength(1);
     expect(d.fixtures).toHaveLength(1);

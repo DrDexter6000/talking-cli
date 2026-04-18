@@ -1,18 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  mkdirSync,
-  mkdtempSync,
-  writeFileSync,
-  rmSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  discoverSkillMd,
-  discoverTools,
-  discoverFixtures,
-  DiscoveryError,
-} from './discovery.js';
+import { describe, expect, it, vi } from 'vitest';
+import { DiscoveryError, discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js';
 
 function createTempDir(): string {
   return mkdtempSync(join(tmpdir(), 'talking-cli-test-'));
@@ -118,7 +108,7 @@ describe('discoverFixtures', () => {
           scenario: 'error',
           command: ['node', 'tools/search.js'],
           assert: { output_has_field: 'hints' },
-        })
+        }),
       );
 
       const fixtures = discoverFixtures(dir);
@@ -135,10 +125,7 @@ describe('discoverFixtures', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       mkdirSync(join(dir, 'talking-cli-fixtures'));
-      writeFileSync(
-        join(dir, 'talking-cli-fixtures', 'bad.error.fixture.json'),
-        'not json'
-      );
+      writeFileSync(join(dir, 'talking-cli-fixtures', 'bad.error.fixture.json'), 'not json');
       writeFileSync(
         join(dir, 'talking-cli-fixtures', 'good.error.fixture.json'),
         JSON.stringify({
@@ -146,7 +133,7 @@ describe('discoverFixtures', () => {
           scenario: 'error',
           command: ['a'],
           assert: { output_has_field: 'hints' },
-        })
+        }),
       );
 
       const fixtures = discoverFixtures(dir);
@@ -166,7 +153,7 @@ describe('discoverFixtures', () => {
       mkdirSync(join(dir, 'talking-cli-fixtures'));
       writeFileSync(
         join(dir, 'talking-cli-fixtures', 'bad.error.fixture.json'),
-        JSON.stringify({ tool: 'bad', scenario: 'error' }) // missing command & assert
+        JSON.stringify({ tool: 'bad', scenario: 'error' }), // missing command & assert
       );
 
       const fixtures = discoverFixtures(dir);

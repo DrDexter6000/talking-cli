@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { renderCoach } from './coach.js';
-import { renderCI, getExitCode } from './ci.js';
-import { renderJSON } from './json.js';
+import { describe, expect, it } from 'vitest';
 import type { EngineOutput } from '../types.js';
+import { getExitCode, renderCI } from './ci.js';
+import { renderCoach } from './coach.js';
+import { renderJSON } from './json.js';
 
 function makeOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
   return {
@@ -83,7 +83,7 @@ describe('CI Renderer', () => {
     const result = renderCI(out);
     expect(result).toContain('25/100');
     expect(result).toContain('H1: FAIL');
-    expect(result).not.toMatch(/\x1b\[/); // no ANSI escape codes
+    expect(result).not.toMatch(new RegExp(`${String.fromCharCode(0x1b)}\\[`)); // no ANSI escape codes
   });
 
   it('returns exit code 0 for perfect score', () => {

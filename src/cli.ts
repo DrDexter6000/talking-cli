@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
-import { discoverSkillMd, discoverTools, discoverFixtures } from './discovery.js';
-import { runEngine } from './engine.js';
-import { renderCoach } from './renderers/coach.js';
-import { renderCI, getExitCode } from './renderers/ci.js';
-import { renderJSON } from './renderers/json.js';
-import { generatePlan } from './optimize/plan-generator.js';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Command } from 'commander';
+import { discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js';
+import { runEngine } from './engine.js';
+import { generatePlan } from './optimize/plan-generator.js';
+import { getExitCode, renderCI } from './renderers/ci.js';
+import { renderCoach } from './renderers/coach.js';
+import { renderJSON } from './renderers/json.js';
 
 export async function runAudit(
   skillDir: string,
-  options: { ci?: boolean; json?: boolean }
+  options: { ci?: boolean; json?: boolean },
 ): Promise<void> {
   const skillMdPath = discoverSkillMd(skillDir);
   const tools = discoverTools(skillDir);
@@ -33,10 +33,7 @@ export async function runAudit(
   }
 }
 
-export async function runOptimize(
-  skillDir: string,
-  options: { apply?: boolean }
-): Promise<void> {
+export async function runOptimize(skillDir: string, options: { apply?: boolean }): Promise<void> {
   if (options.apply) {
     console.error('Error: --apply is not implemented in P1. Deferred to P3.');
     process.exit(1);

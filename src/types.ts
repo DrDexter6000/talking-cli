@@ -67,7 +67,9 @@ export function isValidFixture(obj: unknown): obj is Fixture {
 
 export function assertFixture(obj: unknown): Fixture {
   if (!isValidFixture(obj)) {
-    throw new Error('Invalid fixture: missing required fields (tool, scenario, command, assert.output_has_field)');
+    throw new Error(
+      'Invalid fixture: missing required fields (tool, scenario, command, assert.output_has_field)',
+    );
   }
   return obj;
 }

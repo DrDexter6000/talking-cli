@@ -1,13 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import {
-  mkdtempSync,
-  writeFileSync,
-  rmSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { runFixture, type FixtureRunResult } from './fixture-runner.js';
+import { describe, expect, it } from 'vitest';
 import type { Fixture } from '../types.js';
+import { type FixtureRunResult, runFixture } from './fixture-runner.js';
 
 function makeFixture(overrides: Partial<Fixture> = {}): Fixture {
   return {

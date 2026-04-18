@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { countSkillLines, evaluateH1, MAX_SKILL_LINES } from './h1.js';
 
 describe('countSkillLines', () => {
@@ -14,14 +14,7 @@ describe('countSkillLines', () => {
   });
 
   it('counts code blocks', () => {
-    const lines = [
-      '# Title',
-      '```js',
-      'const x = 1;',
-      'const y = 2;',
-      '```',
-      'end',
-    ];
+    const lines = ['# Title', '```js', 'const x = 1;', 'const y = 2;', '```', 'end'];
     expect(countSkillLines(lines.join('\n'))).toBe(6);
   });
 
@@ -36,7 +29,7 @@ describe('countSkillLines', () => {
   });
 
   it('treats unclosed frontmatter as body', () => {
-    const content = '---\ntitle: test\n' + Array.from({ length: 10 }, (_, i) => `line${i}`).join('\n');
+    const content = `---\ntitle: test\n${Array.from({ length: 10 }, (_, i) => `line${i}`).join('\n')}`;
     expect(countSkillLines(content)).toBe(12);
   });
 

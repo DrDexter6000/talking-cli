@@ -1,7 +1,7 @@
-import type { EngineOutput, DiscoveryResult } from './types.js';
+import { readFileSync } from 'node:fs';
 import { evaluateH1 } from './rules/h1.js';
 import { evaluateH2 } from './rules/h2.js';
-import { readFileSync } from 'node:fs';
+import type { DiscoveryResult, EngineOutput } from './types.js';
 
 export async function runEngine(discovery: DiscoveryResult): Promise<EngineOutput> {
   const content = readFileSync(discovery.skillMdPath, 'utf-8');

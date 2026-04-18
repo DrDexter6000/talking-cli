@@ -22,7 +22,7 @@ export function generatePlan(output: EngineOutput): string {
     lines.push(`1. Open \`${output.skillDir}SKILL.md\`.`);
     lines.push('2. Identify every section that describes what to do *after* a specific tool call.');
     lines.push('3. Delete those sections from SKILL.md.');
-    lines.push('4. Move the guidance into the relevant tool\'s response as a `hints` field.');
+    lines.push("4. Move the guidance into the relevant tool's response as a `hints` field.");
     lines.push('5. Re-run `npx talking-cli audit` to verify the line count dropped.');
     lines.push('');
   }
@@ -40,10 +40,14 @@ export function generatePlan(output: EngineOutput): string {
       lines.push('');
       for (const tool of uncovered) {
         lines.push(`### Tool: \`${tool.name}\``);
-        lines.push(`1. Create \`${output.skillDir}talking-cli-fixtures/${tool.name}.error.fixture.json\`.`);
+        lines.push(
+          `1. Create \`${output.skillDir}talking-cli-fixtures/${tool.name}.error.fixture.json\`.`,
+        );
         lines.push(`   - Command should trigger an error path for this tool.`);
         lines.push(`   - Expected output must include a non-empty \`hints\` field.`);
-        lines.push(`2. Create \`${output.skillDir}talking-cli-fixtures/${tool.name}.empty.fixture.json\`.`);
+        lines.push(
+          `2. Create \`${output.skillDir}talking-cli-fixtures/${tool.name}.empty.fixture.json\`.`,
+        );
         lines.push(`   - Command should trigger a zero-result / empty path.`);
         lines.push(`   - Expected output must include a non-empty \`hints\` field.`);
         lines.push('');

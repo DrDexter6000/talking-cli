@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { generatePlan } from './plan-generator.js';
+import { describe, expect, it } from 'vitest';
 import type { EngineOutput } from '../types.js';
+import { generatePlan } from './plan-generator.js';
 
 function makeOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
   return {

@@ -1,12 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import {
-  mkdtempSync,
-  writeFileSync,
-  mkdirSync,
-  rmSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 import { runEngine } from './engine.js';
 import type { DiscoveryResult } from './types.js';
 
@@ -34,7 +29,7 @@ function createSkillDir(opts: {
   const toolEntries = tools.map((name) => {
     writeFileSync(
       join(dir, 'tools', `${name}.js`),
-      `console.log(JSON.stringify({ hints: ['hint'] }));`
+      `console.log(JSON.stringify({ hints: ['hint'] }));`,
     );
     return { name, ext: '.js', path: join(dir, 'tools', `${name}.js`) };
   });

@@ -1,5 +1,5 @@
-import type { HeuristicResult, DiscoveryResult } from '../types.js';
 import { runFixture } from '../runner/fixture-runner.js';
+import type { DiscoveryResult, HeuristicResult } from '../types.js';
 
 export async function evaluateH2(discovery: DiscoveryResult): Promise<HeuristicResult> {
   const { tools, fixtures, skillMdPath } = discovery;
@@ -21,16 +21,10 @@ export async function evaluateH2(discovery: DiscoveryResult): Promise<HeuristicR
         return { name: tool.name, verdict: 'FAIL' as const, score: 0 };
       }
 
-      const runResults = await Promise.all(
-        toolFixtures.map((f) => runFixture(f.fixture, toolDir))
-      );
+      const runResults = await Promise.all(toolFixtures.map((f) => runFixture(f.fixture, toolDir)));
 
-      const hasErrorScenario = toolFixtures.some((f) =>
-        /error/i.test(f.scenario)
-      );
-      const hasEmptyScenario = toolFixtures.some((f) =>
-        /empty|zero|no-result/i.test(f.scenario)
-      );
+      const hasErrorScenario = toolFixtures.some((f) => /error/i.test(f.scenario));
+      const hasEmptyScenario = toolFixtures.some((f) => /empty|zero|no-result/i.test(f.scenario));
 
       const allPassed = runResults.every((r) => r.status === 'passed');
       const hasRequiredScenarios = hasErrorScenario && hasEmptyScenario;
@@ -44,11 +38,10 @@ export async function evaluateH2(discovery: DiscoveryResult): Promise<HeuristicR
       }
 
       return { name: tool.name, verdict: 'FAIL' as const, score: 0 };
-    })
+    }),
   );
 
-  const totalScore =
-    toolResults.reduce((sum, t) => sum + t.score, 0) / toolResults.length;
+  const totalScore = toolResults.reduce((sum, t) => sum + t.score, 0) / toolResults.length;
 
   const hasFailures = toolResults.some((t) => t.verdict === 'FAIL');
   const hasPartials = toolResults.some((t) => t.verdict === 'PARTIAL');

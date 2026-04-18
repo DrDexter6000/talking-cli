@@ -1,18 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import {
-  mkdtempSync,
-  writeFileSync,
-  mkdirSync,
-  rmSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { evaluateH2 } from './h2.js';
+import { describe, expect, it } from 'vitest';
 import type { DiscoveryResult, Fixture } from '../types.js';
+import { evaluateH2 } from './h2.js';
 
 function createMockDiscovery(
   tools: { name: string }[],
-  fixtures: Array<{ tool: string; scenario: string; command?: string[] }>
+  fixtures: Array<{ tool: string; scenario: string; command?: string[] }>,
 ): { discovery: DiscoveryResult; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), 'talking-cli-h2-'));
 
@@ -23,7 +18,7 @@ function createMockDiscovery(
   for (const tool of tools) {
     writeFileSync(
       join(dir, 'tools', `${tool.name}.js`),
-      `console.log(JSON.stringify({ hints: ['hint1'] }));`
+      `console.log(JSON.stringify({ hints: ['hint1'] }));`,
     );
   }
 
@@ -68,7 +63,7 @@ describe('evaluateH2', () => {
       [
         { tool: 'search', scenario: 'error' },
         { tool: 'search', scenario: 'empty-result' },
-      ]
+      ],
     );
     try {
       const result = await evaluateH2(discovery);
@@ -82,7 +77,7 @@ describe('evaluateH2', () => {
   it('PARTIAL when only error fixture exists', async () => {
     const { discovery, cleanup } = createMockDiscovery(
       [{ name: 'search' }],
-      [{ tool: 'search', scenario: 'error' }]
+      [{ tool: 'search', scenario: 'error' }],
     );
     try {
       const result = await evaluateH2(discovery);
@@ -94,10 +89,7 @@ describe('evaluateH2', () => {
   });
 
   it('FAIL when no fixtures for a tool', async () => {
-    const { discovery, cleanup } = createMockDiscovery(
-      [{ name: 'search' }],
-      []
-    );
+    const { discovery, cleanup } = createMockDiscovery([{ name: 'search' }], []);
     try {
       const result = await evaluateH2(discovery);
       expect(result.verdict).toBe('FAIL');
@@ -114,7 +106,7 @@ describe('evaluateH2', () => {
         { tool: 'search', scenario: 'error' },
         { tool: 'search', scenario: 'empty' },
         // write has no fixtures → FAIL
-      ]
+      ],
     );
     try {
       const result = await evaluateH2(discovery);
@@ -148,7 +140,7 @@ describe('evaluateH2', () => {
       [
         { tool: 'search', scenario: 'error' },
         { tool: 'search', scenario: 'zero-hits' },
-      ]
+      ],
     );
     try {
       const result = await evaluateH2(discovery);

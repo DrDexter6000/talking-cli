@@ -8,7 +8,9 @@ export function renderCI(output: EngineOutput): string {
 
   if (output.h1.verdict !== 'PASS') {
     const raw = output.h1.raw as { lineCount: number; maxLines: number };
-    lines.push(`H1: ${output.h1.verdict} — SKILL.md is ${raw.lineCount} lines (max ${raw.maxLines})`);
+    lines.push(
+      `H1: ${output.h1.verdict} — SKILL.md is ${raw.lineCount} lines (max ${raw.maxLines})`,
+    );
   }
 
   if (output.h2.verdict !== 'PASS' && output.h2.verdict !== 'NOT_APPLICABLE') {

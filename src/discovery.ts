@@ -1,6 +1,11 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { resolve, basename, extname } from 'node:path';
-import { type DiscoveredTool, type DiscoveredFixture, type Fixture, assertFixture } from './types.js';
+import { basename, extname, resolve } from 'node:path';
+import {
+  assertFixture,
+  type DiscoveredFixture,
+  type DiscoveredTool,
+  type Fixture,
+} from './types.js';
 
 const SKILL_MD = 'SKILL.md';
 const TOOLS_DIR = 'tools';
@@ -21,23 +26,17 @@ export function discoverSkillMd(skillDir: string): string {
   try {
     entries = readdirSync(absoluteDir);
   } catch {
-    throw new DiscoveryError(
-      `Cannot read directory ${absoluteDir}`
-    );
+    throw new DiscoveryError(`Cannot read directory ${absoluteDir}`);
   }
 
   if (!entries.includes(SKILL_MD)) {
-    throw new DiscoveryError(
-      `No SKILL.md found in ${absoluteDir} (looked for ${SKILL_MD})`
-    );
+    throw new DiscoveryError(`No SKILL.md found in ${absoluteDir} (looked for ${SKILL_MD})`);
   }
 
   const skillMdPath = resolve(absoluteDir, SKILL_MD);
   const stat = statSync(skillMdPath);
   if (!stat.isFile()) {
-    throw new DiscoveryError(
-      `Expected ${skillMdPath} to be a file, but it is a directory`
-    );
+    throw new DiscoveryError(`Expected ${skillMdPath} to be a file, but it is a directory`);
   }
 
   return skillMdPath;
@@ -92,7 +91,9 @@ export function discoverFixtures(skillDir: string): DiscoveredFixture[] {
     const withoutSuffix = name.slice(0, -FIXTURE_SUFFIX.length);
     const firstDot = withoutSuffix.indexOf('.');
     if (firstDot === -1) {
-      console.warn(`[talking-cli] Skipping malformed fixture filename: ${name} (expected <tool>.<scenario>.fixture.json)`);
+      console.warn(
+        `[talking-cli] Skipping malformed fixture filename: ${name} (expected <tool>.<scenario>.fixture.json)`,
+      );
       continue;
     }
 
@@ -119,7 +120,9 @@ export function discoverFixtures(skillDir: string): DiscoveredFixture[] {
     try {
       assertFixture(parsed);
     } catch (err) {
-      console.warn(`[talking-cli] Skipping invalid fixture schema: ${name} — ${(err as Error).message}`);
+      console.warn(
+        `[talking-cli] Skipping invalid fixture schema: ${name} — ${(err as Error).message}`,
+      );
       continue;
     }
 

@@ -3,15 +3,33 @@ import type { EngineOutput, HeuristicResult } from '../types.js';
 
 function renderHeader(totalScore: number): string {
   if (totalScore === 100) {
-    return chalk.green.bold(`Score: ${totalScore}/100`) + '\n' + chalk.green('Flawless. Your CLI actually talks back. I\'m almost proud.');
+    return (
+      chalk.green.bold(`Score: ${totalScore}/100`) +
+      '\n' +
+      chalk.green("Flawless. Your CLI actually talks back. I'm almost proud.")
+    );
   }
   if (totalScore >= 80) {
-    return chalk.yellow.bold(`Score: ${totalScore}/100`) + '\n' + chalk.yellow('Not bad. A few mute spots, but we can fix them.');
+    return (
+      chalk.yellow.bold(`Score: ${totalScore}/100`) +
+      '\n' +
+      chalk.yellow('Not bad. A few mute spots, but we can fix them.')
+    );
   }
   if (totalScore >= 50) {
-    return chalk.hex('#FF8800').bold(`Score: ${totalScore}/100`) + '\n' + chalk.hex('#FF8800')('Okay, listen up. Your skill is half mute and your SKILL.md is eating the budget alive.');
+    return (
+      chalk.hex('#FF8800').bold(`Score: ${totalScore}/100`) +
+      '\n' +
+      chalk.hex('#FF8800')(
+        'Okay, listen up. Your skill is half mute and your SKILL.md is eating the budget alive.',
+      )
+    );
   }
-  return chalk.red.bold(`Score: ${totalScore}/100`) + '\n' + chalk.red('Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.');
+  return (
+    chalk.red.bold(`Score: ${totalScore}/100`) +
+    '\n' +
+    chalk.red('Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.')
+  );
 }
 
 function renderH1(h1: HeuristicResult): string {
@@ -43,18 +61,27 @@ function renderH2(h2: HeuristicResult): string {
   const partial = tools.filter((t) => t.verdict === 'PARTIAL');
   const passing = tools.filter((t) => t.verdict === 'PASS');
 
-  const lines: string[] = [chalk.bold('H2 · Hint Coverage · ') + (uncovered.length > 0 ? chalk.red('FAIL') : chalk.yellow('PARTIAL'))];
+  const lines: string[] = [
+    chalk.bold('H2 · Hint Coverage · ') +
+      (uncovered.length > 0 ? chalk.red('FAIL') : chalk.yellow('PARTIAL')),
+  ];
 
   if (uncovered.length > 0) {
     const names = uncovered.map((t) => t.name).join(', ');
     lines.push(`${uncovered.length} tool(s) have zero fixtures. They don't speak at all: ${names}`);
-    lines.push(chalk.cyan('→ ') + `Add talking-cli-fixtures for [${names}]. One error scenario, one empty/zero-result scenario. Make them return a "hints" field.`);
+    lines.push(
+      chalk.cyan('→ ') +
+        `Add talking-cli-fixtures for [${names}]. One error scenario, one empty/zero-result scenario. Make them return a "hints" field.`,
+    );
   }
 
   if (partial.length > 0) {
     const names = partial.map((t) => t.name).join(', ');
     lines.push(`${partial.length} tool(s) are half-covered: ${names}`);
-    lines.push(chalk.cyan('→ ') + `Check which scenario is missing (error vs empty-result) and add the missing fixture.`);
+    lines.push(
+      chalk.cyan('→ ') +
+        `Check which scenario is missing (error vs empty-result) and add the missing fixture.`,
+    );
   }
 
   if (passing.length > 0) {
@@ -65,7 +92,11 @@ function renderH2(h2: HeuristicResult): string {
 }
 
 function renderFooter(): string {
-  return chalk.dim('---\nFix the issues above, then run ') + chalk.bold('npx talking-cli audit') + chalk.dim(' again to see your new score.');
+  return (
+    chalk.dim('---\nFix the issues above, then run ') +
+    chalk.bold('npx talking-cli audit') +
+    chalk.dim(' again to see your new score.')
+  );
 }
 
 export function renderCoach(output: EngineOutput): string {
