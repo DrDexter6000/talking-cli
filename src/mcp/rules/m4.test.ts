@@ -105,6 +105,45 @@ describe('evaluateM4', () => {
     const r = evaluateM4(results);
     expect(r.score).toBe(0);
   });
+
+  it('treats bare "Required" as SDK validation error, not actionable', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: { content: [{ type: 'text', text: 'Required' }], isError: true },
+        responseText: 'Required',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('treats short "X is required" as SDK error, not actionable', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: { content: [{ type: 'text', text: 'name is required' }], isError: true },
+        responseText: 'name is required',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('still scores "X is required. Please provide..." as actionable', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [{ type: 'text', text: 'name is required. Please provide a valid name.' }],
+          isError: true,
+        },
+        responseText: 'name is required. Please provide a valid name.',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(100);
+  });
 });
 
 describe('M4_ACTIONABLE_PATTERNS', () => {

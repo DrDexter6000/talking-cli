@@ -47,9 +47,19 @@ export function evaluateM4(results: ScenarioResult[]): HeuristicResult {
     const matchedPatterns = M4_ACTIONABLE_PATTERNS.filter((p) => p.test(text)).map((p) => p.source);
     const isStackTrace = /at\s+\S+\s*\([^)]*:\d+:\d+\)/.test(text);
     const isHttpDump = /HTTP\/\d\.\d/.test(text) || /Status:\s*\d{3}/.test(text);
+    const isBareSdkError =
+      /^required$/i.test(text.trim()) ||
+      (text.trim().length < 30 &&
+        /^(?:[\w\s]+ is required|required field|invalid type|expected \w+, received)\.?$/i.test(
+          text.trim(),
+        ));
 
     const isActionable =
-      text.length >= 15 && !isStackTrace && !isHttpDump && matchedPatterns.length > 0;
+      text.length >= 15 &&
+      !isStackTrace &&
+      !isHttpDump &&
+      !isBareSdkError &&
+      matchedPatterns.length > 0;
 
     return {
       toolName: r.scenario.toolName,
