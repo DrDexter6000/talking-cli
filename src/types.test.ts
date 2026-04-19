@@ -28,6 +28,7 @@ describe('EngineOutput', () => {
       h1: { verdict: 'FAIL', score: 0, raw: { lineCount: 200 } },
       h2: { verdict: 'PARTIAL', score: 50, raw: { tools: [] } },
       totalScore: 25,
+      hasCustomTools: true,
     };
     const json = JSON.stringify(out);
     const parsed = JSON.parse(json) as EngineOutput;
@@ -42,6 +43,7 @@ describe('EngineOutput', () => {
       h1: { verdict: 'PASS', score: 100, raw: null },
       h2: { verdict: 'NOT_APPLICABLE', score: 100, raw: null },
       totalScore: 100,
+      hasCustomTools: false,
     };
     const json = JSON.stringify(out);
     expect(json).not.toContain('function');

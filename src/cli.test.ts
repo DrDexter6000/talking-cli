@@ -2,8 +2,9 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { runAudit, runOptimize } from './cli.js';
+import { runAudit, runMcpAudit, runOptimize } from './cli.js';
 import { DiscoveryError } from './discovery.js';
+import { McpDiscoveryError } from './mcp/discovery.js';
 
 function createSkillDir(opts: {
   skillLines?: number;
@@ -43,6 +44,30 @@ function createSkillDir(opts: {
     };
     writeFileSync(join(dir, 'talking-cli-fixtures', name), JSON.stringify(fixture));
   }
+
+  return dir;
+}
+
+function createMcpServerDir(opts: {
+  tools?: Array<{ name: string; description: string; annotations?: Record<string, boolean> }>;
+}): string {
+  const dir = mkdtempSync(join(tmpdir(), 'talking-cli-mcp-'));
+  const pkg = { name: 'test-server', main: 'index.js' };
+  writeFileSync(join(dir, 'package.json'), JSON.stringify(pkg));
+
+  const tools = opts.tools ?? [];
+  const registrations: string[] = [];
+
+  for (const t of tools) {
+    const annotationStr = t.annotations
+      ? `, annotations: { readOnlyHint: ${t.annotations.readOnlyHint ?? false}, idempotentHint: ${t.annotations.idempotentHint ?? false}, destructiveHint: ${t.annotations.destructiveHint ?? false} }`
+      : '';
+    registrations.push(
+      `server.registerTool("${t.name}", { description: "${t.description}"${annotationStr} });`,
+    );
+  }
+
+  writeFileSync(join(dir, 'index.js'), `const server = {};\n${registrations.join('\n')}\n`);
 
   return dir;
 }
@@ -140,6 +165,125 @@ describe('runAudit', () => {
       logSpy.mockRestore();
       errorSpy.mockRestore();
       exitSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+});
+
+describe('runMcpAudit', () => {
+  it('outputs coach report by default', async () => {
+    const dir = createMcpServerDir({
+      tools: [
+        {
+          name: 'search',
+          description: 'Search for files',
+          annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false },
+        },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runMcpAudit(dir, {});
+      expect(logSpy).toHaveBeenCalled();
+      const output = logSpy.mock.calls[0][0] as string;
+      expect(output).toContain('100/100');
+    } finally {
+      logSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('outputs JSON with --json', async () => {
+    const dir = createMcpServerDir({
+      tools: [
+        {
+          name: 'read',
+          description: 'Read a file',
+          annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false },
+        },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runMcpAudit(dir, { json: true });
+      const output = logSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(output);
+      expect(parsed.totalScore).toBe(100);
+    } finally {
+      logSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('outputs CI text with --ci', async () => {
+    const dir = createMcpServerDir({
+      tools: [
+        {
+          name: 'bloat',
+          description:
+            'This is a very long description that exceeds the five hundred character limit for sure because it just keeps going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going',
+        },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runMcpAudit(dir, { ci: true });
+      const output = logSpy.mock.calls[0][0] as string;
+      expect(output).toContain('FAIL');
+      expect(output).not.toContain('\x1b[');
+    } finally {
+      logSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('uses --persona nba-coach for custom voice', async () => {
+    const strategyDesc = 'Use this tool when you need to search files. First, check permissions.';
+    const dir = createMcpServerDir({
+      tools: [
+        {
+          name: 'bloat',
+          description: strategyDesc,
+          annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false },
+        },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runMcpAudit(dir, { persona: 'nba-coach' });
+      expect(logSpy).toHaveBeenCalled();
+      const output = logSpy.mock.calls[0][0] as string;
+      expect(output).toContain('Playbook Purity');
+    } finally {
+      logSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('rejects invalid --persona with error', async () => {
+    const dir = createMcpServerDir({
+      tools: [{ name: 'read', description: 'Read a file' }],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    try {
+      await runMcpAudit(dir, { persona: 'invalid-persona' });
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown persona'));
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally {
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+      exitSpy.mockRestore();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('throws McpDiscoveryError for missing package.json', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'talking-cli-mcp-'));
+    try {
+      await expect(runMcpAudit(dir, {})).rejects.toThrow(McpDiscoveryError);
+    } finally {
       rmSync(dir, { recursive: true });
     }
   });

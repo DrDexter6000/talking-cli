@@ -15,6 +15,7 @@ function makeEngineOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
     h3: { verdict: 'PASS', score: 100, raw: { withHints: 0, passed: 0, total: 0 } },
     h4: { verdict: 'PASS', score: 100, raw: { actionable: 0, passed: 0, total: 0 } },
     totalScore: 100,
+    hasCustomTools: true,
     ...overrides,
   };
 }

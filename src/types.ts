@@ -17,6 +17,7 @@ export interface EngineOutput {
   h3: HeuristicResult;
   h4: HeuristicResult;
   totalScore: number; // P3: average of h1.score, h2.score, h3.score, h4.score
+  hasCustomTools: boolean;
 }
 
 export interface Fixture {

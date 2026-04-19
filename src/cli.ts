@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 import { Command } from 'commander';
 import { discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js';
 import { runEngine } from './engine.js';
+import { runMcpEngine } from './mcp/engine.js';
+import { getMcpExitCode, renderMcpCI } from './mcp/renderers/ci.js';
+import { renderMcpCoach } from './mcp/renderers/coach.js';
+import { renderMcpJSON } from './mcp/renderers/json.js';
 import { runApply } from './optimize/applier.js';
 import { generatePlan } from './optimize/plan-generator.js';
 import { getPersona, isValidPersona, PERSONA_KEYS } from './personas/index.js';
@@ -37,9 +41,56 @@ export async function runAudit(
       process.exit(1);
     }
     const persona = getPersona(
-      personaKey as 'default' | 'nba-coach' | 'british-critic' | 'zen-master' | undefined,
+      personaKey as
+        | 'default'
+        | 'nba-coach'
+        | 'british-critic'
+        | 'zen-master'
+        | 'emotional-damage-dad'
+        | undefined,
     );
     console.log(renderCoach(engineOutput, persona));
+  }
+}
+
+export async function runMcpAudit(
+  serverDir: string,
+  options: {
+    ci?: boolean;
+    json?: boolean;
+    persona?: string;
+    deep?: boolean;
+    command?: string[];
+    staticDir?: string;
+  },
+): Promise<void> {
+  const engineOutput = await runMcpEngine(serverDir, {
+    deep: options.deep,
+    command: options.command,
+    staticDir: options.staticDir,
+  });
+
+  if (options.json) {
+    console.log(renderMcpJSON(engineOutput));
+  } else if (options.ci) {
+    console.log(renderMcpCI(engineOutput));
+    process.exitCode = getMcpExitCode(engineOutput);
+  } else {
+    const personaKey = options.persona;
+    if (personaKey && !isValidPersona(personaKey)) {
+      console.error(`Unknown persona: "${personaKey}". Available: ${PERSONA_KEYS.join(', ')}`);
+      process.exit(1);
+    }
+    const persona = getPersona(
+      personaKey as
+        | 'default'
+        | 'nba-coach'
+        | 'british-critic'
+        | 'zen-master'
+        | 'emotional-damage-dad'
+        | undefined,
+    );
+    console.log(renderMcpCoach(engineOutput, persona));
   }
 }
 
@@ -77,7 +128,10 @@ program
   .description('Audit a skill directory')
   .option('--ci', 'machine-readable CI mode')
   .option('--json', 'JSON output')
-  .option('--persona <name>', 'coach persona: default, nba-coach, british-critic, zen-master')
+  .option(
+    '--persona <name>',
+    'coach persona: default, nba-coach, british-critic, zen-master, emotional-damage-dad',
+  )
   .action(async (skillDir: string, options: { ci?: boolean; json?: boolean; persona?: string }) => {
     try {
       await runAudit(skillDir, options);
@@ -89,6 +143,48 @@ program
       throw err;
     }
   });
+
+program
+  .command('audit-mcp <server-dir>')
+  .description('Audit an MCP server directory')
+  .option('--ci', 'machine-readable CI mode')
+  .option('--json', 'JSON output')
+  .option('--deep', 'run runtime M3/M4 heuristics (spawns server)')
+  .option(
+    '--command <parts...>',
+    'override server launch command (e.g. --command npx --command -y --command @modelcontextprotocol/server-memory)',
+  )
+  .option(
+    '--static-dir <dir>',
+    'directory for static analysis (M1/M2) when it differs from the server spawn directory',
+  )
+  .option(
+    '--persona <name>',
+    'coach persona: default, nba-coach, british-critic, zen-master, emotional-damage-dad',
+  )
+  .action(
+    async (
+      serverDir: string,
+      options: {
+        ci?: boolean;
+        json?: boolean;
+        persona?: string;
+        deep?: boolean;
+        command?: string[];
+        staticDir?: string;
+      },
+    ) => {
+      try {
+        await runMcpAudit(serverDir, options);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'McpDiscoveryError') {
+          console.error(err.message);
+          process.exit(1);
+        }
+        throw err;
+      }
+    },
+  );
 
 program
   .command('optimize <skill-dir>')

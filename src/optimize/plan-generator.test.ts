@@ -9,6 +9,7 @@ function makeOutput(overrides: Partial<EngineOutput> = {}): EngineOutput {
     h1: { verdict: 'PASS', score: 100, raw: { lineCount: 100, maxLines: 150 } },
     h2: { verdict: 'PASS', score: 100, raw: { tools: [] } },
     totalScore: 100,
+    hasCustomTools: true,
     ...overrides,
   };
 }

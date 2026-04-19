@@ -38,12 +38,12 @@ describe('Persona selector', () => {
 
 describe('Default persona', () => {
   it('renders perfect score header', () => {
-    const text = defaultPersona.renderHeader(100);
+    const text = defaultPersona.renderHeader(100, true);
     expect(text).toContain('Flawless');
   });
 
   it('renders failing score header', () => {
-    const text = defaultPersona.renderHeader(25);
+    const text = defaultPersona.renderHeader(25, true);
     expect(text).toContain('Yikes');
   });
 
@@ -56,12 +56,12 @@ describe('Default persona', () => {
 
 describe('NBA Coach persona', () => {
   it('uses basketball metaphors in header', () => {
-    const text = nbaCoachPersona.renderHeader(100);
+    const text = nbaCoachPersona.renderHeader(100, true);
     expect(text).toContain('Championship');
   });
 
   it('uses basketball language for failures', () => {
-    const text = nbaCoachPersona.renderHeader(25);
+    const text = nbaCoachPersona.renderHeader(25, true);
     expect(text).toContain('blowout');
   });
 
@@ -74,12 +74,12 @@ describe('NBA Coach persona', () => {
 
 describe('British Critic persona', () => {
   it('uses theatre metaphors in header', () => {
-    const text = britishCriticPersona.renderHeader(100);
+    const text = britishCriticPersona.renderHeader(100, true);
     expect(text).toContain('standing ovation');
   });
 
   it('uses dry wit for failures', () => {
-    const text = britishCriticPersona.renderHeader(25);
+    const text = britishCriticPersona.renderHeader(25, true);
     expect(text).toContain('catastrophic opening night');
   });
 
@@ -92,12 +92,12 @@ describe('British Critic persona', () => {
 
 describe('Zen Master persona', () => {
   it('uses nature metaphors in header', () => {
-    const text = zenMasterPersona.renderHeader(100);
+    const text = zenMasterPersona.renderHeader(100, true);
     expect(text).toContain('river');
   });
 
   it('uses silence metaphors for failures', () => {
-    const text = zenMasterPersona.renderHeader(25);
+    const text = zenMasterPersona.renderHeader(25, true);
     expect(text).toContain('garden of silence');
   });
 
@@ -110,13 +110,13 @@ describe('Zen Master persona', () => {
 
 describe('Emotional Damage Dad persona', () => {
   it('uses Chinglish and cousin comparison at 100', () => {
-    const text = emotionalDamageDadPersona.renderHeader(100);
+    const text = emotionalDamageDadPersona.renderHeader(100, true);
     expect(text).toContain('cousin');
     expect(text).toContain("Don't get cocky");
   });
 
   it('shouts EMOTIONAL DAMAGE at low scores', () => {
-    const text = emotionalDamageDadPersona.renderHeader(25);
+    const text = emotionalDamageDadPersona.renderHeader(25, true);
     expect(text).toContain('EMOTIONAL DAMAGE');
     expect(text).toContain('shame');
   });

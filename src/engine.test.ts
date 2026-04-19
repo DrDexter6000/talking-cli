@@ -112,6 +112,7 @@ describe('runEngine', () => {
       expect(result.totalScore).toBe(100);
       expect(result.h1.verdict).toBe('PASS');
       expect(result.h2.verdict).toBe('NOT_APPLICABLE');
+      expect(result.hasCustomTools).toBe(false);
     } finally {
       cleanup();
     }
@@ -135,7 +136,9 @@ describe('runEngine', () => {
       expect(result).toHaveProperty('h3');
       expect(result).toHaveProperty('h4');
       expect(result).toHaveProperty('totalScore');
+      expect(result).toHaveProperty('hasCustomTools');
       expect(typeof result.totalScore).toBe('number');
+      expect(typeof result.hasCustomTools).toBe('boolean');
     } finally {
       cleanup();
     }

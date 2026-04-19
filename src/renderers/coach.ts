@@ -2,7 +2,7 @@ import type { PersonaRenderer } from '../personas/types.js';
 import type { EngineOutput } from '../types.js';
 
 export function renderCoach(output: EngineOutput, persona: PersonaRenderer): string {
-  const sections: string[] = [persona.renderHeader(output.totalScore)];
+  const sections: string[] = [persona.renderHeader(output.totalScore, output.hasCustomTools)];
 
   if (output.h1.verdict !== 'PASS') {
     sections.push(persona.renderH1(output.h1));

@@ -20,5 +20,6 @@ export async function runEngine(discovery: DiscoveryResult): Promise<EngineOutpu
     h3,
     h4,
     totalScore: Math.round((h1.score + h2.score + h3.score + h4.score) / 4),
+    hasCustomTools: discovery.tools.length > 0,
   };
 }

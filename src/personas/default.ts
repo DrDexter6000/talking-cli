@@ -7,34 +7,64 @@ export const defaultPersona: PersonaRenderer = {
   name: 'Coach',
   description: 'Plain-language, direct, and sharp — the default talking-cli voice.',
 
-  renderHeader(totalScore: number): string {
+  renderHeader(totalScore: number, hasCustomTools: boolean): string {
     if (totalScore === 100) {
+      if (hasCustomTools) {
+        return (
+          chalk.green.bold(`Score: ${totalScore}/100`) +
+          '\n' +
+          chalk.green("Flawless. Your CLI actually talks back. I'm almost proud.")
+        );
+      }
       return (
         chalk.green.bold(`Score: ${totalScore}/100`) +
         '\n' +
-        chalk.green("Flawless. Your CLI actually talks back. I'm almost proud.")
+        chalk.green('Flawless. Your SKILL.md stays within budget. No custom tools detected.')
       );
     }
     if (totalScore >= 80) {
+      if (hasCustomTools) {
+        return (
+          chalk.yellow.bold(`Score: ${totalScore}/100`) +
+          '\n' +
+          chalk.yellow('Not bad. A few mute spots, but we can fix them.')
+        );
+      }
       return (
         chalk.yellow.bold(`Score: ${totalScore}/100`) +
         '\n' +
-        chalk.yellow('Not bad. A few mute spots, but we can fix them.')
+        chalk.yellow('Not bad. Your SKILL.md is solid, but no custom tools were detected.')
       );
     }
     if (totalScore >= 50) {
+      if (hasCustomTools) {
+        return (
+          chalk.hex('#FF8800').bold(`Score: ${totalScore}/100`) +
+          '\n' +
+          chalk.hex('#FF8800')(
+            'Okay, listen up. Your skill is half mute and your SKILL.md is eating the budget alive.',
+          )
+        );
+      }
       return (
         chalk.hex('#FF8800').bold(`Score: ${totalScore}/100`) +
         '\n' +
         chalk.hex('#FF8800')(
-          'Okay, listen up. Your skill is half mute and your SKILL.md is eating the budget alive.',
+          'Okay, listen up. Your SKILL.md is eating the budget alive. No custom tools were detected — H2 through H4 were skipped.',
         )
+      );
+    }
+    if (hasCustomTools) {
+      return (
+        chalk.red.bold(`Score: ${totalScore}/100`) +
+        '\n' +
+        chalk.red('Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.')
       );
     }
     return (
       chalk.red.bold(`Score: ${totalScore}/100`) +
       '\n' +
-      chalk.red('Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.')
+      chalk.red('Yikes. Your SKILL.md needs serious trimming. No custom tools detected.')
     );
   },
 
@@ -117,6 +147,110 @@ export const defaultPersona: PersonaRenderer = {
       chalk.cyan('→ ') +
         'Hints should be specific. "Try again" is too short. "Try broadening your query with fewer filters" is actionable.',
     ].join('\n');
+  },
+
+  renderM1(m1: HeuristicResult): string {
+    const raw = m1.raw as {
+      tools: Array<{
+        name: string;
+        hasGuidancePhrases: boolean;
+        matchedPatterns: string[];
+        passed: boolean;
+      }>;
+    };
+    const failed = raw.tools.filter((t) => !t.passed);
+    const lines: string[] = [chalk.bold('M1 · Contract Purity · ') + chalk.red('FAIL')];
+
+    for (const t of failed) {
+      const patterns = t.matchedPatterns.join(', ');
+      lines.push(`  ${t.name}: description contains strategy/guidance [${patterns}]`);
+    }
+
+    lines.push(
+      chalk.cyan('→ ') +
+        'Descriptions are C1 (Contract) — they constrain, not explain. Move "when to use" / "how to use" / "first do X" guidance into the tool response (C3 Voice).',
+    );
+    return lines.join('\n');
+  },
+
+  renderM2(m2: HeuristicResult): string {
+    const raw = m2.raw as {
+      tools: Array<{
+        name: string;
+        hasReadOnly: boolean;
+        hasIdempotent: boolean;
+        hasDestructive: boolean;
+        passed: boolean;
+      }>;
+    };
+    const failed = raw.tools.filter((t) => !t.passed);
+    const lines: string[] = [chalk.bold('M2 · Annotation Completeness · ') + chalk.red(m2.verdict)];
+
+    for (const t of failed) {
+      const missing: string[] = [];
+      if (!t.hasReadOnly) missing.push('readOnlyHint');
+      if (!t.hasIdempotent) missing.push('idempotentHint');
+      if (!t.hasDestructive) missing.push('destructiveHint');
+      lines.push(`  ${t.name}: missing ${missing.join(', ')}`);
+    }
+
+    lines.push(
+      chalk.cyan('→ ') +
+        'Add readOnlyHint, idempotentHint, and destructiveHint to every tool. Agents need these to decide when it is safe to call speculatively.',
+    );
+    return lines.join('\n');
+  },
+
+  renderM3(m3: HeuristicResult): string {
+    const raw = m3.raw as {
+      scenarios: Array<{
+        toolName: string;
+        scenarioType: string;
+        hasGuidance: boolean;
+        responseLength: number;
+      }>;
+    };
+    const failed = raw.scenarios.filter((s) => !s.hasGuidance);
+    const lines: string[] = [chalk.bold('M3 · Response Guidance · ') + chalk.red(m3.verdict)];
+
+    for (const s of failed) {
+      const reason = s.responseLength < 20 ? 'response too short' : 'no actionable guidance';
+      lines.push(`  ${s.toolName} (${s.scenarioType}): ${reason}`);
+    }
+
+    lines.push(
+      chalk.cyan('→ ') +
+        "When a tool returns an empty or partial result, tell the agent what to do next. Don't leave them guessing.",
+    );
+    return lines.join('\n');
+  },
+
+  renderM4(m4: HeuristicResult): string {
+    const raw = m4.raw as {
+      errors: Array<{
+        toolName: string;
+        isActionable: boolean;
+        isStackTrace: boolean;
+        isHttpDump: boolean;
+      }>;
+    };
+    const failed = raw.errors.filter((e) => !e.isActionable);
+    const lines: string[] = [chalk.bold('M4 · Error Actionability · ') + chalk.red(m4.verdict)];
+
+    for (const e of failed) {
+      const reason = e.isStackTrace
+        ? 'raw stack trace'
+        : e.isHttpDump
+          ? 'raw HTTP response'
+          : 'not actionable';
+      lines.push(`  ${e.toolName}: ${reason}`);
+    }
+
+    lines.push(
+      chalk.cyan('→ ') +
+        'Error messages should tell the agent how to recover. Raw stack traces and HTTP dumps waste context budget.',
+    );
+    return lines.join('\n');
   },
 
   renderFooter(totalScore: number): string {
