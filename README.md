@@ -7,13 +7,13 @@
 
 **Your CLI is mute. That's half your prompt problem.**
 
-Every guide on agent skills tells you to optimize your `SKILL.md` â€?the long, one-way monologue you write once and hope the agent remembers. Nobody talks about the other half of your prompt surface: the silent return values of your tools.
+Every guide on agent skills tells you to optimize your `SKILL.md` â€” the long, one-way monologue you write once and hope the agent remembers. Nobody talks about the other half of your prompt surface: the silent return values of your tools.
 
 When an agent calls your CLI today, the tool runs, returns raw data, and says nothing. No hint about the next step. No signal when results are ambiguous. No cue that "zero hits" means "broaden the query." All of that guidance gets shoved back upstream into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can reliably follow.
 
 **Talking CLI** is a design methodology for agent tools that speak back. It treats `SKILL.md` and tool output as **one shared prompt surface with one shared budget**, and gives you concrete rules for deciding what belongs in which channel.
 
-**Prompt-on-call** â€?progressive disclosure taken one level deeper. Instead of pre-loading every scenario into SKILL.md, your tool speaks up when called â€?triggered by what it actually sees, not by what the designer predicted.
+**Prompt-on-call** â€” progressive disclosure taken one level deeper. Instead of pre-loading every scenario into SKILL.md, your tool speaks up when called â€” triggered by what it actually sees, not by what the designer predicted.
 
 Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
@@ -25,13 +25,13 @@ Stop writing everything into `SKILL.md`. Give your CLI a voice.
 
 ```mermaid
 graph LR
-    subgraph Before ["â?Before: Mute CLI"]
+    subgraph Before ["âŒ Before: Mute CLI"]
         A1[SKILL.md<br/>400+ lines] --> A2[Agent]
         A3[Tool returns<br/>raw JSON only] --> A2
         A1 -.->|repeated guidance<br/>shoved upstream| A3
     end
 
-    subgraph After ["âœ?After: Talking CLI"]
+    subgraph After ["âœ… After: Talking CLI"]
         B1[SKILL.md<br/>&lt; 150 lines] --> B2[Agent]
         B3[Tool returns<br/>JSON + hints] --> B2
     end
@@ -43,14 +43,14 @@ graph LR
 
 ```mermaid
 graph TD
-    H1[H1 Â· Document Budget<br/>SKILL.md â‰?150 lines]
+    H1[H1 Â· Document Budget<br/>SKILL.md â‰¤ 150 lines]
     H2[H2 Â· Fixture Coverage<br/>error + empty scenarios]
     H3[H3 Â· Structured Hints<br/>hints / suggestions / guidance]
     H4[H4 Â· Actionable Guidance<br/>specific, actionable content]
 
-    H1 & H2 & H3 & H4 --> Score[Total Score<br/>0â€?00]
-    Score -->|â‰?80| Pass[âœ?PASS<br/>Ship it]
-    Score -->|< 80| Fail[â?FAIL<br/>Fix it]
+    H1 & H2 & H3 & H4 --> Score[Total Score<br/>0â€“100]
+    Score -->|â‰¥ 80| Pass[âœ… PASS<br/>Ship it]
+    Score -->|< 80| Fail[âŒ FAIL<br/>Fix it]
 ```
 
 ---
@@ -58,30 +58,30 @@ graph TD
 ## Quick Start
 
 ```bash
-# Audit your skill â€?default coach mode (plain language, actionable)
+# Audit your skill â€” default coach mode (plain language, actionable)
 npx talking-cli audit ./my-skill
 
-# CI mode â€?machine-readable, exit code driven
+# CI mode â€” machine-readable, exit code driven
 npx talking-cli audit ./my-skill --ci
 
-# JSON mode â€?structured output for tooling
+# JSON mode â€” structured output for tooling
 npx talking-cli audit ./my-skill --json
 
-# Persona mode â€?same audit, different voice
+# Persona mode â€” same audit, different voice
 npx talking-cli audit ./my-skill --persona nba-coach
 npx talking-cli audit ./my-skill --persona british-critic
 npx talking-cli audit ./my-skill --persona zen-master
 npx talking-cli audit ./my-skill --persona emotional-damage-dad
 
-# Audit an MCP server â€?static analysis (fast, safe)
+# Audit an MCP server â€” static analysis (fast, safe)
 npx talking-cli audit-mcp ./my-mcp-server
 
-# Deep audit â€?runtime M3/M4 heuristics (spawns server)
+# Deep audit â€” runtime M3/M4 heuristics (spawns server)
 npx talking-cli audit-mcp ./my-mcp-server --deep
 
 # Generate optimization plan (plan-only, never touches source files)
 npx talking-cli optimize ./my-skill
-# â†?writes TALKING-CLI-OPTIMIZATION.md at the skill root
+# â†’ writes TALKING-CLI-OPTIMIZATION.md at the skill root
 ```
 
 ---
@@ -96,20 +96,20 @@ Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.
 
 H1 Â· Line Count Â· FAIL
 Your SKILL.md is 165 lines. The budget is 150.
-â†?Just 15 lines over. Tighten the prose and migrate post-call guidance to tool hints.
+â†’ Just 15 lines over. Tighten the prose and migrate post-call guidance to tool hints.
 
 H2 Â· Hint Coverage Â· FAIL
 1 tool(s) have zero fixtures. They don't speak at all: search
-â†?Add talking-cli-fixtures for [search]. One error scenario, one empty/zero-result scenario.
+â†’ Add talking-cli-fixtures for [search]. One error scenario, one empty/zero-result scenario.
   Make them return a "hints" field.
 
 H3 Â· Structured Hints Â· FAIL
 0/0 passed fixtures contain hint fields.
-â†?Make your tools return a "hints" or "suggestions" field alongside raw data.
+â†’ Make your tools return a "hints" or "suggestions" field alongside raw data.
 
 H4 Â· Actionable Guidance Â· FAIL
 0/0 hint fields have actionable content.
-â†?Hints should be specific. "Try again" is too short.
+â†’ Hints should be specific. "Try again" is too short.
   "Try broadening your query with fewer filters" is actionable.
 
 ---
@@ -120,29 +120,46 @@ Fix the issues above, then run npx talking-cli audit again to see your new score
 
 ---
 
+## MCP Ecosystem Audit: What We Found
+
+We ran `talking-cli audit-mcp --deep` against 4 official Anthropic MCP servers:
+
+| Server | Tools | Scenarios | M3 Â· Guidance | M4 Â· Errors |
+|--------|-------|-----------|---------------|-------------|
+| `server-filesystem` | 11 | 21 | **0/100** | 74/100 |
+| `server-everything` | 13 | 13 | **0/100** | 83/100 |
+| `server-memory` | 9 | 9 | **0/100** | 100/100* |
+| `server-github` | 25 | 25 | **0/100** | 100/100* |
+| **Total** | **58** | **68** | **0/68** | â€” |
+
+\* M4=100 because Zod validation errors are technically informative. These are SDK-generated messages, not tool-authored recovery guidance.
+
+**The finding**: Out of 68 tested error/empty-result scenarios across 4 official servers, **zero** returned actionable guidance. The entire MCP ecosystem treats tool output as data pipes, not dialogue participants.
+
+We also analyzed 823 Composio GitHub tools via static JSON schema inspection. Same result: zero hint infrastructure.
+
+---
+
 ## The Methodology
 
 Talking CLI is more than a linter. It's a design philosophy:
 
-- **[PHILOSOPHY.md](PHILOSOPHY.md)** â€?the full methodology: four channels, four rules, a budget, and five anti-patterns.
-- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** â€?the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
+- **[PHILOSOPHY.md](PHILOSOPHY.md)** â€” the full methodology: four channels, four rules, a budget, and five anti-patterns.
+- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** â€” the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
 
 ---
 
 ## Status
 
-**P3 Phase 4 complete. MCP audit M1â€“M4 complete.**
+**v0.2.0 â€” Methodology stable. CLI surface may evolve before v1.0.0.**
 
-- âœ?H1: `SKILL.md` line-count budget (150 lines)
-- âœ?H2: Fixture-driven hint coverage detection
-- âœ?H3: Structured hint fields (`hints`, `suggestions`, `guidance`, etc.)
-- âœ?H4: Actionable guidance content (length + specificity)
-- âœ?`optimize --apply`: Auto-fix with safety rules (git branch + backup)
-- âœ?5 personas: default Â· NBA coach Â· British critic Â· Zen master Â· emotional-damage-dad
-- âœ?**MCP server audit**: `audit-mcp` with M1â€“M4 heuristics, `--deep` runtime mode, Python server support
-- â?`optimize --workflow`: 9-step complex skill transformation pipeline
-
-The methodology is stable. The CLI surface may still evolve before v1.0.0.
+- âœ… H1â€“H4 skill audit (`audit` command)
+- âœ… M1â€“M4 MCP server audit (`audit-mcp --deep`)
+- âœ… 5 personas: default Â· NBA coach Â· British critic Â· Zen master Â· emotional-damage-dad
+- âœ… `optimize --apply` with git branch safety
+- â³ `optimize --workflow`: 9-step complex skill transformation pipeline
+- â³ H3 hint budget â‰¤ 3 (embedding-based)
+- â³ H4 semantic duplication detection
 
 ## License
 
