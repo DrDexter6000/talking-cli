@@ -13,7 +13,9 @@ Meanwhile, your tools return raw JSON and say nothing. No hint about what just h
 
 That's not a skill problem. That's a **prompt surface** problem. You only know one writable surface, so everything goes there.
 
-**Talking CLI gives your tools a voice.** When the agent calls, the tool talks back — not with a wall of prose, but with the right hint, at the right moment, inside the response. That's **prompt-on-call**: progressive disclosure, one level deeper.
+**Talking CLI gives your tools a voice.** When the agent calls, the tool talks back — not with a wall of prose, but with the right hint, at the right moment, inside the response.     
+
+> That's **prompt-on-call**: progressive disclosure, one level deeper.
 
 ---
 
