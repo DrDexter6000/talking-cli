@@ -5,6 +5,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 
+**Sound familiar?**
+
+Your `SKILL.md` is 400 lines. Half of it describes what the agent should do *after* a specific tool returns — "if zero results, broaden the query," "if ambiguous, ask the user," "this field means X, not Y." The agent loads all 400 lines every single turn, but most of that guidance only matters 10% of the time. The other 90%, it's paying attention rent on scenarios that didn't happen.
+
+Meanwhile, your tools return raw JSON and say nothing. No hint about what just happened. No signal that results were sparse or the query was ambiguous. No cue for the next step. The tools are mute, so all the guidance gets shoved upstream into `SKILL.md`, which slowly bloats into a monologue describing every possible outcome of every possible call — most of which the agent promptly forgets or ignores.
+
+That's not a skill problem. That's a **prompt surface** problem. You only know one writable surface, so everything goes there.
+
 ---
 
 **Standing on shoulders.** The ideas here did not spring from vacuum.
@@ -14,16 +22,6 @@ CLI is the native interface for AI agents — [John Carmack](https://x.com/ID_AA
 [Progressive disclosure](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) as a skill-loading architecture was formalized by Anthropic (Barry Zhang, Keith Lazuka, Mahesh Murag, Oct 2025) and is now an [open standard](https://agentskills.io) adopted across Claude Code, Codex CLI, and Gemini CLI. [Context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) as a named discipline was popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025.
 
 Anthropic also advocates ["steering agents with helpful instructions in tool responses"](https://www.anthropic.com/engineering/writing-tools-for-agents) — but only as a paragraph-level best practice. Nobody has named it, budgeted it, audited it, or proposed it as a protocol-level primitive. **That gap is what Talking CLI fills.**
-
----
-
-**Sound familiar?**
-
-Your `SKILL.md` is 400 lines. Half of it describes what the agent should do *after* a specific tool returns — "if zero results, broaden the query," "if ambiguous, ask the user," "this field means X, not Y." The agent loads all 400 lines every single turn, but most of that guidance only matters 10% of the time. The other 90%, it's paying attention rent on scenarios that didn't happen.
-
-Meanwhile, your tools return raw JSON and say nothing. No hint about what just happened. No signal that results were sparse or the query was ambiguous. No cue for the next step. The tools are mute, so all the guidance gets shoved upstream into `SKILL.md`, which slowly bloats into a monologue describing every possible outcome of every possible call — most of which the agent promptly forgets or ignores.
-
-That's not a skill problem. That's a **prompt surface** problem. You only know one writable surface, so everything goes there.
 
 ---
 
