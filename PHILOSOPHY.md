@@ -1,6 +1,6 @@
 # The Talking CLI Philosophy
 
-*How to design agent tools that are active participants in reasoning, not mute subroutines.*
+*The methodology behind **prompt-on-call**: how to design agent tools that are active participants in reasoning, not mute subroutines.*
 
 ---
 
@@ -203,10 +203,12 @@ The tool encounters genuine ambiguity and resolves it silently. No hint, no sign
 
 Talking CLI does not invent a new channel. It names, budgets, and disciplines one everybody already has but few design on purpose.
 
-- **Progressive disclosure (Anthropic skills)** — Same family. Covers the `SKILL.md` half of the prompt surface; leaves the tool-output half unstructured. Talking CLI complements it on the other half.
+- **Progressive disclosure (Anthropic skills)** — Same family. Anthropic formalized progressive disclosure as a three-level skill-loading architecture ([Barry Zhang, Keith Lazuka, Mahesh Murag, Oct 2025](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)), now an [open standard](https://agentskills.io). It covers the `SKILL.md` half of the prompt surface; leaves the tool-output half unstructured. Talking CLI complements it on the other half.
+- **Tool response guidance (Anthropic)** — The closest precedent. Anthropic's ["Writing Effective Tools for Agents"](https://www.anthropic.com/engineering/writing-tools-for-agents) (Jan 2026) advocates "steering agents with helpful instructions" in tool responses and "prompt-engineering your error responses." But it treats this as a paragraph-level best practice — no named concept, no budget, no audit, no protocol proposal. Talking CLI formalizes this insight as **prompt-on-call**.
 - **MCP `structuredContent`** — Provides a technical channel for structured tool output. Offers no methodology for what to put in it. Talking CLI fills that gap.
 - **ReAct** — Observation as a step in the agent's loop. Describes the mechanism; does not prescribe observation as a designed prompt surface.
 - **Tool result design in agent frameworks (LangChain, AutoGen, et al.)** — Fragmented practice. Tool returns are ad-hoc payloads with occasional hints. Talking CLI names the fragment and makes it a first-class design surface.
+- **Context engineering** — The parent discipline. Named and popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025. Talking CLI is a concrete sub-pattern: context engineering applied to the agent–tool boundary.
 
 ---
 
@@ -244,3 +246,14 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 ## Acknowledgments
 
 Talking CLI emerged from practical work on a journal-search tool, where the gap between `SKILL.md` growth and tool silence became impossible to ignore. The insight — that the two halves share one budget — predates this document; the synthesis here is an attempt to make it teachable.
+
+The ideas rest on work by many others:
+
+- **John Carmack** observed that CLI is the natural interface for LLM agents ([Dec 2024](https://x.com/ID_AA_Carmack/status/1874124927130886501)).
+- **Wang et al.** proved that executable code actions outperform JSON function calls for LLM agents ([CodeAct, ICML 2024](https://arxiv.org/abs/2402.01030)).
+- **Andrej Karpathy** crystallized the CLI-first agent philosophy: *"Build. For. Agents."* ([Feb 2026](https://x.com/karpathy/status/2026360908398862478)).
+- **Anthropic** (Barry Zhang, Keith Lazuka, Mahesh Murag) formalized progressive disclosure as a skill-loading architecture ([Oct 2025](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)).
+- **Anthropic** (Ken Aizawa) advocated "steering agents with helpful instructions in tool responses" ([Jan 2026](https://www.anthropic.com/engineering/writing-tools-for-agents)).
+- **Tobi Lütke** and **Andrej Karpathy** named and popularized *context engineering* as a discipline ([mid-2025](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)).
+
+Prompt-on-call — the named, budgeted, auditable version of tool-returned guidance — is Talking CLI's contribution.

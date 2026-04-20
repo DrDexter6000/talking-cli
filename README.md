@@ -1,27 +1,57 @@
 # Talking CLI
 
-> **Make it embarrassing to ship a mute CLI.**
+> **Tool silence is a design defect. prompt-on-call is the fix.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 
-**Your CLI is mute. That's half your prompt problem.**
+---
 
-Every guide on agent skills tells you to optimize your `SKILL.md` — the long, one-way monologue you write once and hope the agent remembers. Nobody talks about the other half of your prompt surface: the silent return values of your tools.
+**Standing on shoulders.** The ideas here did not spring from vacuum.
 
-When an agent calls your CLI today, the tool runs, returns raw data, and says nothing. No hint about the next step. No signal when results are ambiguous. No cue that "zero hits" means "broaden the query." All of that guidance gets shoved back upstream into `SKILL.md`, which bloats into hundreds of lines of scenario prose no agent can reliably follow.
+CLI is the native interface for AI agents — [John Carmack](https://x.com/ID_AA_Carmack/status/1874124927130886501) observed this in late 2024, the [CodeAct](https://arxiv.org/abs/2402.01030) paper (Wang et al., ICML 2024) proved it, and [Andrej Karpathy](https://x.com/karpathy/status/2026360908398862478) crystallized it: *"Build. For. Agents."*
 
-**Talking CLI** is a design methodology for agent tools that speak back. It treats `SKILL.md` and tool output as **one shared prompt surface with one shared budget**, and gives you concrete rules for deciding what belongs in which channel.
+[Progressive disclosure](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) as a skill-loading architecture was formalized by Anthropic (Barry Zhang, Keith Lazuka, Mahesh Murag, Oct 2025) and is now an [open standard](https://agentskills.io) adopted across Claude Code, Codex CLI, and Gemini CLI. [Context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) as a named discipline was popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025.
 
-**Prompt-on-call** — progressive disclosure taken one level deeper. Instead of pre-loading every scenario into SKILL.md, your tool speaks up when called — triggered by what it actually sees, not by what the designer predicted.
+Anthropic also advocates ["steering agents with helpful instructions in tool responses"](https://www.anthropic.com/engineering/writing-tools-for-agents) — but only as a paragraph-level best practice. Nobody has named it, budgeted it, audited it, or proposed it as a protocol-level primitive. **That gap is what Talking CLI fills.**
 
-Stop writing everything into `SKILL.md`. Give your CLI a voice.
+---
+
+## The finding
+
+We ran a runtime audit against **4 official Anthropic MCP servers** across **68 error / empty-result scenarios**. Number of scenarios that returned actionable guidance:
+
+> **0 / 68.**
+
+Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastructure. The MCP ecosystem today treats tool output as a data pipe, not a dialogue participant.
+
+**Why we care**: every one of those silent responses gets "fixed" upstream by shoving more prose into `SKILL.md`. Your 400-line skill document is paying rent, every turn, for guidance that should have been whispered once, at the moment it mattered, inside the tool response.
+
+**What's coming**: a quantitative benchmark comparing the same agent on mute vs. talking variants of the same server (tokens, turns, success rate). If the delta is real, silence has a price and we can name it. If it isn't, we will publish that too.
+
+---
+
+## What this project is
+
+Talking CLI is a **three-leg stool** built around one idea: **prompt-on-call** — moving guidance from static documents into the moment of invocation.
+
+1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for prompt-on-call's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
+2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
+3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
+
+The linter (`talking-cli audit` / `audit-mcp`) is the **probe**, not the hero. It's how you reproduce the audit numbers on your own server.
+
+### Core claim
+
+> **Prompt Surface = `SKILL.md` ∪ `{tool_result.hints}` — two halves, one budget.**
+
+Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**prompt-on-call**) is the single biggest lever most skill authors haven't pulled.
 
 ---
 
 ## How it works
 
-### The Prompt Budget Shift
+### The Prompt Budget Shift (visual)
 
 ```mermaid
 graph LR
@@ -31,7 +61,7 @@ graph LR
         A1 -.->|repeated guidance<br/>shoved upstream| A3
     end
 
-    subgraph After ["✅ After: Talking CLI"]
+    subgraph After ["✅ After: prompt-on-call"]
         B1[SKILL.md<br/>&lt; 150 lines] --> B2[Agent]
         B3[Tool returns<br/>JSON + hints] --> B2
     end
@@ -83,6 +113,23 @@ npx talking-cli audit-mcp ./my-mcp-server --deep
 npx talking-cli optimize ./my-skill
 # → writes TALKING-CLI-OPTIMIZATION.md at the skill root
 ```
+
+## API key requirements
+
+Normal `talking-cli` usage does **not** require any model API key.
+
+The following commands are fully local-first:
+
+- `talking-cli audit`
+- `talking-cli audit-mcp`
+- `talking-cli optimize`
+
+Any model-backed execution belongs only to the internal benchmark harness under `benchmark/`, not to the user-facing CLI contract.
+
+For internal benchmark development today:
+
+- `npm run benchmark:smoke` is wired and local-only using the stub benchmark provider.
+- `npm run benchmark` is reserved for the future model-backed standalone executor path and is not Phase 1-complete yet.
 
 ---
 
@@ -142,24 +189,35 @@ We also analyzed 823 Composio GitHub tools via static JSON schema inspection. Sa
 
 ## The Methodology
 
-Talking CLI is more than a linter. It's a design philosophy:
+Talking CLI is more than a linter. It's the implementation of **prompt-on-call**: every tool response is a designed prompt surface, not a data dump.
 
 - **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
 - **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
 
 ---
 
-## Status
+## Roadmap
 
-**v0.2.0 — Methodology stable. CLI surface may evolve before v1.0.0.**
+**v0.5 endgame** — the project pivots from "another linter" to **evidence-first standard proposal**. Execution plan lives in [`.internal/TDD-P4.md`](.internal/TDD-P4.md); PRD in [`.internal/PRD.md`](.internal/PRD.md) §0.0 and §7.
 
-- ✅ H1–H4 skill audit (`audit` command)
+| Track | Goal | Status |
+|---|---|---|
+| **Methodology** (shipped) | PHILOSOPHY + CN-001 + H1–H4 / M1–M4 heuristics | ✅ |
+| **Evidence harness** (G7 / P4.1) | Internal benchmark harness comparing mute vs. talking variants under controlled execution | 🔄 next |
+| **Ecosystem audit publication** (G8 / P4.2) | `AUDIT-BENCHMARK.md` as re-runnable artifact, public post | 🔄 blocked on G7 |
+| **H4 semantic upgrade** (G9 / P4.3) | Haiku-class classifier replaces the `≥ 10 chars` stub; graceful fallback without API key | ⏳ |
+| **H3 hint-budget ≤ 3** (G9 / P4.4) | Semantic dedup of hints, not field-count | ⏳ |
+| **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ⏳ |
+| **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 90/100, CI-enforced, README badge | ⏳ |
+| **MCP spec proposal** (G10 / P4.7) | RFC / discussion on `modelcontextprotocol/*` for a first-class `agent_hints` field | ⏳ |
+
+### Status of surfaces available today
+
+- ✅ H1–H4 skill audit (`audit`) — v1 heuristics; H3/H4 will harden in P4.3–4.4
 - ✅ M1–M4 MCP server audit (`audit-mcp --deep`)
-- ✅ 5 personas: default · NBA coach · British critic · Zen master · emotional-damage-dad
-- ✅ `optimize --apply` with git branch safety
-- ⏳ `optimize --workflow`: 9-step complex skill transformation pipeline
-- ⏳ H3 hint budget ≤ 3 (embedding-based)
-- ⏳ H4 semantic duplication detection
+- ✅ `optimize` plan + `--apply` with git branch safety
+- 🧪 Multiple personas (`--persona`) — **experimental**, surface will shrink in P4.5
+- ⛔ `optimize --workflow` (9-step pipeline) — specified in PRD §11, deferred past P4
 
 ## License
 

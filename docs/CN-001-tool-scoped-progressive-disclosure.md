@@ -137,8 +137,9 @@ Tool-Scoped Progressive Disclosure is not a newly invented universe. It is a cle
 
 | Term | Why it is close | Why it is not sufficient |
 |---|---|---|
-| **Context Engineering** | The parent discipline — "the right context at the right time" | Too broad; does not specify this architecture |
-| **Progressive Disclosure** | Accurately describes the "on-demand" principle | States the principle; does not describe the agent/tool layering |
+| **Context Engineering** | The parent discipline — "the right context at the right time." Named and popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025; [formalized by Anthropic](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) (Sept 2025). | Too broad; does not specify this architecture |
+| **Progressive Disclosure** | Accurately describes the "on-demand" principle. [Formalized for skill-loading by Anthropic](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) (Barry Zhang, Keith Lazuka, Mahesh Murag, Oct 2025) as a three-level architecture (metadata → instructions → resources). | Covers the `SKILL.md` half of the prompt surface; does not describe the tool-output half or the agent/tool layering |
+| **Tool Response Guidance** | [Anthropic advocates](https://www.anthropic.com/engineering/writing-tools-for-agents) "steering agents with helpful instructions" in tool responses (Jan 2026). | Paragraph-level best practice — no named concept, no budget, no audit, no protocol proposal |
 | **Dynamic / Event-Driven Context Injection** | Very close to the runtime injection mechanism | Does not fully capture "tool-scoped + thin global router" |
 | **Tiered Skill Architecture** | Close to the "router + body" structure | Usually applied to skill loading; does not always cover CLI runtime hints |
 | **Just-In-Time Tooling / JIT Context** | Emphasizes on-demand loading | Leans toward tool discovery; does not focus on hint injection |
