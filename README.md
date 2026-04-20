@@ -33,6 +33,8 @@ Anthropic also advocates ["steering agents with helpful instructions in tool res
 
 Talking CLI is a **three-leg stool** built around one idea: **prompt-on-call** — moving guidance from static documents into the moment of invocation.
 
+You can also think of this as **distributed prompting**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
+
 1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for prompt-on-call's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
 2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
 3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
@@ -42,6 +44,10 @@ The linter (`talking-cli audit` / `audit-mcp`) is the **probe**, not the hero. I
 ### Core claim
 
 > **Prompt Surface = `SKILL.md` ∪ `{tool_result.hints}` — two halves, one budget.**
+
+Or, in distributed-systems language:
+
+> **Centralized guidance (SKILL.md) + Distributed guidance (tool hints) = One prompt budget.**
 
 Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**prompt-on-call**) is the single biggest lever most skill authors haven't pulled.
 

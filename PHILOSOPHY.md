@@ -53,6 +53,24 @@ We call this **prompt-on-call**. It is progressive disclosure applied to the age
 
 ---
 
+## Also Known As: Distributed Prompting
+
+If "prompt-on-call" sounds too telephonic, call it **distributed prompting**.
+
+The analogy is exact:
+
+| Centralized System | Distributed System |
+|---|---|
+| One monolithic document (SKILL.md) carries all guidance | Guidance is distributed across every node (tool response) |
+| Every turn pays the full cost, regardless of which tools are called | Each turn only loads the guidance relevant to the tools that were actually invoked |
+| Single point of failure: one bloated document | Resilient: each tool owns its own guidance |
+
+The discipline that makes distributed prompting work is the same discipline that makes distributed systems work: **a shared protocol**. In Talking CLI, that protocol is the Four Rules of Talk (below). Without the rules, distributed prompting collapses into chaos — every tool invents its own voice, and the agent drowns in incompatible guidance.
+
+> **prompt-on-call = distributed prompting + the Four Rules protocol**
+
+---
+
 ## The Four Channels
 
 Talking CLI distinguishes four channels in the agent/tool interaction. Each has a different lifetime, a different cost profile, and a different owner.
@@ -208,6 +226,7 @@ Talking CLI does not invent a new channel. It names, budgets, and disciplines on
 - **MCP `structuredContent`** — Provides a technical channel for structured tool output. Offers no methodology for what to put in it. Talking CLI fills that gap.
 - **ReAct** — Observation as a step in the agent's loop. Describes the mechanism; does not prescribe observation as a designed prompt surface.
 - **Tool result design in agent frameworks (LangChain, AutoGen, et al.)** — Fragmented practice. Tool returns are ad-hoc payloads with occasional hints. Talking CLI names the fragment and makes it a first-class design surface.
+- **Distributed prompting** — The engineering framing of prompt-on-call. Emphasizes the shift from centralized (SKILL.md) to decentralized (per-tool response) guidance architecture, with a shared protocol ensuring consistency.
 - **Context engineering** — The parent discipline. Named and popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025. Talking CLI is a concrete sub-pattern: context engineering applied to the agent–tool boundary.
 
 ---
