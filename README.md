@@ -17,6 +17,16 @@ Anthropic also advocates ["steering agents with helpful instructions in tool res
 
 ---
 
+**Sound familiar?**
+
+Your `SKILL.md` is 400 lines. Half of it describes what the agent should do *after* a specific tool returns — "if zero results, broaden the query," "if ambiguous, ask the user," "this field means X, not Y." The agent loads all 400 lines every single turn, but most of that guidance only matters 10% of the time. The other 90%, it's paying attention rent on scenarios that didn't happen.
+
+Meanwhile, your tools return raw JSON and say nothing. No hint about what just happened. No signal that results were sparse or the query was ambiguous. No cue for the next step. The tools are mute, so all the guidance gets shoved upstream into `SKILL.md`, which slowly bloats into a monologue describing every possible outcome of every possible call — most of which the agent promptly forgets or ignores.
+
+That's not a skill problem. That's a **prompt surface** problem. You only know one writable surface, so everything goes there.
+
+---
+
 ## The finding
 
 We ran a runtime audit against **4 official Anthropic MCP servers** across **68 error / empty-result scenarios**. Number of scenarios that returned actionable guidance:
@@ -24,8 +34,6 @@ We ran a runtime audit against **4 official Anthropic MCP servers** across **68 
 > **0 / 68.**
 
 Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastructure. The MCP ecosystem today treats tool output as a data pipe, not a dialogue participant.
-
-**Why we care**: every one of those silent responses gets "fixed" upstream by shoving more prose into `SKILL.md`. Your 400-line skill document is paying rent, every turn, for guidance that should have been whispered once, at the moment it mattered, inside the tool response.
 
 **What's coming**: a quantitative benchmark comparing the same agent on mute vs. talking variants of the same server (tokens, turns, success rate). If the delta is real, silence has a price and we can name it. If it isn't, we will publish that too.
 
