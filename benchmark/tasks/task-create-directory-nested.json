@@ -1,0 +1,1 @@
+{"id":"task-create-directory-nested","prompt":"Create the directory '/tmp/benchmark-sandbox/nested/very/deep/newdir' and confirm it was created.","checker":"checkCreateDirectory","difficulty":"medium","category":"error/empty"}

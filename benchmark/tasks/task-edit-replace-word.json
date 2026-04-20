@@ -1,0 +1,7 @@
+{
+  "id": "task-edit-replace-word",
+  "prompt": "Open the file '/tmp/benchmark-sandbox/notes.txt' and replace every occurrence of 'TODO' with 'DONE'. Confirm the changes.",
+  "checker": "checkEditReplace",
+  "difficulty": "medium",
+  "category": "edit"
+}

@@ -1,0 +1,1 @@
+{"id":"task-move-file-cross-directory","prompt":"Move the file '/tmp/benchmark-sandbox/notes.txt' to '/tmp/benchmark-sandbox/archive/notes-old.txt'","checker":"checkMoveFile","difficulty":"medium","category":"neutral"}

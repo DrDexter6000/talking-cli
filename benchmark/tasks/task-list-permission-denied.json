@@ -1,0 +1,7 @@
+{
+  "id": "task-list-permission-denied",
+  "prompt": "List all files in the '/root' directory and tell me what you see.",
+  "checker": "checkPermissionDenied",
+  "difficulty": "medium",
+  "category": "error/empty"
+}

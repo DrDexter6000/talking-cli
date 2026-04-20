@@ -1,0 +1,1 @@
+{"id":"task-read-recovery-multiple-fail","prompt":"Read '/tmp/benchmark-sandbox/settings.json' and '/tmp/benchmark-sandbox/preferences.json'. If any file fails to read, identify which files are available and read those instead.","checker":"checkReadMultipleRecovery","difficulty":"hard","category":"error/empty"}

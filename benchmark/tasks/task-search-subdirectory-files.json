@@ -1,0 +1,1 @@
+{"id":"task-search-subdirectory-files","prompt":"Find all JavaScript files (*.js) anywhere under '/tmp/benchmark-sandbox/project'. List them all.","checker":"checkSearchSubdir","difficulty":"medium","category":"search"}

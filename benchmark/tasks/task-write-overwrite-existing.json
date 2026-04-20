@@ -1,0 +1,1 @@
+{"id":"task-write-overwrite-existing","prompt":"Overwrite '/tmp/benchmark-sandbox/notes.txt' with the content 'This is the new version of the notes.' Confirm the operation was successful.","checker":"checkWriteOverwrite","difficulty":"medium","category":"neutral"}

@@ -1,0 +1,7 @@
+{
+  "id": "task-search-not-found",
+  "prompt": "Search for a file named 'nonexistent_file.xyz' anywhere under '/tmp/benchmark-sandbox'. What is the result?",
+  "checker": "checkSearchNotFound",
+  "difficulty": "medium",
+  "category": "not-found"
+}

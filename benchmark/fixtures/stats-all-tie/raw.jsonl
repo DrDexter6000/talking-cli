@@ -1,0 +1,6 @@
+{"taskId":"task-a","variant":"mute","turn":0,"role":"assistant","input_tokens":100,"output_tokens":50,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
+{"taskId":"task-a","variant":"talking","turn":0,"role":"assistant","input_tokens":105,"output_tokens":52,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
+{"taskId":"task-b","variant":"mute","turn":0,"role":"assistant","input_tokens":80,"output_tokens":30,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
+{"taskId":"task-b","variant":"talking","turn":0,"role":"assistant","input_tokens":85,"output_tokens":32,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
+{"taskId":"task-c","variant":"mute","turn":0,"role":"assistant","input_tokens":120,"output_tokens":60,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
+{"taskId":"task-c","variant":"talking","turn":0,"role":"assistant","input_tokens":125,"output_tokens":62,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}

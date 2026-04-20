@@ -1,0 +1,1 @@
+{"id":"task-search-recovery-broaden","prompt":"Find all Python files in '/tmp/benchmark-sandbox'. If the search returns no results, try broader patterns until you find some.","checker":"checkSearchRecovery","difficulty":"hard","category":"error/empty"}

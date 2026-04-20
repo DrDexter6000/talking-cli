@@ -1,0 +1,7 @@
+{
+  "id": "task-search-empty-root",
+  "prompt": "Search for all files matching the pattern '*.config.js' in the directory '/tmp/benchmark-sandbox'. What files did you find?",
+  "checker": "checkSearchResults",
+  "difficulty": "easy",
+  "category": "search"
+}

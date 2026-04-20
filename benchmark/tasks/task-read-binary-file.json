@@ -1,0 +1,7 @@
+{
+  "id": "task-read-binary-file",
+  "prompt": "Read the file '/tmp/benchmark-sandbox/image.png' and describe its contents to me.",
+  "checker": "checkBinaryRead",
+  "difficulty": "medium",
+  "category": "error/empty"
+}

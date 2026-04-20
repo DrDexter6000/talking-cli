@@ -1,0 +1,1 @@
+{"id":"task-list-recovery-empty-dir","prompt":"List the contents of '/tmp/benchmark-sandbox/data/'. If the directory is empty, check the parent directory for data files and report what you find.","checker":"checkListRecovery","difficulty":"hard","category":"error/empty"}

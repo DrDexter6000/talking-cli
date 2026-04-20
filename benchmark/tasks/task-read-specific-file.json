@@ -1,0 +1,7 @@
+{
+  "id": "task-read-specific-file",
+  "prompt": "Read the file '/tmp/benchmark-sandbox/README.txt' and tell me its full contents.",
+  "checker": "checkReadSpecificFile",
+  "difficulty": "easy",
+  "category": "read"
+}
