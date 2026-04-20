@@ -27,18 +27,6 @@ Anthropic also advocates ["steering agents with helpful instructions in tool res
 
 ---
 
-## The finding
-
-We ran a runtime audit against **4 official Anthropic MCP servers** across **68 error / empty-result scenarios**. Number of scenarios that returned actionable guidance:
-
-> **0 / 68.**
-
-Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastructure. The MCP ecosystem today treats tool output as a data pipe, not a dialogue participant.
-
-**What's coming**: a quantitative benchmark comparing the same agent on mute vs. talking variants of the same server (tokens, turns, success rate). If the delta is real, silence has a price and we can name it. If it isn't, we will publish that too.
-
----
-
 ## What this project is
 
 Talking CLI is a **three-leg stool** built around one idea: **prompt-on-call** — moving guidance from static documents into the moment of invocation.
@@ -175,9 +163,13 @@ Fix the issues above, then run npx talking-cli audit again to see your new score
 
 ---
 
-## MCP Ecosystem Audit: What We Found
+## The finding: MCP Ecosystem Audit
 
-We ran `talking-cli audit-mcp --deep` against 4 official Anthropic MCP servers:
+We ran `talking-cli audit-mcp --deep` against **4 official Anthropic MCP servers** across **68 error / empty-result scenarios**. Number of scenarios that returned actionable guidance:
+
+> **0 / 68.**
+
+Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastructure. The MCP ecosystem today treats tool output as a data pipe, not a dialogue participant.
 
 | Server | Tools | Scenarios | M3 · Guidance | M4 · Errors |
 |--------|-------|-----------|---------------|-------------|
@@ -189,9 +181,7 @@ We ran `talking-cli audit-mcp --deep` against 4 official Anthropic MCP servers:
 
 \* M4=100 because Zod validation errors are technically informative. These are SDK-generated messages, not tool-authored recovery guidance.
 
-**The finding**: Out of 68 tested error/empty-result scenarios across 4 official servers, **zero** returned actionable guidance. The entire MCP ecosystem treats tool output as data pipes, not dialogue participants.
-
-We also analyzed 823 Composio GitHub tools via static JSON schema inspection. Same result: zero hint infrastructure.
+**What's coming**: a quantitative benchmark comparing the same agent on mute vs. talking variants of the same server (tokens, turns, success rate). If the delta is real, silence has a price and we can name it. If it isn't, we will publish that too.
 
 ---
 
