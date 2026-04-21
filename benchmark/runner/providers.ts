@@ -55,6 +55,13 @@ function createAnthropicProvider(): StandaloneLLMProvider {
     throw new Error("ANTHROPIC_API_KEY is required for benchmark provider 'anthropic'.");
   }
   const baseUrl = (process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com").replace(/\/$/, "");
+  // MiniMax has two endpoints:
+  // - api.minimax.io (international) - for pay-as-you-go keys
+  // - api.minimaxi.com (China) - for Coding Plan keys (sk-cp-...)
+  // The correct endpoint depends on the key type, not a universal rule.
+  if (baseUrl.includes("minimax.io") && apiKey.startsWith("sk-cp-")) {
+    console.warn("[WARNING] Coding Plan key (sk-cp-...) detected with international endpoint (api.minimax.io). China endpoint (api.minimaxi.com) may be required.");
+  }
   const model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
 
   return {
@@ -66,6 +73,69 @@ function createAnthropicProvider(): StandaloneLLMProvider {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+      // Extract system prompt from first user message (benchmark convention)
+      // MiniMax requires 'system' as a top-level field, not inside messages
+      let systemPrompt: string | undefined;
+      const processedMessages = messages.reduce<Array<{ role: string; content: unknown }>>((acc, message) => {
+        if (message.role === "tool") {
+          acc.push({
+            role: "user",
+            content: [{
+              type: "tool_result",
+              tool_use_id: message.toolUseId,
+              content: message.content,
+              is_error: message.isError ?? false,
+            }],
+          });
+        } else if (message.role === "assistant_content") {
+          acc.push({
+            role: "assistant",
+            content: message.content,
+          });
+        } else if (message.role === "user") {
+          const text = message.content as string;
+          // Extract system prompt if present (format: "system prompt\n\nUser request: ...")
+          const systemMatch = text.match(/^(You are [^\n]+)\n\nUser request: /);
+          if (systemMatch && !systemPrompt) {
+            systemPrompt = systemMatch[1];
+            acc.push({
+              role: "user",
+              content: [{ type: "text", text: text.replace(systemMatch[1] + "\n\n", "") }],
+            });
+          } else {
+            acc.push({
+              role: "user",
+              content: [{ type: "text", text }],
+            });
+          }
+        } else {
+          acc.push({
+            role: message.role,
+            content: [{ type: "text", text: message.content as string }],
+          });
+        }
+        return acc;
+      }, []);
+
+      const requestBody: Record<string, unknown> = {
+        model,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        temperature: 1.0,
+        messages: processedMessages,
+      };
+
+      if (systemPrompt) {
+        requestBody.system = systemPrompt;
+      }
+
+      if (tools.length > 0) {
+        requestBody.tools = tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          input_schema: tool.inputSchema,
+        }));
+      }
+
       let response: Response;
       try {
         response = await fetch(`${baseUrl}/v1/messages`, {
@@ -75,44 +145,7 @@ function createAnthropicProvider(): StandaloneLLMProvider {
             "x-api-key": apiKey,
             "anthropic-version": "2023-06-01",
           },
-          body: JSON.stringify({
-            model,
-            max_tokens: MAX_OUTPUT_TOKENS,
-            temperature: 1.0,
-            messages: messages.reduce<Array<{ role: string; content: unknown }>>((acc, message) => {
-              if (message.role === "tool") {
-                // Anthropic API: tool results go as user messages with tool_result content blocks
-                acc.push({
-                  role: "user",
-                  content: [{
-                    type: "tool_result",
-                    tool_use_id: message.toolUseId,
-                    content: message.content,
-                    is_error: message.isError ?? false,
-                  }],
-                });
-              } else if (message.role === "assistant_content") {
-                // Rich assistant content (preserves thinking context + tool_use blocks)
-                acc.push({
-                  role: "assistant",
-                  content: message.content,
-                });
-              } else {
-                acc.push({
-                  role: message.role,
-                  content: message.content,
-                });
-              }
-              return acc;
-            }, []),
-            tools: tools.length > 0
-              ? tools.map((tool) => ({
-                  name: tool.name,
-                  description: tool.description,
-                  input_schema: tool.inputSchema,
-                }))
-              : undefined,
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         });
       } finally {
