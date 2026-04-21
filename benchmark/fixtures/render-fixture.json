@@ -13,6 +13,12 @@
     "signTestPValue": 1.0,
     "meanDeltaInputTokens": 8.333333333333334,
     "meanDeltaOutputTokens": 5.0,
+    "meanDeltaWalltime": 100,
+    "medianDeltaWalltime": 50,
+    "talkingRecoveries": 2,
+    "muteRecoveries": 0,
+    "tokensPerTaskTalking": 195,
+    "tokensPerTaskMute": 190,
     "wilcoxonW": 1.5,
     "wilcoxonPValue": 0.75
   },

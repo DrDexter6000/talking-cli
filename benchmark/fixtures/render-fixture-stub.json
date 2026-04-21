@@ -11,6 +11,12 @@
     "signTestPValue": 1,
     "meanDeltaInputTokens": 0,
     "meanDeltaOutputTokens": 0,
+    "meanDeltaWalltime": 0,
+    "medianDeltaWalltime": 0,
+    "talkingRecoveries": 0,
+    "muteRecoveries": 0,
+    "tokensPerTaskTalking": 0,
+    "tokensPerTaskMute": 0,
     "wilcoxonW": 0,
     "wilcoxonPValue": 1
   },

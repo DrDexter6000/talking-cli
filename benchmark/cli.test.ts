@@ -28,8 +28,8 @@ describe("benchmark CLI", () => {
   }, 15000);
 
   it("rejects unsupported providers with a clear error", async () => {
-    await expect(main(["--provider", "anthropic"])).rejects.toThrow(
-      /ANTHROPIC_API_KEY/i,
+    await expect(main(["--provider", "unsupported"])).rejects.toThrow(
+      /Unsupported benchmark provider/i,
     );
   });
 });

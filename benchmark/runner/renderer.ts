@@ -11,7 +11,7 @@ export function renderBenchmark(summaryPath: string): string {
 
   const lines: string[] = [];
 
-  lines.push("# AUDIT-BENCHMARK.md — Talking CLI Evidence Harness v0.5");
+  lines.push("# AUDIT-BENCHMARK.md — Talking CLI Evidence Harness v0.6");
   lines.push("");
   lines.push("> Auto-generated from `summary.json`. Do not hand-edit. Fix the template instead.");
   lines.push("");
@@ -23,20 +23,50 @@ export function renderBenchmark(summaryPath: string): string {
     lines.push("");
   }
 
+  // ─── Executive Summary ─────────────────────────────────────────────────────
+  lines.push("## Executive Summary");
+  lines.push("");
+  const a = summary.aggregate;
+  lines.push(`- **Talking wins**: ${a.talkingWins} tasks`);
+  lines.push(`- **Mute wins**: ${a.muteWins} tasks`);
+  lines.push(`- **Ties**: ${a.ties} tasks`);
+  lines.push(`- **Discordance rate**: ${((a.talkingWins + a.muteWins) / summary.perTask.length * 100).toFixed(1)}%`);
+  lines.push("");
+  lines.push("### Token Efficiency");
+  lines.push("");
+  lines.push(`- **Mean Δ input tokens**: ${a.meanDeltaInputTokens > 0 ? "+" : ""}${a.meanDeltaInputTokens.toFixed(0)} (talking - mute)`);
+  lines.push(`- **Mean Δ output tokens**: ${a.meanDeltaOutputTokens > 0 ? "+" : ""}${a.meanDeltaOutputTokens.toFixed(0)} (talking - mute)`);
+  lines.push(`- **Tokens per successful task (talking)**: ${a.tokensPerTaskTalking.toFixed(0)}`);
+  lines.push(`- **Tokens per successful task (mute)**: ${a.tokensPerTaskMute.toFixed(0)}`);
+  lines.push("");
+  lines.push("### Time Performance");
+  lines.push("");
+  lines.push(`- **Mean Δ walltime**: ${a.meanDeltaWalltime > 0 ? "+" : ""}${a.meanDeltaWalltime.toFixed(0)}ms (talking - mute)`);
+  lines.push(`- **Median Δ walltime**: ${a.medianDeltaWalltime > 0 ? "+" : ""}${a.medianDeltaWalltime.toFixed(0)}ms`);
+  lines.push("");
+  lines.push("### Error Recovery");
+  lines.push("");
+  lines.push(`- **Talking recoveries**: ${a.talkingRecoveries}`);
+  lines.push(`- **Mute recoveries**: ${a.muteRecoveries}`);
+  lines.push("");
+
   // ─── Per-Task Results ──────────────────────────────────────────────────────
   lines.push("## Per-Task Results");
   lines.push("");
   lines.push(
-    "| Task | Mute Pass | Talking Pass | Delta | Mute InTok | Talking InTok | Δ Input |",
+    "| Task | Mute | Talking | Δ | Mute Tok | Talking Tok | Δ Tok | Time |",
   );
-  lines.push("|------|-----------|--------------|-------|------------|---------------|---------|");
+  lines.push("|------|------|---------|---|----------|-------------|-------|------|");
   for (const row of summary.perTask) {
     const mutePass = row.mute.pass ? "✅" : "❌";
     const talkingPass = row.talking.pass ? "✅" : "❌";
     const deltaIcon =
       row.delta === "talking_win" ? "↑ talking" : row.delta === "mute_win" ? "↓ mute" : "= tie";
+    const muteTok = row.mute.inputTokens + row.mute.outputTokens;
+    const talkingTok = row.talking.inputTokens + row.talking.outputTokens;
+    const deltaTok = talkingTok - muteTok;
     lines.push(
-      `| ${row.taskId} | ${mutePass} | ${talkingPass} | ${deltaIcon} | ${row.mute.inputTokens} | ${row.talking.inputTokens} | ${row.deltaInputTokens > 0 ? "+" : ""}${row.deltaInputTokens} |`,
+      `| ${row.taskId} | ${mutePass} | ${talkingPass} | ${deltaIcon} | ${muteTok} | ${talkingTok} | ${deltaTok > 0 ? "+" : ""}${deltaTok} | ${row.deltaWalltime}ms |`,
     );
   }
   lines.push("");
@@ -44,12 +74,13 @@ export function renderBenchmark(summaryPath: string): string {
   // ─── Aggregate Stats ───────────────────────────────────────────────────────
   lines.push("## Aggregate Stats");
   lines.push("");
-  const a = summary.aggregate;
   lines.push(`- **Talking wins**: ${a.talkingWins}`);
   lines.push(`- **Mute wins**: ${a.muteWins}`);
   lines.push(`- **Ties**: ${a.ties}`);
   lines.push("");
-  lines.push("### Statistical Tests");
+
+  // ─── Statistical Tests ─────────────────────────────────────────────────────
+  lines.push("## Statistical Tests");
   lines.push("");
   lines.push(`- **Sign test**: n = ${a.signTestN}, p-value: ${a.signTestPValue.toFixed(4)}`);
   lines.push(`- **Wilcoxon signed-rank**: W = ${a.wilcoxonW}, p-value: ${a.wilcoxonPValue.toFixed(4)}`);
@@ -86,6 +117,14 @@ export function renderBenchmark(summaryPath: string): string {
   );
   lines.push("within ≤ 20 turns.");
   lines.push("");
+  lines.push("### Metrics");
+  lines.push("");
+  lines.push("- **Pass/fail**: Binary task completion");
+  lines.push("- **Token consumption**: Input + output tokens per task");
+  lines.push("- **Walltime**: Actual execution time in milliseconds");
+  lines.push("- **Error recoveries**: Count of tool errors that were successfully recovered from");
+  lines.push("- **Tool calls**: Total number of tool invocations");
+  lines.push("");
   lines.push("### Statistical Approach");
   lines.push("");
   lines.push(
@@ -93,10 +132,15 @@ export function renderBenchmark(summaryPath: string): string {
   );
   lines.push(
     "- **Secondary analysis**: Wilcoxon signed-rank test on per-task token/turn deltas.",
+  );
+  lines.push(
+    "- **Efficiency analysis**: Tokens per successful task (lower is better).",
+  );
+  lines.push(
     "",
   );
   lines.push(
-    "Both tests are non-parametric and suitable for small-N paired comparisons (N ≥ 4 for N=20 in production).",
+    "All tests are non-parametric and suitable for small-N paired comparisons.",
   );
   lines.push("");
 
@@ -120,20 +164,23 @@ export function renderBenchmark(summaryPath: string): string {
   lines.push("# 1. Run the internal smoke harness (no model API key required)");
   lines.push("npm run benchmark:smoke");
   lines.push("");
-  lines.push("# 2. Run the full benchmark once a model-backed provider is wired");
+  lines.push("# 2. Run the full benchmark with progress reporting and parallel execution");
   lines.push("export ANTHROPIC_API_KEY=sk-ant-...   # example only; not required for talking-cli product usage");
-  lines.push("npm run benchmark");
+  lines.push("npm run benchmark -- --provider minimax --parallel --max-concurrency 3");
   lines.push("");
-  lines.push("# 3. Inspect the generated benchmark artifacts");
+  lines.push("# 3. Resume an interrupted benchmark");
+  lines.push("npm run benchmark -- --provider minimax --parallel --resume");
+  lines.push("");
+  lines.push("# 4. Inspect the generated benchmark artifacts");
   lines.push("dir benchmark/results/<date>");
   lines.push("```");
   lines.push("");
-  lines.push("- **Executor**: `benchmark:smoke` currently uses a local stub executor; `benchmark` still expects a future model-backed standalone provider.");
+  lines.push("- **Executor**: `benchmark:smoke` uses a local stub executor; `benchmark` uses the model-backed standalone provider.");
   lines.push(
     "- **Server**: `@modelcontextprotocol/server-filesystem` vendored at pinned commit.",
   );
   lines.push(
-    "- **Task set**: smoke mode runs 3 tasks today; production target remains the full 20+ task matrix from Phase 1.",
+    "- **Task set**: Full task matrix with recovery scenarios.",
   );
   lines.push("");
 

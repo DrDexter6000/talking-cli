@@ -1,26 +1,22 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createProvider } from "./runner/providers.js";
 
-const ORIGINAL_ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
 describe("benchmark provider factory", () => {
-  afterEach(() => {
-    if (ORIGINAL_ANTHROPIC_API_KEY === undefined) {
-      delete process.env.ANTHROPIC_API_KEY;
-    } else {
-      process.env.ANTHROPIC_API_KEY = ORIGINAL_ANTHROPIC_API_KEY;
-    }
-  });
-
-  it("throws a clear error when the Anthropic key is missing", () => {
-    delete process.env.ANTHROPIC_API_KEY;
-    expect(() => createProvider("anthropic")).toThrow(/ANTHROPIC_API_KEY/i);
-  });
-
-  it("creates an Anthropic-backed provider when the key is present", () => {
-    process.env.ANTHROPIC_API_KEY = "test-key";
-    const provider = createProvider("anthropic");
+  it("creates a stub provider by default", () => {
+    const provider = createProvider("stub");
     expect(provider).toHaveProperty("call");
     expect(typeof provider.call).toBe("function");
+  });
+
+  it("creates a deepseek provider when configured", () => {
+    process.env.DEEPSEEK_API_KEY = "test-key";
+    const provider = createProvider("deepseek");
+    expect(provider).toHaveProperty("call");
+    expect(typeof provider.call).toBe("function");
+    delete process.env.DEEPSEEK_API_KEY;
+  });
+
+  it("throws for unsupported providers", () => {
+    expect(() => createProvider("unsupported")).toThrow(/Unsupported benchmark provider/);
   });
 });

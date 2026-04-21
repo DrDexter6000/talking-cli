@@ -5,12 +5,29 @@ import { resolve } from "node:path";
 
 export interface PerTaskRow {
   taskId: string;
-  mute: { pass: boolean; inputTokens: number; outputTokens: number; turns: number };
-  talking: { pass: boolean; inputTokens: number; outputTokens: number; turns: number };
+  mute: { 
+    pass: boolean; 
+    inputTokens: number; 
+    outputTokens: number; 
+    turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
+  };
+  talking: { 
+    pass: boolean; 
+    inputTokens: number; 
+    outputTokens: number; 
+    turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
+  };
   delta: "talking_win" | "mute_win" | "tie";
   deltaInputTokens: number; // talking - mute (negative = talking cheaper)
   deltaOutputTokens: number;
   deltaTurns: number;
+  deltaWalltime: number;
 }
 
 export interface AggregateStats {
@@ -22,6 +39,15 @@ export interface AggregateStats {
   // Token deltas
   meanDeltaInputTokens: number;
   meanDeltaOutputTokens: number;
+  // Time deltas
+  meanDeltaWalltime: number;
+  medianDeltaWalltime: number;
+  // Recovery metrics
+  talkingRecoveries: number;
+  muteRecoveries: number;
+  // Efficiency
+  tokensPerTaskTalking: number;
+  tokensPerTaskMute: number;
   // Wilcoxon
   wilcoxonW: number;
   wilcoxonPValue: number;
@@ -48,8 +74,11 @@ type BenchmarkResultEntry = {
   turns: number;
   inputTokens: number;
   outputTokens: number;
+  walltime: number;
   outcome: string;
   pass: boolean;
+  errorRecoveries?: number;
+  toolCalls?: number;
 };
 
 // ─── Main entry ───────────────────────────────────────────────────────────────
@@ -91,6 +120,9 @@ function computeStatsFromResults(resultPath: string): SummaryJson {
     inputTokens: entry.inputTokens,
     outputTokens: entry.outputTokens,
     turns: entry.turns,
+    walltime: entry.walltime,
+    errorRecoveries: entry.errorRecoveries,
+    toolCalls: entry.toolCalls,
   }));
 }
 
@@ -113,6 +145,7 @@ function computeStatsFromLegacyRaw(rawPath: string): SummaryJson {
     inputTokens: entry.input_tokens ?? 0,
     outputTokens: entry.output_tokens ?? 0,
     turns: 1,
+    walltime: 0,
   }));
 }
 
@@ -123,16 +156,19 @@ function summarizeTaskMap<TEntry>(
     inputTokens: number;
     outputTokens: number;
     turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
   },
 ): SummaryJson {
   const perTask: PerTaskRow[] = [];
   for (const [taskId, slot] of taskMap) {
     const muteMetrics = slot.mute
       ? toMetrics(slot.mute)
-      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0 };
+      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0, walltime: 0 };
     const talkingMetrics = slot.talking
       ? toMetrics(slot.talking)
-      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0 };
+      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0, walltime: 0 };
 
     let delta: "talking_win" | "mute_win" | "tie";
     if (talkingMetrics.pass && !muteMetrics.pass) delta = "talking_win";
@@ -146,17 +182,24 @@ function summarizeTaskMap<TEntry>(
         inputTokens: muteMetrics.inputTokens,
         outputTokens: muteMetrics.outputTokens,
         turns: muteMetrics.turns,
+        walltime: muteMetrics.walltime,
+        errorRecoveries: muteMetrics.errorRecoveries,
+        toolCalls: muteMetrics.toolCalls,
       },
       talking: {
         pass: talkingMetrics.pass,
         inputTokens: talkingMetrics.inputTokens,
         outputTokens: talkingMetrics.outputTokens,
         turns: talkingMetrics.turns,
+        walltime: talkingMetrics.walltime,
+        errorRecoveries: talkingMetrics.errorRecoveries,
+        toolCalls: talkingMetrics.toolCalls,
       },
       delta,
       deltaInputTokens: talkingMetrics.inputTokens - muteMetrics.inputTokens,
       deltaOutputTokens: talkingMetrics.outputTokens - muteMetrics.outputTokens,
       deltaTurns: talkingMetrics.turns - muteMetrics.turns,
+      deltaWalltime: talkingMetrics.walltime - muteMetrics.walltime,
     });
   }
 
@@ -176,6 +219,29 @@ function summarizeTaskMap<TEntry>(
     ? nonTieRows.reduce((s, r) => s + r.deltaOutputTokens, 0) / nonTieRows.length
     : 0;
 
+  // Time metrics
+  const meanDeltaWalltime = nonTieRows.length > 0
+    ? nonTieRows.reduce((s, r) => s + r.deltaWalltime, 0) / nonTieRows.length
+    : 0;
+  const sortedWalltime = [...perTask.map(r => r.deltaWalltime)].sort((a, b) => a - b);
+  const medianDeltaWalltime = sortedWalltime.length > 0
+    ? sortedWalltime[Math.floor(sortedWalltime.length / 2)]
+    : 0;
+
+  // Recovery metrics
+  const talkingRecoveries = perTask.reduce((sum, r) => sum + (r.talking.errorRecoveries ?? 0), 0);
+  const muteRecoveries = perTask.reduce((sum, r) => sum + (r.mute.errorRecoveries ?? 0), 0);
+
+  // Efficiency: tokens per successful task
+  const talkingSuccessCount = perTask.filter(r => r.talking.pass).length;
+  const muteSuccessCount = perTask.filter(r => r.mute.pass).length;
+  const tokensPerTaskTalking = talkingSuccessCount > 0
+    ? perTask.filter(r => r.talking.pass).reduce((s, r) => s + r.talking.inputTokens + r.talking.outputTokens, 0) / talkingSuccessCount
+    : 0;
+  const tokensPerTaskMute = muteSuccessCount > 0
+    ? perTask.filter(r => r.mute.pass).reduce((s, r) => s + r.mute.inputTokens + r.mute.outputTokens, 0) / muteSuccessCount
+    : 0;
+
   // Wilcoxon signed-rank on input token deltas
   const allDeltas = perTask.map((r) => r.deltaInputTokens);
   const { W: wilcoxonW, pValue: wilcoxonPValue } = wilcoxonSignedRank(allDeltas);
@@ -190,6 +256,12 @@ function summarizeTaskMap<TEntry>(
       signTestPValue,
       meanDeltaInputTokens,
       meanDeltaOutputTokens,
+      meanDeltaWalltime,
+      medianDeltaWalltime,
+      talkingRecoveries,
+      muteRecoveries,
+      tokensPerTaskTalking,
+      tokensPerTaskMute,
       wilcoxonW,
       wilcoxonPValue,
     },

@@ -260,6 +260,9 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let turnCount = 0;
+    let errorRecoveries = 0;
+    let totalToolCalls = 0;
+    let timeToFirstTool = 0;
 
     // Load system prompt based on variant
     const systemPrompt = this.loadSystemPrompt(variant);
@@ -323,6 +326,9 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             outcome: "error",
             taskId: task.id,
             variant,
+            errorRecoveries,
+            toolCalls: totalToolCalls,
+            timeToFirstTool: timeToFirstTool || elapsed,
           };
         }
 
@@ -369,8 +375,18 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             outcome: "stop_reason_end_turn",
             taskId: task.id,
             variant,
+            errorRecoveries,
+            toolCalls: totalToolCalls,
+            timeToFirstTool: timeToFirstTool || elapsed,
+            timeToSuccess: this.evaluateTask(task, finalText) ? elapsed : 0,
           };
         }
+
+        // Track time to first tool call
+        if (totalToolCalls === 0) {
+          timeToFirstTool = Date.now() - startTime;
+        }
+        totalToolCalls += toolUses.length;
 
         // Add assistant's full response to conversation history (preserves tool_use blocks
         // for multi-turn coherence — required by Anthropic API and MiniMax extended-thinking).
@@ -421,6 +437,11 @@ export class StandaloneExecutor implements BenchmarkExecutor {
                 timestamp: new Date().toISOString(),
               };
               appendFileSync(rawPath, JSON.stringify(toolResultEntry) + "\n");
+
+              // Track error recoveries
+              if (result.isError) {
+                errorRecoveries++;
+              }
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
               messages.push({
@@ -430,6 +451,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
                 content: msg,
                 isError: true,
               });
+              errorRecoveries++;
             }
           }
         } else {
@@ -455,6 +477,9 @@ export class StandaloneExecutor implements BenchmarkExecutor {
         outcome: "timeout",
         taskId: task.id,
         variant,
+        errorRecoveries,
+        toolCalls: totalToolCalls,
+        timeToFirstTool: timeToFirstTool || elapsed,
       };
     } finally {
       if (mcp) await mcp.close();

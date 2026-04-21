@@ -20,10 +20,10 @@ describe("Phase 1 Task 1.7 · CI smoke tier", () => {
     expect(wf).toContain("workflow_dispatch");
   });
 
-  it("ANTHROPIC_API_KEY passed as secret, not hardcoded", () => {
+  it("DEEPSEEK_API_KEY passed as secret, not hardcoded", () => {
     const wf = readFileSync(CI_PATH, "utf-8");
-    expect(wf).toContain("${{ secrets.ANTHROPIC_API_KEY }}");
-    expect(wf).not.toContain("sk-ant-");
+    expect(wf).toContain("${{ secrets.DEEPSEEK_API_KEY }}");
+    expect(wf).not.toContain("sk-");
   });
 
   it("package scripts wire the smoke benchmark to a real entrypoint", () => {

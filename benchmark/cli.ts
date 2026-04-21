@@ -10,6 +10,9 @@ type CliOptions = {
   taskLimit?: number;
   outputDir: string;
   variants?: string[];
+  parallel?: boolean;
+  maxConcurrency?: number;
+  resume?: boolean;
 };
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
@@ -20,8 +23,10 @@ function parseArgs(args: string[]): CliOptions {
   let provider = "stub";
   let taskLimit: number | undefined;
   let outputDir = resolve(BENCHMARK_DIR, "results", today);
-
   let variants: string[] | undefined;
+  let parallel = false;
+  let maxConcurrency: number | undefined;
+  let resume = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -57,9 +62,30 @@ function parseArgs(args: string[]): CliOptions {
       index += 1;
       continue;
     }
+
+    if (arg === "--parallel") {
+      parallel = true;
+      continue;
+    }
+
+    if (arg === "--max-concurrency") {
+      const rawValue = args[index + 1];
+      const parsedValue = Number.parseInt(rawValue ?? "", 10);
+      if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+        throw new Error(`Invalid --max-concurrency value: ${rawValue ?? "<missing>"}`);
+      }
+      maxConcurrency = parsedValue;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--resume") {
+      resume = true;
+      continue;
+    }
   }
 
-  return { provider, taskLimit, outputDir, variants };
+  return { provider, taskLimit, outputDir, variants, parallel, maxConcurrency, resume };
 }
 
 export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
@@ -74,6 +100,9 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
     disableMcp: options.provider === "stub",
     provider: options.provider,
     variants: options.variants,
+    parallel: options.parallel,
+    maxConcurrency: options.maxConcurrency,
+    resume: options.resume,
   });
 }
 

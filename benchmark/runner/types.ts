@@ -21,6 +21,13 @@ export interface BenchmarkRunResult {
   walltime: number;
   outcome: "completed" | "timeout" | "error" | "stop_reason_end_turn";
   pass: boolean;
+  // Extended metrics
+  errorRecoveries?: number;        // Number of times agent recovered from error
+  toolCalls?: number;              // Total tool calls made
+  uniqueTools?: number;            // Number of unique tools used
+  hintUtilization?: number;        // Percentage of hints that led to action
+  timeToFirstTool?: number;        // Time until first tool call (ms)
+  timeToSuccess?: number;          // Time until pass (ms), 0 if failed
 }
 
 export interface BenchmarkRunOptions {
