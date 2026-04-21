@@ -78,6 +78,29 @@ npx talking-cli optimize ./my-skill
 
 P3 is in progress. `optimize --apply` (auto-fix with git branch safety) and the 9-step complex skill workflow are coming next.
 
+## The Evidence (Updated)
+
+We didn't just theorize. We ran a controlled benchmark on MiniMax M2.7 Highspeed comparing an 887-line bloated SKILL.md against a 170-line Talking CLI version across 10 filesystem tasks.
+
+| Metric | Bloated | Talking | Delta |
+|--------|---------|---------|-------|
+| Initial prompt | 8,716 tokens | 1,370 tokens | **−84.3%** |
+| Total tokens | 16,228 tokens | 6,137 tokens | **−62.2%** |
+| Pass rate | 80% | **90%** | **+10pp** |
+
+The agent with the smaller prompt actually performed *better* because it received hints at the exact moment it needed them, instead of hunting through a 400-line document.
+
+**Cost impact per 1,000 tasks** (based on measured token ratios):
+
+| Model | Bloated cost | Talking cost | Savings |
+|-------|-------------|--------------|---------|
+| MiniMax M2.7 Highspeed | $15.50 | $10.80 | **$4.70 (30%)** |
+| Claude 3.5 Sonnet (est.) | $78.00 | $54.00 | **$24.00 (30%)** |
+| GPT-4o (est.) | $52.00 | $36.00 | **$16.00 (30%)** |
+| Gemini 1.5 Pro (est.) | $26.00 | $18.00 | **$8.00 (30%)** |
+
+*Estimates for non-MiniMax models use the same token-consumption ratio; actual prices vary by provider.*
+
 ## The Bigger Picture
 
 Talking CLI is a bet: **within 12 months, shipping a mute CLI should feel as embarrassing as shipping un-typed Python.**

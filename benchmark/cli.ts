@@ -9,6 +9,7 @@ type CliOptions = {
   provider: string;
   taskLimit?: number;
   outputDir: string;
+  variants?: string[];
 };
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,8 @@ function parseArgs(args: string[]): CliOptions {
   let provider = "stub";
   let taskLimit: number | undefined;
   let outputDir = resolve(BENCHMARK_DIR, "results", today);
+
+  let variants: string[] | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -43,10 +46,20 @@ function parseArgs(args: string[]): CliOptions {
     if (arg === "--output-dir") {
       outputDir = resolve(args[index + 1] ?? outputDir);
       index += 1;
+      continue;
+    }
+
+    if (arg === "--variants") {
+      const rawValue = args[index + 1];
+      if (rawValue) {
+        variants = rawValue.split(",").map((v) => v.trim());
+      }
+      index += 1;
+      continue;
     }
   }
 
-  return { provider, taskLimit, outputDir };
+  return { provider, taskLimit, outputDir, variants };
 }
 
 export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
@@ -60,6 +73,7 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
     taskLimit: options.taskLimit,
     disableMcp: options.provider === "stub",
     provider: options.provider,
+    variants: options.variants,
   });
 }
 

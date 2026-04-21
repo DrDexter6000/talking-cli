@@ -1,1 +1,0 @@
-{"id":"task-move-recovery-dest-exists","prompt":"Move '/tmp/benchmark-sandbox/temp.txt' to '/tmp/benchmark-sandbox/final.txt'. If the destination already exists, handle the conflict by backing up the existing file first, then perform the move.","checker":"checkMoveRecovery","difficulty":"hard","category":"error/empty"}

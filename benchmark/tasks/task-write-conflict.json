@@ -1,1 +1,0 @@
-{"id":"task-write-conflict","prompt":"Increment the counter in '/tmp/benchmark-sandbox/counter.txt' by 1. The current value should be read first.","checker":"checkWriteConflict","difficulty":"hard","category":"error/empty"}

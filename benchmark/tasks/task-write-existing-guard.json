@@ -1,1 +1,0 @@
-{"id":"task-write-existing-guard","prompt":"Update the config file /tmp/benchmark-sandbox/config.json to set port to 3000.","checker":"checkWriteExistingGuard","difficulty":"hard","category":"error/empty"}

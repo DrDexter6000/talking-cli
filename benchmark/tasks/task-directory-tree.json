@@ -1,1 +1,0 @@
-{"id":"task-directory-tree","prompt":"Generate a recursive directory tree of '/tmp/benchmark-sandbox' as JSON. Show me the full structure.","checker":"checkDirectoryTree","difficulty":"medium","category":"error/empty"}

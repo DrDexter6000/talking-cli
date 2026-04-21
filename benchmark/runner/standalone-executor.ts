@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { basename, dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
   BenchmarkExecutor,
@@ -215,6 +215,27 @@ function getServerConfig(variant: string, sandboxDir: string): { command: string
 export class StandaloneExecutor implements BenchmarkExecutor {
   constructor(private readonly llm: StandaloneLLMProvider) {}
 
+  private loadSystemPrompt(variant: string): string {
+    const skillDir = resolve(BENCHMARK_DIR, "skills");
+    
+    if (variant === "bloated") {
+      const bloatedPath = join(skillDir, "bloated-skill.md");
+      if (existsSync(bloatedPath)) {
+        return readFileSync(bloatedPath, "utf-8");
+      }
+    }
+    
+    if (variant === "talking") {
+      const talkingPath = join(skillDir, "talking-skill.md");
+      if (existsSync(talkingPath)) {
+        return readFileSync(talkingPath, "utf-8");
+      }
+    }
+    
+    // Default system prompt for mute variant
+    return "You are a benchmark executor with access to MCP filesystem tools. Complete the user's request using the available tools. You may call tools multiple times if needed. When done, summarize the result.";
+  }
+
   private evaluateTask(task: BenchmarkTask, finalTurn: unknown): boolean {
     const checker = checkers[task.checker];
     if (!checker) {
@@ -240,8 +261,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     let totalOutputTokens = 0;
     let turnCount = 0;
 
-    const systemPrompt =
-      "You are a benchmark executor with access to MCP filesystem tools. Complete the user's request using the available tools. You may call tools multiple times if needed. When done, summarize the result.";
+    // Load system prompt based on variant
+    const systemPrompt = this.loadSystemPrompt(variant);
     const messages: StandaloneConversationMessage[] = [
       { role: "user", content: systemPrompt + "\n\nUser request: " + task.prompt },
     ];

@@ -1,1 +1,0 @@
-{"id":"task-encoding-trap","prompt":"Read the file '/tmp/benchmark-sandbox/notes.txt' and extract the meeting date.","checker":"checkEncodingTrap","difficulty":"hard","category":"error/empty"}

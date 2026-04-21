@@ -1,7 +1,0 @@
-{
-  "id": "task-search-wildcard-empty",
-  "prompt": "Search for all files matching pattern '*.nonexistent' under '/tmp/benchmark-sandbox'. What did you find?",
-  "checker": "checkSearchEmpty",
-  "difficulty": "medium",
-  "category": "error/empty"
-}

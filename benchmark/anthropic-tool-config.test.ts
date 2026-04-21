@@ -59,7 +59,7 @@ describe("anthropic-compatible benchmark provider configuration", () => {
       { name: "search_files", description: "Search files", input_schema: { type: "object" } },
     ]);
     expect(body.messages).toEqual([
-      { role: "user", content: "system" },
+      { role: "user", content: [{ type: "text", text: "system" }] },
       { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_test123", content: "[]", is_error: false }] },
     ]);
     expect(body.temperature).toBe(1.0);

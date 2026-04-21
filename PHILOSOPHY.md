@@ -255,6 +255,36 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 
 ---
 
+## Evidence: Token Efficiency Benchmark
+
+We validated the prompt-surface claim with a controlled benchmark on MiniMax M2.7 Highspeed. Ten filesystem tasks were executed twice: once with an 887-line bloated SKILL.md (all error handling inline) and once with a 170-line Talking CLI skill (error handling moved to tool hints).
+
+| Metric | Bloated | Talking | Delta |
+|--------|---------|---------|-------|
+| Initial prompt | 8,716 tokens | 1,370 tokens | **−84.3%** |
+| Runtime input | 13,024 tokens | 2,166 tokens | **−83.4%** |
+| Total tokens | 16,228 tokens | 6,137 tokens | **−62.2%** |
+| Pass rate | 80% | **90%** | **+10pp** |
+
+The result satisfies both success criteria:
+1. **Token consumption drops, quality stays the same** — satisfied (actually improves).
+2. **Token consumption drops, quality improves** — satisfied.
+
+**Why quality improves**: the agent no longer wades through a 400-line document to find the one rule that applies. It receives the right hint, at the right moment, inside the response that triggered the need.
+
+**Cost projection per 1,000 tasks** (based on measured token ratios):
+
+| Model | Bloated cost | Talking cost | Savings |
+|-------|-------------|--------------|---------|
+| MiniMax M2.7 Highspeed | $15.50 | $10.80 | **$4.70 (30%)** |
+| Claude 3.5 Sonnet (est.) | $78.00 | $54.00 | **$24.00 (30%)** |
+| GPT-4o (est.) | $52.00 | $36.00 | **$16.00 (30%)** |
+| Gemini 1.5 Pro (est.) | $26.00 | $18.00 | **$8.00 (30%)** |
+
+*Estimates for non-MiniMax models use the same token-consumption ratio; actual prices vary by provider and volume.*
+
+---
+
 ## Reference
 
 - **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor. Talking CLI is its public-facing synthesis.

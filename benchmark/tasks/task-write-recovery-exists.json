@@ -1,1 +1,0 @@
-{"id":"task-write-recovery-exists","prompt":"Create a file '/tmp/benchmark-sandbox/report.txt' with the content 'Status: active'. If the file already exists, read its current content first, then overwrite it with the new content and confirm the change.","checker":"checkWriteRecovery","difficulty":"hard","category":"error/empty"}

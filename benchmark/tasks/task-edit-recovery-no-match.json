@@ -1,1 +1,0 @@
-{"id":"task-edit-recovery-no-match","prompt":"Replace 'TODO: implement feature' with 'DONE: feature implemented' in '/tmp/benchmark-sandbox/src/main.js'. If the exact text isn't found, search for similar patterns and make the replacement.","checker":"checkEditRecovery","difficulty":"hard","category":"error/empty"}

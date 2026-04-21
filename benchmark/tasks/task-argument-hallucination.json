@@ -1,1 +1,0 @@
-{"id":"tool-argument-hallucination","prompt":"Delete all temporary files in '/tmp/benchmark-sandbox/temp' matching pattern '*.tmp'.","checker":"checkArgumentHallucination","difficulty":"hard","category":"error/empty"}

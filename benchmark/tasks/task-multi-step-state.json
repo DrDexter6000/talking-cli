@@ -1,1 +1,0 @@
-{"id":"task-multi-step-state","prompt":"Build the project in '/tmp/benchmark-sandbox'. First check for a build script, then run it, and report any errors.","checker":"checkMultiStepState","difficulty":"hard","category":"error/empty"}

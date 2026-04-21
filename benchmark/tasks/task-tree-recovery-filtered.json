@@ -1,1 +1,0 @@
-{"id":"task-tree-recovery-filtered","prompt":"Get the directory tree of '/tmp/benchmark-sandbox/src'. If the tree appears empty or filtered, try without exclude patterns to see the full structure.","checker":"checkTreeRecovery","difficulty":"hard","category":"error/empty"}

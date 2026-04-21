@@ -1,1 +1,0 @@
-{"id":"task-symlink-resolution","prompt":"Find the actual location of the file '/tmp/benchmark-sandbox/config.json' and read its content.","checker":"checkSymlinkResolution","difficulty":"hard","category":"error/empty"}

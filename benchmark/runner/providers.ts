@@ -30,8 +30,13 @@ type AnthropicResponse = {
   error?: { message?: string };
 };
 
-const REQUEST_TIMEOUT_MS = 90_000;
-const MAX_OUTPUT_TOKENS = 30720;
+// MiniMax M2.7 Highspeed specifications:
+// - Context Window: 204,800 tokens (205K)
+// - Max Output Tokens: 131,072 tokens
+// - Speed: ~100 tokens per second
+// - Pricing: $0.60/1M input, $2.40/1M output
+const REQUEST_TIMEOUT_MS = 120_000; // 2 min timeout for highspeed variant
+const MAX_OUTPUT_TOKENS = 131072; // Max output for M2.7 highspeed
 
 export function createStubProvider(): StandaloneLLMProvider {
   return {

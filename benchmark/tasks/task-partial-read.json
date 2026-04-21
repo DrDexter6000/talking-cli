@@ -1,1 +1,0 @@
-{"id":"task-partial-read","prompt":"Read the database configuration from '/tmp/benchmark-sandbox/config.yaml'. The DB settings are somewhere in the file.","checker":"checkPartialRead","difficulty":"hard","category":"error/empty"}

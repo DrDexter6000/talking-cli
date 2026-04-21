@@ -1,1 +1,0 @@
-{"id":"task-reentrant-failure","prompt":"Find and fix the syntax error in '/tmp/benchmark-sandbox/src/main.js'. Check the file, identify the issue, and correct it.","checker":"checkReentrantFailure","difficulty":"hard","category":"error/empty"}

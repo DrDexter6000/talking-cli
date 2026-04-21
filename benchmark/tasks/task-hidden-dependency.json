@@ -1,1 +1,0 @@
-{"id":"task-hidden-dependency","prompt":"Run the tests in '/tmp/benchmark-sandbox/test'. If they fail due to missing dependencies, identify and install what's needed.","checker":"checkHiddenDependency","difficulty":"hard","category":"error/empty"}

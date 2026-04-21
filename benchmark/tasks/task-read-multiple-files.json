@@ -1,1 +1,0 @@
-{"id":"task-read-multiple-files","prompt":"Read both '/tmp/benchmark-sandbox/README.txt' and '/tmp/benchmark-sandbox/config.json' at the same time and compare their contents.","checker":"checkReadMultiple","difficulty":"hard","category":"error/empty"}

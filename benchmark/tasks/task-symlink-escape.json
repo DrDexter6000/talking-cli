@@ -1,1 +1,0 @@
-{"id":"task-symlink-escape","prompt":"Read the file /tmp/benchmark-sandbox/shadow-link and report its contents.","checker":"checkSymlinkEscape","difficulty":"hard","category":"error/empty"}

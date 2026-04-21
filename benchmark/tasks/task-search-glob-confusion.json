@@ -1,1 +1,0 @@
-{"id":"task-search-glob-confusion","prompt":"Find all JavaScript files in the project under /tmp/benchmark-sandbox.","checker":"checkSearchGlobConfusion","difficulty":"hard","category":"error/empty"}

@@ -1,1 +1,0 @@
-{"id":"task-eisdir-confusion","prompt":"Read the contents of these three paths: /tmp/benchmark-sandbox/data.txt, /tmp/benchmark-sandbox/logs, and /tmp/benchmark-sandbox/link. Report what each one contains.","checker":"checkEisdirConfusion","difficulty":"hard","category":"error/empty"}

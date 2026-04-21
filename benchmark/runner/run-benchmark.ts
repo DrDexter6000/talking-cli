@@ -8,6 +8,7 @@ type RunBenchmarkOptions = {
   taskLimit?: number;
   disableMcp?: boolean;
   provider?: string;
+  variants?: string[];
 };
 
 export async function runBenchmark(
@@ -28,19 +29,16 @@ export async function runBenchmark(
   const limitedTasks = options.taskLimit ? tasks.slice(0, options.taskLimit) : tasks;
   const benchmarkResults = [];
 
+  const variants = options.variants ?? ["mute", "talking"];
   for (const task of limitedTasks) {
-    benchmarkResults.push(
-      await executor.runTask(task, "mute", {
-        outputDir: resultDir,
-        disableMcp: options.disableMcp,
-      }),
-    );
-    benchmarkResults.push(
-      await executor.runTask(task, "talking", {
-        outputDir: resultDir,
-        disableMcp: options.disableMcp,
-      }),
-    );
+    for (const variant of variants) {
+      benchmarkResults.push(
+        await executor.runTask(task, variant, {
+          outputDir: resultDir,
+          disableMcp: options.disableMcp,
+        }),
+      );
+    }
   }
 
   writeFileSync(
