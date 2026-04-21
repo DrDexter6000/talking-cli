@@ -33,7 +33,7 @@ async function runHealthCheck(): Promise<boolean> {
   const baseUrl = (process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com").replace(/\/$/, "");
   
   if (!apiKey) {
-    console.error("‚ùå ANTHROPIC_API_KEY not set");
+    console.error("‚ù?ANTHROPIC_API_KEY not set");
     return false;
   }
   
@@ -54,22 +54,22 @@ async function runHealthCheck(): Promise<boolean> {
     
     if (!response.ok) {
       const error = await response.json();
-      console.error(`‚ùå API Health Check Failed: ${error.error?.message ?? response.statusText}`);
+      console.error(`‚ù?API Health Check Failed: ${error.error?.message ?? response.statusText}`);
       return false;
     }
     
     const data = await response.json();
     if (data.content && data.content.length > 0) {
-      console.log("‚úÖ API Health Check Passed");
+      console.log("‚ú?API Health Check Passed");
       console.log(`   Model: ${data.model}`);
       console.log(`   Response: ${data.content[data.content.length - 1].text ?? "[thinking block]"}`);
       return true;
     } else {
-      console.error("‚ùå API returned empty content");
+      console.error("‚ù?API returned empty content");
       return false;
     }
   } catch (error) {
-    console.error(`‚ùå API Health Check Failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`‚ù?API Health Check Failed: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }
@@ -78,11 +78,11 @@ async function runTokenEfficiencyBenchmark() {
   // Run health check first
   const healthy = await runHealthCheck();
   if (!healthy) {
-    console.error("\n‚ùå Benchmark aborted due to API health check failure");
+    console.error("\n‚ù?Benchmark aborted due to API health check failure");
     console.error("Please check:");
     console.error("  1. ANTHROPIC_API_KEY is set correctly");
     console.error("  2. ANTHROPIC_BASE_URL is correct (https://api.minimaxi.com/anthropic for MiniMax)");
-    console.error("  3. ANTHROPIC_MODEL is correct (MiniMax-M2.7 for MiniMax)");
+    console.error("  3. ANTHROPIC_MODEL is correct (MiniMax-M2.7-highspeed for MiniMax Highspeed)");
     process.exit(1);
   }
   
@@ -209,6 +209,7 @@ async function runTokenEfficiencyBenchmark() {
 }
 
 runTokenEfficiencyBenchmark().catch(console.error);
+
 
 
 

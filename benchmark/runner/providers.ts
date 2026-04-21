@@ -69,16 +69,13 @@ function createAnthropicProvider(): StandaloneLLMProvider {
   }
   let model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
 
-// MiniMax model name correction
-// The correct model name is "MiniMax-M2.7" not "MiniMax-M2.7-highspeed"
-if (baseUrl.includes("minimaxi") && model.includes("highspeed")) {
-  console.warn(`[WARNING] Correcting model name from '${model}' to 'MiniMax-M2.7'`);
-  model = "MiniMax-M2.7";
-}
+
   
   // Validate model name for MiniMax
-  if (baseUrl.includes("minimax") && !model.includes("MiniMax")) {
-    console.warn(`[WARNING] MiniMax endpoint detected but model name '${model}' doesn't start with 'MiniMax'. Common names: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
+  // Validate model name for MiniMax
+if (baseUrl.includes("minimax") && !model.match(/^MiniMax-M\d+\.?\d*(?:-highspeed)?$/)) {
+  console.warn(`[WARNING] MiniMax endpoint detected but model name '${model}' doesn't match expected pattern. Examples: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
+}' doesn't start with 'MiniMax'. Common names: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
   }
 
   return {
@@ -229,4 +226,5 @@ export function createProvider(name: string): StandaloneLLMProvider {
     `Unsupported benchmark provider: ${name}. Supported providers: stub, anthropic.`,
   );
 }
+
 
