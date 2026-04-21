@@ -67,7 +67,19 @@ function createAnthropicProvider(): StandaloneLLMProvider {
   if (baseUrl.includes("minimax.io") && apiKey.startsWith("sk-cp-")) {
     console.warn("[WARNING] Coding Plan key (sk-cp-...) detected with international endpoint (api.minimax.io). China endpoint (api.minimaxi.com) may be required.");
   }
-  const model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
+  let model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
+
+// MiniMax model name correction
+// The correct model name is "MiniMax-M2.7" not "MiniMax-M2.7-highspeed"
+if (baseUrl.includes("minimaxi") && model.includes("highspeed")) {
+  console.warn(`[WARNING] Correcting model name from '${model}' to 'MiniMax-M2.7'`);
+  model = "MiniMax-M2.7";
+}
+  
+  // Validate model name for MiniMax
+  if (baseUrl.includes("minimax") && !model.includes("MiniMax")) {
+    console.warn(`[WARNING] MiniMax endpoint detected but model name '${model}' doesn't start with 'MiniMax'. Common names: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
+  }
 
   return {
     async call(
@@ -159,12 +171,29 @@ function createAnthropicProvider(): StandaloneLLMProvider {
 
       const body = (await response.json()) as AnthropicResponse;
       if (!response.ok) {
-        throw new Error(body.error?.message ?? `Anthropic request failed with status ${response.status}`);
+        const errorMsg = body.error?.message ?? `Anthropic request failed with status ${response.status}`;
+        console.error(`[API Error] ${errorMsg}`);
+        console.error(`[API Error] Request body: ${JSON.stringify(requestBody).substring(0, 500)}...`);
+        throw new Error(errorMsg);
+      }
+      
+      // Validate response has content
+      if (!body.content || body.content.length === 0) {
+        console.error(`[API Warning] Empty content in response. Usage: ${JSON.stringify(body.usage)}`);
+        // Return a graceful fallback instead of failing
+        return {
+          content: [{ type: "text" as const, text: "[Error: Model returned empty response]" }],
+          stop_reason: "end_turn",
+          usage: {
+            input_tokens: body.usage?.input_tokens ?? 0,
+            output_tokens: body.usage?.output_tokens ?? 0,
+          },
+        };
       }
 
       // Filter out thinking blocks from the actionable response.
       // Extended-thinking providers (MiniMax, Claude) emit { type: "thinking" } blocks
-      // that are part of the model's internal reasoning chain â€” not actionable content.
+      // that are part of the model's internal reasoning chain â€?not actionable content.
       // These blocks are excluded from the response content but the LLMResponse metadata
       // (stop_reason, usage) still reflects the full generation including thinking.
       const actionableContent = (body.content ?? []).filter(
@@ -200,3 +229,4 @@ export function createProvider(name: string): StandaloneLLMProvider {
     `Unsupported benchmark provider: ${name}. Supported providers: stub, anthropic.`,
   );
 }
+

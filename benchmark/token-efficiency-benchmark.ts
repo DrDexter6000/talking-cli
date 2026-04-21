@@ -26,7 +26,68 @@ interface TokenEfficiencyReport {
   };
 }
 
+async function runHealthCheck(): Promise<boolean> {
+  console.log("=== Running API Health Check ===");
+  
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const baseUrl = (process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com").replace(/\/$/, "");
+  
+  if (!apiKey) {
+    console.error("❌ ANTHROPIC_API_KEY not set");
+    return false;
+  }
+  
+  try {
+    const response = await fetch(`${baseUrl}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest",
+        max_tokens: 50,
+        messages: [{ role: "user", content: "Hello" }],
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error(`❌ API Health Check Failed: ${error.error?.message ?? response.statusText}`);
+      return false;
+    }
+    
+    const data = await response.json();
+    if (data.content && data.content.length > 0) {
+      console.log("✅ API Health Check Passed");
+      console.log(`   Model: ${data.model}`);
+      console.log(`   Response: ${data.content[data.content.length - 1].text ?? "[thinking block]"}`);
+      return true;
+    } else {
+      console.error("❌ API returned empty content");
+      return false;
+    }
+  } catch (error) {
+    console.error(`❌ API Health Check Failed: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
 async function runTokenEfficiencyBenchmark() {
+  // Run health check first
+  const healthy = await runHealthCheck();
+  if (!healthy) {
+    console.error("\n❌ Benchmark aborted due to API health check failure");
+    console.error("Please check:");
+    console.error("  1. ANTHROPIC_API_KEY is set correctly");
+    console.error("  2. ANTHROPIC_BASE_URL is correct (https://api.minimaxi.com/anthropic for MiniMax)");
+    console.error("  3. ANTHROPIC_MODEL is correct (MiniMax-M2.7 for MiniMax)");
+    process.exit(1);
+  }
+  
+  console.log("");
+  
   const resultDir = resolve(BENCHMARK_DIR, "results", `token-efficiency-${new Date().toISOString().slice(0, 10)}`);
   mkdirSync(resultDir, { recursive: true });
 
