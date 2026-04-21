@@ -4,39 +4,14 @@ import type {
 } from "./standalone-executor.js";
 import type { BenchmarkToolDefinition } from "./types.js";
 
-type AnthropicTextBlock = {
-  type: "text";
-  text: string;
-};
-
-type AnthropicToolUseBlock = {
-  type: "tool_use";
-  id: string;
-  name: string;
-  input: Record<string, unknown>;
-};
-
-type AnthropicThinkingBlock = {
-  type: "thinking";
-  thinking: string;
-};
-
-type AnthropicContentBlock = AnthropicTextBlock | AnthropicToolUseBlock | AnthropicThinkingBlock;
-
-type AnthropicResponse = {
-  content?: AnthropicContentBlock[];
-  stop_reason?: string;
-  usage?: { input_tokens?: number; output_tokens?: number };
-  error?: { message?: string };
-};
-
-// MiniMax M2.7 Highspeed specifications:
-// - Context Window: 204,800 tokens (205K)
-// - Max Output Tokens: 131,072 tokens
-// - Speed: ~100 tokens per second
-// - Pricing: $0.60/1M input, $2.40/1M output
-const REQUEST_TIMEOUT_MS = 120_000; // 2 min timeout for highspeed variant
-const MAX_OUTPUT_TOKENS = 131072; // Max output for M2.7 highspeed
+// DeepSeek API specifications:
+// - Base URL: https://api.deepseek.com
+// - Format: OpenAI compatible
+// - Models: deepseek-chat (non-thinking), deepseek-reasoner (thinking)
+// - Auth: Bearer token in Authorization header
+// - Context Window: 64K tokens
+const REQUEST_TIMEOUT_MS = 300_000; // 5 minutes for complex tasks
+const MAX_OUTPUT_TOKENS = 4096; // 4K tokens limit as requested
 
 export function createStubProvider(): StandaloneLLMProvider {
   return {
@@ -54,28 +29,18 @@ export function createStubProvider(): StandaloneLLMProvider {
   };
 }
 
-function createAnthropicProvider(): StandaloneLLMProvider {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+function createDeepSeekProvider(): StandaloneLLMProvider {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is required for benchmark provider 'anthropic'.");
+    throw new Error("DEEPSEEK_API_KEY is required for benchmark provider 'deepseek'.");
   }
-  const baseUrl = (process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com").replace(/\/$/, "");
-  // MiniMax has two endpoints:
-  // - api.minimax.io (international) - for pay-as-you-go keys
-  // - api.minimaxi.com (China) - for Coding Plan keys (sk-cp-...)
-  // The correct endpoint depends on the key type, not a universal rule.
-  if (baseUrl.includes("minimax.io") && apiKey.startsWith("sk-cp-")) {
-    console.warn("[WARNING] Coding Plan key (sk-cp-...) detected with international endpoint (api.minimax.io). China endpoint (api.minimaxi.com) may be required.");
-  }
-  let model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
+  const baseUrl = (process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com").replace(/\/$/, "");
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
-
-  
-  // Validate model name for MiniMax
-  // Validate model name for MiniMax
-if (baseUrl.includes("minimax") && !model.match(/^MiniMax-M\d+\.?\d*(?:-highspeed)?$/)) {
-  console.warn(`[WARNING] MiniMax endpoint detected but model name '${model}' doesn't match expected pattern. Examples: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
-}' doesn't start with 'MiniMax'. Common names: MiniMax-M2.7, MiniMax-M2.7-highspeed`);
+  // Validate model name
+  const validModels = ["deepseek-chat", "deepseek-reasoner"];
+  if (!validModels.includes(model)) {
+    console.warn(`[WARNING] Unknown DeepSeek model '${model}'. Valid models: ${validModels.join(", ")}`);
   }
 
   return {
@@ -87,77 +52,81 @@ if (baseUrl.includes("minimax") && !model.match(/^MiniMax-M\d+\.?\d*(?:-highspee
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-      // Extract system prompt from first user message (benchmark convention)
-      // MiniMax requires 'system' as a top-level field, not inside messages
-      let systemPrompt: string | undefined;
-      const processedMessages = messages.reduce<Array<{ role: string; content: unknown }>>((acc, message) => {
+      // Convert messages to OpenAI format
+      const processedMessages = messages.reduce<Array<{ role: string; content: string }>>((acc, message) => {
         if (message.role === "tool") {
           acc.push({
             role: "user",
-            content: [{
-              type: "tool_result",
-              tool_use_id: message.toolUseId,
-              content: message.content,
-              is_error: message.isError ?? false,
-            }],
+            content: `[Tool Result: ${message.name}] ${message.content}`,
           });
         } else if (message.role === "assistant_content") {
-          acc.push({
-            role: "assistant",
-            content: message.content,
-          });
+          // Extract text content from assistant_content
+          const content = message.content as Array<{ type: string; text?: string }>;
+          const text = content
+            .filter((block) => block.type === "text")
+            .map((block) => block.text)
+            .join("\n");
+          acc.push({ role: "assistant", content: text || "" });
         } else if (message.role === "user") {
-          const text = message.content as string;
-          // Extract system prompt if present (format: "system prompt\n\nUser request: ...")
-          const systemMatch = text.match(/^(You are [^\n]+)\n\nUser request: /);
-          if (systemMatch && !systemPrompt) {
-            systemPrompt = systemMatch[1];
-            acc.push({
-              role: "user",
-              content: [{ type: "text", text: text.replace(systemMatch[1] + "\n\n", "") }],
-            });
-          } else {
-            acc.push({
-              role: "user",
-              content: [{ type: "text", text }],
-            });
-          }
-        } else {
-          acc.push({
-            role: message.role,
-            content: [{ type: "text", text: message.content as string }],
-          });
+          acc.push({ role: "user", content: message.content as string });
+        } else if (message.role === "assistant") {
+          acc.push({ role: "assistant", content: message.content as string });
         }
         return acc;
       }, []);
 
-      const requestBody: Record<string, unknown> = {
-        model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        temperature: 1.0,
-        messages: processedMessages,
-      };
-
-      if (systemPrompt) {
-        requestBody.system = systemPrompt;
+      // Extract system prompt if present
+      // Supports two formats:
+      // 1. "You are xxx\n\nUser request: ..." (legacy format)
+      // 2. "---\nname: xxx\n...\n---\n# Title\n...\n\nUser request: ..." (YAML frontmatter format)
+      let systemPrompt: string | undefined;
+      const firstMessage = processedMessages[0];
+      if (firstMessage && firstMessage.role === "user") {
+        const content = firstMessage.content;
+        
+        // Try legacy format first
+        const legacyMatch = content.match(/^(You are [^\n]+)\n\nUser request: /);
+        if (legacyMatch) {
+          systemPrompt = legacyMatch[1];
+          firstMessage.content = content.replace(legacyMatch[1] + "\n\n", "");
+        } else {
+          // Try YAML frontmatter format: extract everything before "User request:"
+          const yamlMatch = content.match(/^(---[\s\S]*?---\n[\s\S]*?)\n\nUser request: /);
+          if (yamlMatch) {
+            systemPrompt = yamlMatch[1].trim();
+            firstMessage.content = content.replace(yamlMatch[1] + "\n\n", "");
+          }
+        }
       }
 
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages: systemPrompt 
+          ? [{ role: "system", content: systemPrompt }, ...processedMessages]
+          : processedMessages,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        temperature: 1.0,
+      };
+
+      // Add tools if provided (DeepSeek supports function calling)
       if (tools.length > 0) {
         requestBody.tools = tools.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          input_schema: tool.inputSchema,
+          type: "function" as const,
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema,
+          },
         }));
       }
 
       let response: Response;
       try {
-        response = await fetch(`${baseUrl}/v1/messages`, {
+        response = await fetch(`${baseUrl}/chat/completions`, {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
+            "authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify(requestBody),
           signal: controller.signal,
@@ -166,47 +135,67 @@ if (baseUrl.includes("minimax") && !model.match(/^MiniMax-M\d+\.?\d*(?:-highspee
         clearTimeout(timeout);
       }
 
-      const body = (await response.json()) as AnthropicResponse;
+      const body = await response.json() as {
+        choices?: Array<{
+          message: {
+            content: string;
+            tool_calls?: Array<{
+              id: string;
+              function: { name: string; arguments: string };
+            }>;
+            reasoning_content?: string;
+          };
+          finish_reason: string;
+        }>;
+        usage?: { prompt_tokens: number; completion_tokens: number };
+        error?: { message: string };
+      };
+
       if (!response.ok) {
-        const errorMsg = body.error?.message ?? `Anthropic request failed with status ${response.status}`;
+        const errorMsg = body.error?.message ?? `DeepSeek request failed with status ${response.status}`;
         console.error(`[API Error] ${errorMsg}`);
-        console.error(`[API Error] Request body: ${JSON.stringify(requestBody).substring(0, 500)}...`);
         throw new Error(errorMsg);
       }
-      
-      // Validate response has content
-      if (!body.content || body.content.length === 0) {
-        console.error(`[API Warning] Empty content in response. Usage: ${JSON.stringify(body.usage)}`);
-        // Return a graceful fallback instead of failing
-        return {
-          content: [{ type: "text" as const, text: "[Error: Model returned empty response]" }],
-          stop_reason: "end_turn",
-          usage: {
-            input_tokens: body.usage?.input_tokens ?? 0,
-            output_tokens: body.usage?.output_tokens ?? 0,
-          },
-        };
+
+      const choice = body.choices?.[0];
+      if (!choice) {
+        throw new Error("DeepSeek returned empty choices");
       }
 
-      // Filter out thinking blocks from the actionable response.
-      // Extended-thinking providers (MiniMax, Claude) emit { type: "thinking" } blocks
-      // that are part of the model's internal reasoning chain â€?not actionable content.
-      // These blocks are excluded from the response content but the LLMResponse metadata
-      // (stop_reason, usage) still reflects the full generation including thinking.
-      const actionableContent = (body.content ?? []).filter(
-        (block): block is AnthropicTextBlock | AnthropicToolUseBlock => block.type !== "thinking",
-      );
+      const content: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }> = [];
+
+      // Add text content
+      if (choice.message.content) {
+        content.push({ type: "text", text: choice.message.content });
+      }
+
+      // Add tool calls
+      if (choice.message.tool_calls) {
+        for (const toolCall of choice.message.tool_calls) {
+          try {
+            const input = JSON.parse(toolCall.function.arguments);
+            content.push({
+              type: "tool_use",
+              id: toolCall.id,
+              name: toolCall.function.name,
+              input,
+            });
+          } catch {
+            console.error(`[API Error] Failed to parse tool call arguments: ${toolCall.function.arguments}`);
+          }
+        }
+      }
 
       return {
-        content: actionableContent.map((block) =>
+        content: content.map((block) =>
           block.type === "tool_use"
-            ? { type: "tool_use" as const, id: block.id, name: block.name, input: block.input }
-            : { type: "text" as const, text: block.text },
+            ? { type: "tool_use" as const, id: block.id!, name: block.name!, input: block.input! }
+            : { type: "text" as const, text: block.text! },
         ),
-        stop_reason: body.stop_reason ?? "end_turn",
+        stop_reason: choice.finish_reason === "tool_calls" ? "tool_use" : "end_turn",
         usage: {
-          input_tokens: body.usage?.input_tokens ?? 0,
-          output_tokens: body.usage?.output_tokens ?? 0,
+          input_tokens: body.usage?.prompt_tokens ?? 0,
+          output_tokens: body.usage?.completion_tokens ?? 0,
         },
       };
     },
@@ -218,13 +207,11 @@ export function createProvider(name: string): StandaloneLLMProvider {
     return createStubProvider();
   }
 
-  if (name === "anthropic") {
-    return createAnthropicProvider();
+  if (name === "deepseek") {
+    return createDeepSeekProvider();
   }
 
   throw new Error(
-    `Unsupported benchmark provider: ${name}. Supported providers: stub, anthropic.`,
+    `Unsupported benchmark provider: ${name}. Supported providers: stub, deepseek.`,
   );
 }
-
-

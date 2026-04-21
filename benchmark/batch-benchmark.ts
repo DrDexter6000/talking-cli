@@ -81,7 +81,7 @@ async function runBatch(
   const batchTasks = tasks.slice(startIndex, startIndex + batchSize);
   console.log(`Running batch: tasks ${startIndex + 1} to ${startIndex + batchTasks.length} of ${tasks.length}`);
 
-  const provider = createProvider("anthropic");
+  const provider = createProvider("deepseek");
   const executor = new StandaloneExecutor(provider);
 
   const results: BatchResult[] = [];
@@ -229,4 +229,5 @@ async function runBenchmarkWithBatches() {
 
 // Run benchmark with batching
 runBenchmarkWithBatches().catch(console.error);
+
 

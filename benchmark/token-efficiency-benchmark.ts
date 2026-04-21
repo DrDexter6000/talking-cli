@@ -105,7 +105,7 @@ async function runTokenEfficiencyBenchmark() {
   const limitedTasks = tasks.slice(0, 10);
   console.log(`Running token efficiency benchmark with ${limitedTasks.length} tasks...`);
 
-  const provider = createProvider("anthropic");
+  const provider = createProvider("deepseek");
   const executor = new StandaloneExecutor(provider);
 
   const results: Array<{ variant: string; turns: number; inputTokens: number; outputTokens: number; pass: boolean }> = [];
@@ -209,6 +209,7 @@ async function runTokenEfficiencyBenchmark() {
 }
 
 runTokenEfficiencyBenchmark().catch(console.error);
+
 
 
 

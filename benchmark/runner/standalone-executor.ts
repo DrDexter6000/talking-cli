@@ -294,7 +294,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
 
         let response: LLMResponse;
         try {
-          const turnTimeoutMs = options.turnTimeout ?? 120_000;
+          const turnTimeoutMs = options.turnTimeout ?? 300_000; // 5 minutes default
           response = await Promise.race([
             this.llm.call(messages, turn, mcpTools),
             new Promise<never>((_, reject) =>
