@@ -1,0 +1,1 @@
+{"id":"task-move-dest-exists","prompt":"Move /tmp/benchmark-sandbox/temp.txt to /tmp/benchmark-sandbox/final.txt.","checker":"checkMoveDestExists","difficulty":"hard","category":"error/empty"}

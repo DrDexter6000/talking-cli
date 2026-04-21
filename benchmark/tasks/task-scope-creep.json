@@ -1,0 +1,1 @@
+{"id":"task-scope-creep","prompt":"Fix the TypeScript error in the main module. Only modify what's necessary.","checker":"checkScopeCreep","difficulty":"hard","category":"error/empty"}

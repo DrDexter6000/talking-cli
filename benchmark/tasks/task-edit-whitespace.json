@@ -1,0 +1,1 @@
+{"id":"task-edit-whitespace","prompt":"Update the function name from 'oldFunction' to 'newFunction' in /tmp/benchmark-sandbox/src/utils.js.","checker":"checkEditWhitespace","difficulty":"hard","category":"error/empty"}

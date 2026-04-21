@@ -1,0 +1,1 @@
+{"id":"task-mock-write-verify","prompt":"Create a file at /tmp/benchmark-sandbox/output.txt with the content 'Hello World'. Confirm the file was actually created.","checker":"checkMockWriteVerify","difficulty":"hard","category":"error/empty"}
