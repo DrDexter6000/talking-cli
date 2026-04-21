@@ -1,6 +1,6 @@
 # Talking CLI
 
-> **Tool silence is a design defect. distributed prompting is the fix.**
+> **Tool silence is a design defect. Distributed Prompting is the fix.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
@@ -19,7 +19,7 @@ That's not a skill problem. That's a **prompt surface** problem. You only know o
 
 **Talking CLI gives your tools a voice.** When the agent calls, the tool talks back — not with a wall of prose, but with the right hint, at the right moment, inside the response.     
 
-> That's **distributed prompting**: progressive disclosure, with **prompt-on-call** as its implementation pattern.
+> That's **Distributed Prompting**: progressive disclosure, with **Prompt-On-Call** as its implementation pattern.
 
 ---
 
@@ -35,11 +35,11 @@ Anthropic also advocates ["steering agents with helpful instructions in tool res
 
 ## What this project is
 
-Talking CLI is a **three-leg stool** built around one idea: **distributed prompting** — moving guidance from static SKILL.md into the moment of invocation.
+Talking CLI is a **three-leg stool** built around one idea: **Distributed Prompting** — moving guidance from static SKILL.md into the moment of invocation.
 
-You can also think of this as **prompt-on-call**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
+You can also think of this as **Prompt-On-Call**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
 
-1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for prompt-on-call's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
+1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for Distributed Prompting's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
 2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
 3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
 
@@ -53,7 +53,7 @@ Or, in distributed-systems language:
 
 > **Centralized guidance (SKILL.md) + Distributed guidance (tool hints) = One prompt budget.**
 
-Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**distributed prompting** via **prompt-on-call**) is the single biggest lever most skill authors haven't pulled.
+Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**Distributed Prompting** via **Prompt-On-Call**) is the single biggest lever most skill authors haven't pulled.
 
 ---
 
@@ -69,7 +69,7 @@ graph LR
         A1 -.->|repeated guidance<br/>shoved upstream| A3
     end
 
-    subgraph After ["✅ After: distributed prompting"]
+    subgraph After ["✅ After: Distributed Prompting"]
         B1[SKILL.md<br/>&lt; 150 lines] --> B2[Agent]
         B3[Tool returns<br/>JSON + hints] --> B2
     end
@@ -220,7 +220,7 @@ We analyzed the **OpenClaw gh-issues** skill (887 lines of bloated SKILL.md vs 1
 
 ## The Methodology
 
-Talking CLI is more than a linter. It's the implementation of **distributed prompting**: every tool response is a designed prompt surface, not a data dump. Prompt-on-call is the concrete pattern for achieving this.
+Talking CLI is more than a linter. It's the implementation of **Distributed Prompting**: every tool response is a designed prompt surface, not a data dump. **Prompt-On-Call** is the concrete pattern for achieving this.
 
 - **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
 - **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).

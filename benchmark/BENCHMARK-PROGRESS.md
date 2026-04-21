@@ -239,7 +239,7 @@ npm run benchmark:smoke
 
 ## 9. Contact & Context
 
-**Project**: Talking CLI — distributed prompting / prompt-on-call methodology
+**Project**: Talking CLI — **Distributed Prompting** / **Prompt-On-Call** methodology
 **Goal**: Prove that moving guidance from SKILL.md into tool responses reduces token consumption and improves task completion
 **Current Phase**: Framework complete; awaiting validation on capable models
 **Next Phase**: Functional validation on Claude/GPT-4, then MCP spec proposal
