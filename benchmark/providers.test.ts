@@ -16,7 +16,7 @@ describe("benchmark provider factory", () => {
     delete process.env.DEEPSEEK_API_KEY;
   });
 
-  it("throws for unsupported providers", () => {
-    expect(() => createProvider("unsupported")).toThrow(/Unsupported benchmark provider/);
+  it("throws for unknown providers", () => {
+    expect(() => createProvider("unknown-provider")).toThrow(/Unknown provider/);
   });
 });

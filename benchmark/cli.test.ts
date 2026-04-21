@@ -27,9 +27,9 @@ describe("benchmark CLI", () => {
     expect(summary.perTask).toHaveLength(2);
   }, 15000);
 
-  it("rejects unsupported providers with a clear error", async () => {
+  it("rejects unknown providers with a clear error", async () => {
     await expect(main(["--provider", "unsupported"])).rejects.toThrow(
-      /Unsupported benchmark provider/i,
+      /Unknown provider/i,
     );
   });
 });
