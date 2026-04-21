@@ -40,6 +40,9 @@ benchmark/tmp/
 benchmark/*.local.json
 benchmark/config.local.json
 
+# Benchmark directory (temporary exclusion for development)
+benchmark/
+
 # Test / tool caches
 .nyc_output/
 .cache/

@@ -1,13 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { StandaloneExecutor } from './benchmark/dist/runner/standalone-executor.js';
-import { createProvider } from './benchmark/dist/runner/providers.js';
+import { StandaloneExecutor } from './runner/standalone-executor.js';
+import { createProvider } from './runner/providers.js';
 
 async function runSingleTask() {
   const resultDir = resolve('benchmark', 'results', 'deepseek-single-task-' + new Date().toISOString().slice(0, 10));
   mkdirSync(resultDir, { recursive: true });
 
-  // ¶ÁÈ¡×î¼òµ¥µÄÈÎÎñ
+  // ï¿½ï¿½È¡ï¿½ï¿½òµ¥µï¿½ï¿½ï¿½ï¿½ï¿½
   const taskFile = resolve('benchmark', 'tasks', 'task-code-review-automation.json');
   const task = JSON.parse(readFileSync(taskFile, 'utf-8'));
 

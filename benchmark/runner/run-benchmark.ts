@@ -23,12 +23,36 @@ function formatDuration(ms: number): string {
   return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
 }
 
+let lastProgressTime = Date.now();
+let lastProgressCompleted = 0;
+
 function printProgress(completed: number, total: number, currentTask: string, currentVariant: string, result?: BenchmarkRunResult) {
   const percent = ((completed / total) * 100).toFixed(1);
   const status = result 
     ? `${result.pass ? "✅" : "❌"} ${result.turns}turns ${result.inputTokens + result.outputTokens}tok`
     : "running...";
   console.log(`[${completed}/${total}] ${percent}% | ${currentVariant} | ${currentTask} | ${status}`);
+  
+  // Progress heartbeat every 2-5 minutes to prevent user thinking it's hung
+  const now = Date.now();
+  const elapsed = now - lastProgressTime;
+  const completedSinceLast = completed - lastProgressCompleted;
+  
+  // Report every 3 minutes OR every 10 tasks, whichever comes first
+  if (elapsed > 180_000 || completedSinceLast >= 10) {
+    const rate = elapsed > 0 ? (completedSinceLast / (elapsed / 60000)).toFixed(1) : "0";
+    const remaining = total - completed;
+    const etaMinutes = rate !== "0" ? (remaining / Number(rate)).toFixed(0) : "?";
+    
+    console.log("");
+    console.log(`⏱️  Progress heartbeat: ${completed}/${total} (${percent}%)`);
+    console.log(`   Speed: ${rate} tasks/min | ETA: ~${etaMinutes} min`);
+    console.log(`   Current: ${currentVariant} | ${currentTask}`);
+    console.log("");
+    
+    lastProgressTime = now;
+    lastProgressCompleted = completed;
+  }
 }
 
 async function runTaskWithTimeout(
@@ -186,6 +210,10 @@ export async function runBenchmark(
   console.log(`   Resume: ${options.resume ? "Yes" : "No"}`);
   console.log(`   Output: ${resultDir}`);
   console.log("");
+
+  // Reset progress tracking
+  lastProgressTime = Date.now();
+  lastProgressCompleted = 0;
 
   if (options.parallel) {
     benchmarkResults.push(...await runParallel(

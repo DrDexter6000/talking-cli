@@ -439,5 +439,8 @@ function createGeminiProvider(config: ProviderConfig): StandaloneLLMProvider {
   };
 }
 
-export { loadProviderConfig, listAvailableProviders, generateProviderConfigTemplate };
+export { loadProviderConfig };
 export type { ProviderConfig };
+
+// Re-export from provider-config.ts for backward compatibility
+export { listAvailableProviders, generateProviderConfigTemplate } from "./provider-config.js";
