@@ -1,0 +1,1 @@
+{"id":"task-permission-cascade","prompt":"Create a backup of '/tmp/benchmark-sandbox/data/important.db' to '/tmp/benchmark-sandbox/backup/important.db'.","checker":"checkPermissionCascade","difficulty":"hard","category":"error/empty"}

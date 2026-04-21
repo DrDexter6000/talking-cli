@@ -1,0 +1,1 @@
+{"id":"task-schema-drift","prompt":"List all files in '/tmp/benchmark-sandbox/project' recursively, showing file sizes.","checker":"checkSchemaDrift","difficulty":"hard","category":"error/empty"}

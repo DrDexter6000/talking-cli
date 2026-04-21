@@ -1,0 +1,1 @@
+{"id":"task-context-pollution","prompt":"Parse the JSON data in '/tmp/benchmark-sandbox/output.json' and create a summary report.","checker":"checkContextPollution","difficulty":"hard","category":"error/empty"}

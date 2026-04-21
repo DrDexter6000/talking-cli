@@ -1,0 +1,1 @@
+{"id":"task-rate-limit-recovery","prompt":"Search for all TODO comments across the entire '/tmp/benchmark-sandbox' directory tree.","checker":"checkRateLimitRecovery","difficulty":"hard","category":"error/empty"}

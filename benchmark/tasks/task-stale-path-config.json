@@ -1,0 +1,1 @@
+{"id":"task-stale-path-config","prompt":"Read the application configuration file and tell me the database port. The config is typically at '/tmp/benchmark-sandbox/config.yaml'.","checker":"checkStalePathConfig","difficulty":"hard","category":"error/empty"}
