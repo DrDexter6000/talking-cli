@@ -3,6 +3,7 @@
 > **SSOT (Single Source of Truth)** for all benchmark-related progress, findings, and decisions.
 > Last updated: 2026-04-21
 > Status: Active development
+> Version: Framework v0.6 (package.json 0.1.0)
 
 ---
 
@@ -78,14 +79,33 @@ npm run benchmark -- --provider minimax --limit 5
 
 **Conclusion**: Model capability is the bottleneck, not the methodology.
 
-### 2.4 Token Efficiency (Valid ✅)
+### 2.5 Phase 1 Benchmark Results (Honest Finding)
 
-**OpenClaw gh-issues case study**:
+**Date**: 2026-04-20
+**Model**: MiniMax-M2.7-highspeed
+**Task Set**: 25 filesystem tasks
+**Variants**: mute vs talking (with hints)
+
+**Result**: **NEGATIVE (statistically significant)**
+- Talking wins: 0
+- Mute wins: 6  
+- Ties: 19
+- Sign test: n=6, p=0.03125 (< 0.05)
+
+**Interpretation**: On MiniMax M2.7, the mute variant (no hints) significantly outperformed the talking variant. This does NOT mean the methodology is invalid — it means this particular model cannot leverage the hints effectively.
+
+**Full details**: See `.internal/TDD-P4-phase-1.md` for complete execution log.
+
+### 2.4 Token Efficiency (Case Study Only)
+
+**OpenClaw gh-issues case study** (static analysis, no model execution):
 - Bloated: 887 lines / 4,939 words / 34,850 chars
 - Talking: 170 lines / 772 words / 5,479 chars
 - **84.3% volume reduction**
 
-**This is objective and independent of model capability.**
+⚠️ **Important**: This measures SKILL.md size reduction only. It does NOT prove that the talking variant achieves the same task quality with fewer tokens. The controlled benchmark (Phase 1) produced a NEGATIVE result on MiniMax M2.7 (see §2.5 below).
+
+**This is objective and independent of model capability, but it is not sufficient evidence of the full claim.**
 
 ---
 
@@ -95,7 +115,7 @@ npm run benchmark -- --provider minimax --limit 5
 
 | Decision | Rationale |
 |----------|-----------|
-| No more model testing | MiniMax M2.7 is too weak; stronger models cost too much |
+| Pause model testing | MiniMax M2.7 produced negative results; stronger models needed for validation |
 | Focus on token efficiency | Objective, reproducible, independent of model capability |
 | Case study approach | OpenClaw, Anthropic skill-creator, Vercel AGENTS.md |
 | Keep functional benchmark | For future stronger models; framework is ready |
@@ -153,16 +173,22 @@ npm run benchmark -- --provider minimax --limit 5
 
 ### Achieved ✅
 
-1. **Token consumption reduction**: 84.3% initial prompt reduction (OpenClaw case)
-2. **Framework robustness**: Progress reporting, parallel execution, resume
-3. **Hint coverage**: 10/10 tools have hints
-4. **Task diversity**: Recovery tasks, error scenarios, edge cases
+1. **Framework robustness**: Progress reporting, parallel execution, resume, extended metrics
+2. **Hint coverage**: 10/10 tools have hints
+3. **Task diversity**: Recovery tasks, error scenarios, edge cases
+4. **Provider flexibility**: Configurable provider system (stub, deepseek, openai, minimax, gemini)
 
 ### Pending ⏳
 
-1. **Task quality improvement**: Higher discordance rate with current model
+1. **Functional validation on capable models**: Test on Claude 3.5 Sonnet or GPT-4 to verify talking > mute
 2. **More case studies**: Anthropic, Vercel, other ecosystems
-3. **Statistical significance**: p < 0.05 on functional benchmark
+3. **Statistical significance**: p < 0.05 on functional benchmark with a model that can leverage hints
+
+### Honest Assessment ⚠️
+
+- **Token efficiency claim**: 84.3% SKILL.md reduction proven (static analysis)
+- **Task quality claim**: NOT proven on tested models (MiniMax M2.7 showed opposite result)
+- **Methodology validity**: Remains theoretically sound; needs validation on stronger models
 
 ---
 
@@ -191,13 +217,19 @@ npm run benchmark -- --provider minimax --limit 5
 ### Commands
 ```bash
 # Run benchmark with progress and parallel execution
-npm run benchmark -- --provider minimax --parallel --max-concurrency 3
+npm run benchmark -- --provider deepseek --parallel --max-concurrency 3
 
 # Resume interrupted benchmark
-npm run benchmark -- --provider minimax --parallel --resume
+npm run benchmark -- --provider deepseek --parallel --resume
 
 # Quick test with limited tasks
-npm run benchmark -- --provider minimax --limit 5
+npm run benchmark -- --provider deepseek --limit 5
+
+# List available providers
+npm run benchmark -- --list-providers
+
+# Generate provider config template
+npm run benchmark -- --init-config
 
 # Smoke test (no API key needed)
 npm run benchmark:smoke
@@ -207,15 +239,16 @@ npm run benchmark:smoke
 
 ## 9. Contact & Context
 
-**Project**: Talking CLI — prompt-on-call / distributed prompting methodology
+**Project**: Talking CLI — distributed prompting / prompt-on-call methodology
 **Goal**: Prove that moving guidance from SKILL.md into tool responses reduces token consumption and improves task completion
-**Current Phase**: Evidence collection (benchmark framework + case studies)
-**Next Phase**: MCP spec proposal (when evidence is solid)
+**Current Phase**: Framework complete; awaiting validation on capable models
+**Next Phase**: Functional validation on Claude/GPT-4, then MCP spec proposal
 
 **Key Insight**: 
 > "The agent receives guidance exactly when it needs it, not buried in a 400-line document."
 
 **Value Proposition**:
-- Token efficiency: 84.3% reduction in initial prompt size
+- Token efficiency: 84.3% reduction in initial prompt size (proven via static analysis)
 - Maintainability: Hints live with tools, not in monolithic SKILL.md
 - Composability: Each tool carries its own guidance
+- ⚠️ Task quality improvement: NOT yet proven on tested models; needs validation on stronger models

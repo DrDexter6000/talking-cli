@@ -1,6 +1,6 @@
 # The Talking CLI Philosophy
 
-*The methodology behind **prompt-on-call**: how to design agent tools that are active participants in reasoning, not mute subroutines.*
+*The methodology behind **distributed prompting**: how to design agent tools that are active participants in reasoning, not mute subroutines.*
 
 ---
 
@@ -49,13 +49,13 @@ This is not a metaphor. It is a concrete architectural claim:
 
 Agent-native tooling does not just read prompts. It writes them, mid-loop.
 
-We call this **prompt-on-call**. It is progressive disclosure applied to the agent–tool boundary: guidance is not pre-announced in a global document; it is surfaced locally, at the moment of invocation, based on what actually happened.
+We call this **distributed prompting**. It is progressive disclosure applied to the agent–tool boundary: guidance is not pre-announced in a global document; it is surfaced locally, at the moment of invocation, based on what actually happened.
 
 ---
 
-## Also Known As: Distributed Prompting
+## Implementation: Prompt-on-Call
 
-If "prompt-on-call" sounds too telephonic, call it **distributed prompting**.
+If "distributed prompting" sounds too abstract, call it **prompt-on-call**. This is the concrete implementation pattern: guidance is attached to the tool call itself, delivered in the response, at the moment the agent needs it.
 
 The analogy is exact:
 
@@ -67,7 +67,7 @@ The analogy is exact:
 
 The discipline that makes distributed prompting work is the same discipline that makes distributed systems work: **a shared protocol**. In Talking CLI, that protocol is the Four Rules of Talk (below). Without the rules, distributed prompting collapses into chaos — every tool invents its own voice, and the agent drowns in incompatible guidance.
 
-> **prompt-on-call = distributed prompting + the Four Rules protocol**
+> **distributed prompting = prompt-on-call + the Four Rules protocol**
 
 ---
 
@@ -222,11 +222,11 @@ The tool encounters genuine ambiguity and resolves it silently. No hint, no sign
 Talking CLI does not invent a new channel. It names, budgets, and disciplines one everybody already has but few design on purpose.
 
 - **Progressive disclosure (Anthropic skills)** — Same family. Anthropic formalized progressive disclosure as a three-level skill-loading architecture ([Barry Zhang, Keith Lazuka, Mahesh Murag, Oct 2025](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)), now an [open standard](https://agentskills.io). It covers the `SKILL.md` half of the prompt surface; leaves the tool-output half unstructured. Talking CLI complements it on the other half.
-- **Tool response guidance (Anthropic)** — The closest precedent. Anthropic's ["Writing Effective Tools for Agents"](https://www.anthropic.com/engineering/writing-tools-for-agents) (Jan 2026) advocates "steering agents with helpful instructions" in tool responses and "prompt-engineering your error responses." But it treats this as a paragraph-level best practice — no named concept, no budget, no audit, no protocol proposal. Talking CLI formalizes this insight as **prompt-on-call**.
+- **Tool response guidance (Anthropic)** — The closest precedent. Anthropic's ["Writing Effective Tools for Agents"](https://www.anthropic.com/engineering/writing-tools-for-agents) (Jan 2026) advocates "steering agents with helpful instructions" in tool responses and "prompt-engineering your error responses." But it treats this as a paragraph-level best practice — no named concept, no budget, no audit, no protocol proposal. Talking CLI formalizes this insight as **distributed prompting** (with prompt-on-call as its implementation pattern).
 - **MCP `structuredContent`** — Provides a technical channel for structured tool output. Offers no methodology for what to put in it. Talking CLI fills that gap.
 - **ReAct** — Observation as a step in the agent's loop. Describes the mechanism; does not prescribe observation as a designed prompt surface.
 - **Tool result design in agent frameworks (LangChain, AutoGen, et al.)** — Fragmented practice. Tool returns are ad-hoc payloads with occasional hints. Talking CLI names the fragment and makes it a first-class design surface.
-- **Distributed prompting** — The engineering framing of prompt-on-call. Emphasizes the shift from centralized (SKILL.md) to decentralized (per-tool response) guidance architecture, with a shared protocol ensuring consistency.
+- **Prompt-on-call** — The implementation pattern for distributed prompting. The concrete mechanism of attaching guidance to individual tool responses at the moment of invocation.
 - **Context engineering** — The parent discipline. Named and popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025. Talking CLI is a concrete sub-pattern: context engineering applied to the agent–tool boundary.
 
 ---
@@ -305,4 +305,4 @@ The ideas rest on work by many others:
 - **Anthropic** (Ken Aizawa) advocated "steering agents with helpful instructions in tool responses" ([Jan 2026](https://www.anthropic.com/engineering/writing-tools-for-agents)).
 - **Tobi Lütke** and **Andrej Karpathy** named and popularized *context engineering* as a discipline ([mid-2025](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)).
 
-Prompt-on-call — the named, budgeted, auditable version of tool-returned guidance — is Talking CLI's contribution.
+Distributed prompting — the named, budgeted, auditable approach to decentralized tool guidance — is Talking CLI's contribution. Prompt-on-call is its implementation pattern.

@@ -1,6 +1,6 @@
 # Talking CLI
 
-> **Tool silence is a design defect. prompt-on-call is the fix.**
+> **Tool silence is a design defect. distributed prompting is the fix.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
@@ -19,7 +19,7 @@ That's not a skill problem. That's a **prompt surface** problem. You only know o
 
 **Talking CLI gives your tools a voice.** When the agent calls, the tool talks back — not with a wall of prose, but with the right hint, at the right moment, inside the response.     
 
-> That's **prompt-on-call**: progressive disclosure, with **distributed prompting**.
+> That's **distributed prompting**: progressive disclosure, with **prompt-on-call** as its implementation pattern.
 
 ---
 
@@ -35,9 +35,9 @@ Anthropic also advocates ["steering agents with helpful instructions in tool res
 
 ## What this project is
 
-Talking CLI is a **three-leg stool** built around one idea: **prompt-on-call** — moving guidance from static SKILL.md into the moment of invocation.
+Talking CLI is a **three-leg stool** built around one idea: **distributed prompting** — moving guidance from static SKILL.md into the moment of invocation.
 
-You can also think of this as **distributed prompting**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
+You can also think of this as **prompt-on-call**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
 
 1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for prompt-on-call's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
 2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
@@ -53,7 +53,7 @@ Or, in distributed-systems language:
 
 > **Centralized guidance (SKILL.md) + Distributed guidance (tool hints) = One prompt budget.**
 
-Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**prompt-on-call**) is the single biggest lever most skill authors haven't pulled.
+Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Moving that guidance into the tool's response (**distributed prompting** via **prompt-on-call**) is the single biggest lever most skill authors haven't pulled.
 
 ---
 
@@ -69,7 +69,7 @@ graph LR
         A1 -.->|repeated guidance<br/>shoved upstream| A3
     end
 
-    subgraph After ["✅ After: prompt-on-call"]
+    subgraph After ["✅ After: distributed prompting"]
         B1[SKILL.md<br/>&lt; 150 lines] --> B2[Agent]
         B3[Tool returns<br/>JSON + hints] --> B2
     end
@@ -193,20 +193,19 @@ Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastruct
 
 \* M4=100 because Zod validation errors are technically informative. These are SDK-generated messages, not tool-authored recovery guidance.
 
-### Token Efficiency Benchmark Results
+### Token Efficiency Analysis
 
-We ran a controlled benchmark comparing **bloated SKILL.md** (887 lines, all error handling inline) vs **Talking CLI** (170 lines, error handling in tool hints) on MiniMax M2.7 Highspeed across 10 filesystem tasks.
+We analyzed the **OpenClaw gh-issues** skill (887 lines of bloated SKILL.md vs 170 lines of Talking CLI approach) to measure prompt-size reduction:
 
 | Metric | Bloated | Talking | Delta |
 |--------|---------|---------|-------|
-| Initial prompt | 8,716 tokens | 1,370 tokens | **−84.3%** |
-| Runtime input | 13,024 tokens | 2,166 tokens | **−83.4%** |
-| Total tokens | 16,228 tokens | 6,137 tokens | **−62.2%** |
-| Pass rate | 80% | **90%** | **+10pp** |
+| Lines of code | 887 | 170 | **−80.8%** |
+| Words | 4,939 | 772 | **−84.4%** |
+| Characters | 34,850 | 5,479 | **−84.3%** |
 
-Not only does Talking CLI cut token consumption by more than half, it also improves task success rate because the agent receives guidance exactly when it needs it, not buried in a 400-line document.
+**This demonstrates significant SKILL.md size reduction.** However, note that this is a static analysis of prompt size, not a controlled benchmark of task completion quality. The controlled benchmark on MiniMax M2.7 produced inconclusive results due to model capability limitations — validation on stronger models (Claude, GPT-4) is needed to confirm the full claim.
 
-**Estimated cost savings per 1,000 tasks** (based on measured token ratios):
+**Estimated cost savings per 1,000 tasks** (based on measured token ratios, assuming equivalent task quality):
 
 | Model | Bloated cost | Talking cost | Savings |
 |-------|-------------|--------------|---------|
@@ -215,13 +214,13 @@ Not only does Talking CLI cut token consumption by more than half, it also impro
 | GPT-4o (est.) | $52.00 | $36.00 | **$16.00 (30%)** |
 | Gemini 1.5 Pro (est.) | $26.00 | $18.00 | **$8.00 (30%)** |
 
-*Estimates for non-MiniMax models use the same token-consumption ratio; actual prices vary by provider.*
+*Estimates assume equivalent task quality; actual validation on stronger models pending.*
 
 ---
 
 ## The Methodology
 
-Talking CLI is more than a linter. It's the implementation of **prompt-on-call**: every tool response is a designed prompt surface, not a data dump.
+Talking CLI is more than a linter. It's the implementation of **distributed prompting**: every tool response is a designed prompt surface, not a data dump. Prompt-on-call is the concrete pattern for achieving this.
 
 - **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
 - **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
@@ -230,18 +229,19 @@ Talking CLI is more than a linter. It's the implementation of **prompt-on-call**
 
 ## Roadmap
 
-**v0.5 endgame** — the project pivots from "another linter" to **evidence-first standard proposal**. Execution plan lives in [`.internal/TDD-P4.md`](.internal/TDD-P4.md); PRD in [`.internal/PRD.md`](.internal/PRD.md) §0.0 and §7.
+**Current focus**: Framework complete (v0.6); awaiting functional validation on capable models.
 
 | Track | Goal | Status |
 |---|---|---|
 | **Methodology** (shipped) | PHILOSOPHY + CN-001 + H1–H4 / M1–M4 heuristics | ✅ |
-| **Evidence harness** (G7 / P4.1) | Internal benchmark harness comparing mute vs. talking variants under controlled execution | 🔄 next |
-| **Ecosystem audit publication** (G8 / P4.2) | `AUDIT-BENCHMARK.md` as re-runnable artifact, public post | 🔄 blocked on G7 |
+| **Evidence harness** (G7 / P4.1) | Internal benchmark harness comparing mute vs. talking variants under controlled execution | ✅ Complete (v0.6 with parallel execution, resume, extended metrics) |
+| **Functional validation** | Validate talking > mute on Claude/GPT-4-class models | ⏳ Pending (MiniMax M2.7 showed negative results) |
+| **Ecosystem audit publication** (G8 / P4.2) | `AUDIT-BENCHMARK.md` as re-runnable artifact, public post | 🔄 Ready for re-run with stronger models |
 | **H4 semantic upgrade** (G9 / P4.3) | Haiku-class classifier replaces the `≥ 10 chars` stub; graceful fallback without API key | ⏳ |
 | **H3 hint-budget ≤ 3** (G9 / P4.4) | Semantic dedup of hints, not field-count | ⏳ |
 | **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ⏳ |
 | **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 90/100, CI-enforced, README badge | ⏳ |
-| **MCP spec proposal** (G10 / P4.7) | RFC / discussion on `modelcontextprotocol/*` for a first-class `agent_hints` field | ⏳ |
+| **MCP spec proposal** (G10 / P4.7) | RFC / discussion on `modelcontextprotocol/*` for a first-class `agent_hints` field | ⏳ Blocked on functional validation |
 
 ### Status of surfaces available today
 
