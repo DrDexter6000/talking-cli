@@ -42,6 +42,7 @@ benchmark/config.local.json
 
 # Benchmark directory (temporary exclusion for development)
 benchmark/
+github-benchmark/
 
 # Test / tool caches
 .nyc_output/
