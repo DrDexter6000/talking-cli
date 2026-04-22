@@ -233,7 +233,7 @@ We ran the full benchmark harness (25 tasks, mute vs talking) against **DeepSeek
 
 **Statistical significance**: Wilcoxon p = 0.030 (< 0.05) for token efficiency; Sign test p = 1.0 (not significant) for task wins.
 
-**Success evaluation** (per [BENCHMARK-REPORT-STANDARD](benchmark/BENCHMARK-REPORT-STANDARD.md)):
+**Success evaluation** (per [BENCHMARK-REPORT-STANDARD](benchmark/docs/BENCHMARK-REPORT-STANDARD.md)):
 - ✅ Token reduction: YES (−76%)
 - ✅ Quality maintained: YES (pass rate delta: +4pp, within ±5pp)
 - ✅ Quality improved: YES (Talking wins: 5 > Mute wins: 4)
@@ -257,6 +257,68 @@ We ran the full benchmark harness (25 tasks, mute vs talking) against **DeepSeek
 | Gemini 1.5 Pro (est.) | $41.00 | $10.00 | **$31.00 (76%)** |
 
 *Estimates assume equivalent task quality; actual validation on stronger models pending.*
+
+<details>
+<summary><b>How we benchmark — design principles, limitations, and v2 roadmap</b></summary>
+
+This section explains the experimental design behind the numbers above, what the v1 benchmark can and cannot prove, and how v2 is being designed. A methodology section that admits boundaries is more credible than a results section that hides them.
+
+**Full design document**: [benchmark/docs/BENCHMARK-METHODOLOGY.md](benchmark/docs/BENCHMARK-METHODOLOGY.md).
+
+### The hypothesis
+
+> Distributed Prompting — moving guidance from static `SKILL.md` into tool responses — produces materially better agent behavior than the equivalent guidance left as static prose.
+
+"Better" decomposes into three observables that v2 reports as co-equal headlines:
+
+| Claim | Direct observable |
+|---|---|
+| **Efficiency** | Total end-to-end tokens (input + output, cache-aware) per task |
+| **Behavior** | Turns to first successful tool call; error → recovery distance |
+| **Quality** | Pass rate per difficulty tier |
+
+### What v1 (above) measured
+
+- 25 hand-curated tasks, primarily hard difficulty.
+- Two arms: `mute` (raw JSON) vs `talking` (JSON + hints).
+- Single trial per cell — no within-cell variance estimate.
+- Headline statistical test: Wilcoxon signed-rank on per-task input-token deltas.
+
+### What v1 proves
+
+- **Token efficiency** on DeepSeek-V3.2: talking variant uses substantively fewer tokens at p < .05.
+
+### What v1 does NOT yet prove
+
+- **Quality lift**: pass-rate delta of +4pp (36% → 40%) is within statistical noise on n = 25; sign test p = 1.0.
+- **Cross-model generalization**: cost extrapolations to Claude / GPT-4o / Gemini above use ratio math, not actual runs.
+- **Decomposition of savings**: how much of the −76% is initial-prompt shrink vs. fewer agent turns? v1 does not separate these.
+- **Variant integrity**: under default settings, v1's `mute` arm uses a hardcoded fallback prompt rather than `bloated-skill.md`. The 887 vs 170 line comparison is a static-document fact; the runtime experiment compares something narrower. v2 phase A fixes this.
+
+### v2 design principles
+
+1. **Measure what the thesis claims** — turn count, error-recovery distance, and per-cell variance, not just aggregate tokens.
+2. **Calibrate difficulty for signal** — sweet spot for detecting hint-driven lift is medium tasks (60–75% baseline pass rate). v1's hard-skewed corpus means most tasks fail in both arms, hiding any lift.
+3. **Categorize by hint-trigger scenario** — hints help in empty-result, permission-failure, and schema-ambiguity situations. v2 reports per-category effect sizes.
+4. **Variance is a feature** — if hints reduce decision entropy, talking should be *more consistent* across runs. v2 measures this with k ≥ 3 trials per cell.
+5. **Reproducibility over headline** — schema-versioned results, hashed task corpus, captured server stderr, mechanical server diff in CI.
+
+### v2 verdict tiers (replacing the current SUCCESS/GREAT_SUCCESS rubric)
+
+| Verdict | Condition |
+|---|---|
+| **PROVEN** | total tokens ↓ p < .05 **AND** turns ↓ p < .05 **AND** medium-tier pass rate ↑ ≥ 10pp |
+| **SUCCESS** | total tokens ↓ p < .05 **AND** pass rate 95% CI does not exclude 0 |
+| **PARTIAL** | One of {tokens, turns} significant; others neutral |
+| **FAILURE** | No metric reaches p < .05 |
+
+Cross-provider claims will require ≥ 3 providers reaching the same verdict tier or higher.
+
+### Why publish this before v2 results land
+
+Two reasons: (1) the design is critiqueable on its own merits, not defended after-the-fact to fit a result; (2) if v2 produces FAILURE, that result is fully informative — the framework that called for it is the same one that publishes it.
+
+</details>
 
 ---
 
