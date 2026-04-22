@@ -233,11 +233,17 @@ We ran the full benchmark harness (25 tasks, mute vs talking) against **DeepSeek
 
 **Statistical significance**: Wilcoxon p = 0.030 (< 0.05) for token efficiency; Sign test p = 1.0 (not significant) for task wins.
 
-**Success evaluation**:
+**Success evaluation** (per [BENCHMARK-REPORT-STANDARD](benchmark/BENCHMARK-REPORT-STANDARD.md)):
 - ✅ Token reduction: YES (−76%)
 - ✅ Quality maintained: YES (pass rate delta: +4pp, within ±5pp)
 - ✅ Quality improved: YES (Talking wins: 5 > Mute wins: 4)
-- **Verdict**: SUCCESS (成功) — Token savings significant, quality maintained with slight improvement
+- **Verdict**: **SUCCESS (成功)** — Token savings significant, quality maintained with slight improvement
+
+**Success criteria**:
+- **SUCCESS (成功)**: Token消耗减少，执行质量保持不变 (±5pp以内)
+- **GREAT_SUCCESS (大成功)**: Token消耗减少，执行质量还获得提高 (Talking wins > Mute wins)
+- **PARTIAL (部分成功)**: Token消耗减少，但质量下降明显
+- **FAILURE (失败)**: Token消耗未减少，或质量严重下降
 
 **Interpretation**: On DeepSeek-V3.2, **Distributed Prompting** delivers significant token and time savings (76% reduction), while maintaining task quality. The 16 ties (64%) indicate that for most tasks, both variants either succeed or fail together — the model's capability ceiling is the bottleneck, not the methodology.
 
