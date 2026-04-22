@@ -1,9 +1,0 @@
-{"taskId":"task-a","variant":"mute","turn":0,"role":"assistant","tool_name":"search_files","input_tokens":100,"output_tokens":50,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"timeout"}
-{"taskId":"task-a","variant":"talking","turn":0,"role":"assistant","tool_name":"search_files","input_tokens":110,"output_tokens":55,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
-{"taskId":"task-b","variant":"mute","turn":0,"role":"assistant","tool_name":"read_text_file","input_tokens":80,"output_tokens":30,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
-{"taskId":"task-b","variant":"talking","turn":0,"role":"assistant","tool_name":"read_text_file","input_tokens":85,"output_tokens":35,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
-{"taskId":"task-c","variant":"mute","turn":0,"role":"assistant","tool_name":"search_files","input_tokens":120,"output_tokens":60,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"error"}
-{"taskId":"task-c","variant":"talking","turn":0,"role":"assistant","tool_name":"search_files","input_tokens":130,"output_tokens":65,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
-{"taskId":"task-d","variant":"mute","turn":0,"role":"assistant","tool_name":"list_directory","input_tokens":90,"output_tokens":40,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"stop_reason_end_turn"}
-{"taskId":"task-d","variant":"talking","turn":0,"role":"assistant","tool_name":"list_directory","input_tokens":95,"output_tokens":45,"timestamp":"2024-01-01T00:00:00.000Z","outcome":"timeout"}
-

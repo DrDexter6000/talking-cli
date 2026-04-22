@@ -1,1 +1,0 @@
-{"id":"task-tail-file","prompt":"Read the last 20 lines of '/tmp/benchmark-sandbox/logfile.txt' and summarize what happened.","checker":"checkTailFile","difficulty":"medium","category":"error/empty"}
