@@ -263,7 +263,7 @@ We ran the full benchmark harness (25 tasks, mute vs talking) against **DeepSeek
 
 This section explains the experimental design behind the numbers above, what the v1 benchmark can and cannot prove, and how v2 is being designed. A methodology section that admits boundaries is more credible than a results section that hides them.
 
-**Full design document**: [benchmark/docs/BENCHMARK-METHODOLOGY.md](benchmark/docs/BENCHMARK-METHODOLOGY.md).
+**Full design document**: [docs/BENCHMARK-METHODOLOGY.md](docs/BENCHMARK-METHODOLOGY.md).
 
 ### The hypothesis
 
