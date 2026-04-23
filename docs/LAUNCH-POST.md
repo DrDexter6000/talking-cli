@@ -1,5 +1,7 @@
 # Launch Post: I asked a linter to review my own AI skill. It called me fat.
 
+> ⚠️ **ARCHIVED** — This draft was written for v0.3.0. The project is now at v0.6. Benchmark data and feature descriptions are outdated. Retained for historical reference only; do not use for current project documentation.
+
 **TL;DR**: I built a linter that audits agent skills across four dimensions. It roasts your code because it cares. It's called Talking CLI, and it just shipped v0.3.0 (H1–H4).
 
 ```bash

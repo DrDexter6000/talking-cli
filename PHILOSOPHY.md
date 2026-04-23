@@ -179,6 +179,16 @@ If a piece of advice lives in both `SKILL.md` and `tool_result.hints`, one of th
 
 These four heuristics map directly onto the first four rules of the planned `talking-cli` linter.
 
+### Tradeoffs
+
+Adopting Talking CLI requires explicit design work in three areas:
+
+1. **A new layer must be designed.** `hints`, `ambiguity`, and (optionally) `next_steps` need formal definitions in your tool's response schema. This is upfront investment that mute tools avoid.
+
+2. **Hint growth must be restrained.** If every tool emits five or ten hints, the pattern reverts to the prompt flood it was designed to prevent. The three-hint cap (Heuristic 3) is not arbitrary — it is the enforcement mechanism for the budget.
+
+3. **The schema/hint boundary must be explicit.** Without a clear line between what belongs in the Contract (C1) and what belongs in the Voice (C3), field semantics get duplicated across both surfaces and the budget wastes twice on the same guidance.
+
 ---
 
 ## Anti-Patterns (or, How to Build a Mute CLI)
@@ -228,6 +238,48 @@ Talking CLI does not invent a new channel. It names, budgets, and disciplines on
 - **Tool result design in agent frameworks (LangChain, AutoGen, et al.)** — Fragmented practice. Tool returns are ad-hoc payloads with occasional hints. Talking CLI names the fragment and makes it a first-class design surface.
 - **Prompt-On-Call** — The implementation pattern for Distributed Prompting. The concrete mechanism of attaching guidance to individual tool responses at the moment of invocation.
 - **Context engineering** — The parent discipline. Named and popularized by [Tobi Lütke](https://x.com/tobi) and [Andrej Karpathy](https://x.com/karpathy) in mid-2025. Talking CLI is a concrete sub-pattern: context engineering applied to the agent–tool boundary.
+
+---
+
+## Canonical Example
+
+The reference implementation for Talking CLI is a journal-search tool. The mapping below shows how each channel maps to concrete implementation, without coupling the methodology to any specific project.
+
+### C1 — The Contract
+
+Schema elements:
+- JSON schema for parameters and return shape
+- Documented types, enums, and required fields
+- Response envelope including `results`, `hints`, `ambiguity`
+
+### C2 — The Handshake
+
+Deterministic preprocessing:
+- Query normalization
+- Date expressions parsed into structured time windows
+- Topic / entity hint extraction
+- Structured `search_plan` output
+
+### C3 — The Voice
+
+Invocation-scoped fields returned alongside data:
+
+- `hints` — short, per-call guidance ("0 results; consider broadening the date range")
+- `ambiguity` — explicit signal when interpretation is unclear
+- (Optionally) `next_steps` — non-directive cues for the next call
+
+These are only relevant to the current call. They must not be pre-loaded into the global skill document.
+
+### C4 — The Judgment
+
+The agent decides:
+
+- Whether the current ambiguity warrants asking the user
+- Whether this is an aggregation query
+- Whether retrieved evidence answers the question directly or only supports an answer
+- Whether to follow up or conclude
+
+The CLI surfaces evidence and hints; the agent decides.
 
 ---
 
