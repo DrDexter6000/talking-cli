@@ -1,0 +1,1 @@
+{"id":"task-edit-recovery-dry-run","prompt":"Preview changes to replace 'old_value' with 'new_value' in '/tmp/benchmark-sandbox/config.js' using dry run. If no matches are found, search for the file content first to find the correct text to replace, then do the actual replacement.","checker":"checkEditDryRunRecovery","difficulty":"hard","category":"error/empty"}

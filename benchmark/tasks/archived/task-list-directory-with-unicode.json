@@ -1,0 +1,1 @@
+{"id":"task-list-directory-with-unicode","prompt":"Create a file named '/tmp/benchmark-sandbox/café.txt' with the content 'Hello ☕' and then read it back.","checker":"checkUnicodeFile","difficulty":"hard","category":"neutral"}

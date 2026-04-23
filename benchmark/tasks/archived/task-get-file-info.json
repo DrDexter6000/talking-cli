@@ -1,0 +1,1 @@
+{"id":"task-get-file-info","prompt":"Get detailed file information for '/tmp/benchmark-sandbox/README.txt' — size, permissions, creation date, everything.","checker":"checkGetFileInfo","difficulty":"easy","category":"neutral"}

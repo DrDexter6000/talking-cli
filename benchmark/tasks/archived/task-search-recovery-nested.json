@@ -1,0 +1,1 @@
+{"id":"task-search-recovery-nested","prompt":"Find all test files in '/tmp/benchmark-sandbox'. If no tests are found at the root level, search recursively in subdirectories.","checker":"checkSearchNested","difficulty":"hard","category":"error/empty"}
