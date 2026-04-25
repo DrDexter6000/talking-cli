@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
@@ -199,6 +200,13 @@ class McpSubprocess {
     this.stderrBuf = "";
   }
 
+  /** Return captured stderr (last 50KB) for diagnostics. */
+  getStderr(): string {
+    const MAX = 50 * 1024;
+    if (this.stderrBuf.length <= MAX) return this.stderrBuf;
+    return this.stderrBuf.slice(-MAX);
+  }
+
   async waitForReady(timeoutMs = 15000): Promise<void> {
     // Check if server already signaled ready or is dead
     if (this.stderrBuf.includes("running on stdio")) return;
@@ -390,10 +398,17 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     let useMcp = !options.disableMcp;
     let mcp: McpSubprocess | null = null;
     let mcpTools: BenchmarkToolDefinition[] = [];
+    let isOwnSandbox = false;
+    let sandboxDir = "";
+
     if (useMcp) {
+      isOwnSandbox = !options.sandboxDir;
+      sandboxDir = options.sandboxDir
+        ?? mkdtempSync(join(tmpdir(), "talking-cli-benchmark-"));
+      if (!isOwnSandbox && !existsSync(sandboxDir)) {
+        mkdirSync(sandboxDir, { recursive: true });
+      }
       try {
-        const sandboxDir = options.sandboxDir ?? "/tmp/benchmark-sandbox";
-        if (!existsSync(sandboxDir)) mkdirSync(sandboxDir, { recursive: true });
         const serverConf = options.serverCommand
           ? { command: options.serverCommand, args: options.serverArgs ?? [sandboxDir] }
           : cell
@@ -451,6 +466,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             errorRecoveries,
             toolCalls: totalToolCalls,
             timeToFirstTool: timeToFirstTool || elapsed,
+            serverStderr: mcp?.getStderr(),
           };
         }
 
@@ -507,6 +523,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             timeToSuccess: passed ? elapsed : 0,
             score: checkerResult.score,
             passedSubchecks: checkerResult.passedSubchecks,
+            serverStderr: mcp?.getStderr(),
           };
         }
 
@@ -610,9 +627,13 @@ export class StandaloneExecutor implements BenchmarkExecutor {
         errorRecoveries,
         toolCalls: totalToolCalls,
         timeToFirstTool: timeToFirstTool || elapsed,
+        serverStderr: mcp?.getStderr(),
       };
     } finally {
       if (mcp) await mcp.close();
+      if (isOwnSandbox && sandboxDir) {
+        try { rmSync(sandboxDir, { recursive: true, force: true }); } catch { /* ignore cleanup errors */ }
+      }
     }
   }
 }

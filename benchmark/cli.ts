@@ -17,6 +17,8 @@ type CliOptions = {
   resume?: boolean;
   listProviders?: boolean;
   initConfig?: boolean;
+  repeat?: number;
+  verbose?: boolean;
 };
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +36,8 @@ function parseArgs(args: string[]): CliOptions {
   let providers: string[] | undefined;
   let listProviders = false;
   let initConfig = false;
+  let repeat: number | undefined;
+  let verbose = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -109,9 +113,25 @@ function parseArgs(args: string[]): CliOptions {
       initConfig = true;
       continue;
     }
+
+    if (arg === "--repeat") {
+      const rawValue = args[index + 1];
+      const parsedValue = Number.parseInt(rawValue ?? "", 10);
+      if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+        throw new Error(`Invalid --repeat value: ${rawValue ?? "<missing>"}`);
+      }
+      repeat = parsedValue;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--verbose") {
+      verbose = true;
+      continue;
+    }
   }
 
-  return { provider, providers, taskLimit, outputDir, variants, parallel, maxConcurrency, resume, listProviders, initConfig };
+  return { provider, providers, taskLimit, outputDir, variants, parallel, maxConcurrency, resume, listProviders, initConfig, repeat, verbose };
 }
 
 export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
@@ -172,6 +192,8 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
         parallel: options.parallel,
         maxConcurrency: options.maxConcurrency,
         resume: options.resume,
+        repeat: options.repeat,
+        verbose: options.verbose,
       });
     }
 
@@ -203,6 +225,8 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
       parallel: options.parallel,
       maxConcurrency: options.maxConcurrency,
       resume: options.resume,
+      repeat: options.repeat,
+      verbose: options.verbose,
     });
   }
 }

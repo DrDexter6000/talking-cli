@@ -92,6 +92,8 @@ export interface BenchmarkRunResult {
   score?: number;
   /** Named sub-checks that passed */
   passedSubchecks?: string[];
+  /** Captured MCP server stderr (last 50KB) */
+  serverStderr?: string;
 }
 
 export interface BenchmarkRunOptions {

@@ -17,6 +17,7 @@
     "benchmark:build": "tsc -p benchmark/tsconfig.json",
     "benchmark": "npm run benchmark:build && node benchmark/dist/cli.js",
     "benchmark:smoke": "npm run benchmark:build && node benchmark/dist/cli.js --provider stub --limit 3 --output-dir benchmark/results/smoke",
+    "benchmark:diff": "npx tsx benchmark/scripts/generate-server-diff.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

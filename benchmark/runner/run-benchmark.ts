@@ -14,6 +14,8 @@ type RunBenchmarkOptions = {
   maxConcurrency?: number;
   progressInterval?: number;
   resume?: boolean;
+  repeat?: number;
+  verbose?: boolean;
 };
 
 type ProgressCallback = (completed: number, total: number, currentTask: string, currentVariant: string, result?: BenchmarkRunResult) => void;
@@ -87,6 +89,36 @@ async function runTaskWithTimeout(
   }
 }
 
+function writeTrace(
+  resultDir: string,
+  taskId: string,
+  variant: string,
+  trial: number,
+  totalTrials: number,
+): void {
+  const tracesDir = resolve(resultDir, "traces");
+  mkdirSync(tracesDir, { recursive: true });
+  const trialSuffix = totalTrials > 1 ? `-${trial}` : "";
+  const tracePath = resolve(tracesDir, `${taskId}-${variant}${trialSuffix}.jsonl`);
+
+  // Copy relevant lines from raw.jsonl matching this task+variant
+  const rawPath = resolve(resultDir, "raw.jsonl");
+  if (existsSync(rawPath)) {
+    const rawLines = readFileSync(rawPath, "utf-8").split("\n").filter(l => l.trim());
+    const relevant = rawLines.filter(l => {
+      try {
+        const entry = JSON.parse(l) as { taskId?: string; variant?: string };
+        return entry.taskId === taskId && entry.variant === variant;
+      } catch {
+        return false;
+      }
+    });
+    if (relevant.length > 0) {
+      writeFileSync(tracePath, relevant.join("\n") + "\n", "utf-8");
+    }
+  }
+}
+
 async function runParallel(
   executor: BenchmarkExecutor,
   tasks: BenchmarkTask[],
@@ -96,7 +128,8 @@ async function runParallel(
   onProgress: ProgressCallback,
 ): Promise<BenchmarkRunResult[]> {
   const maxConcurrency = options.maxConcurrency ?? 3;
-  const total = tasks.length * variants.length;
+  const trials = options.repeat ?? 1;
+  const total = tasks.length * variants.length * trials;
   const results: BenchmarkRunResult[] = [];
   const running = new Set<Promise<void>>();
   let completed = 0;
@@ -113,17 +146,20 @@ async function runParallel(
     console.log(`📥 Resumed from ${existing.length} existing results`);
   }
 
-  // Create work items
-  const workItems: { task: BenchmarkTask; variant: string }[] = [];
+  // Create work items (include trial index)
+  const workItems: { task: BenchmarkTask; variant: string; trial: number }[] = [];
   for (const task of tasks) {
     for (const variant of variants) {
-      // Skip if already completed
-      const alreadyDone = results.some(
-        r => r.taskId === task.id && r.variant === variant
-          && (r.provider ?? undefined) === (options.provider ?? undefined),
-      );
-      if (!alreadyDone) {
-        workItems.push({ task, variant });
+      for (let trial = 0; trial < trials; trial++) {
+        // Skip if already completed (only when trials === 1 for backward compat)
+        if (trials === 1) {
+          const alreadyDone = results.some(
+            r => r.taskId === task.id && r.variant === variant
+              && (r.provider ?? undefined) === (options.provider ?? undefined),
+          );
+          if (alreadyDone) continue;
+        }
+        workItems.push({ task, variant, trial });
       }
     }
   }
@@ -131,7 +167,7 @@ async function runParallel(
   // Process work items with concurrency limit
   const queue = [...workItems];
   
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const errors: Error[] = [];
     
     function startNext() {
@@ -145,12 +181,18 @@ async function runParallel(
         return;
       }
 
-      const { task, variant } = queue.shift()!;
+      const { task, variant, trial } = queue.shift()!;
+      const suffix = trials > 1 ? ` (trial ${trial + 1}/${trials})` : "";
       const promise = runTaskWithTimeout(executor, task, variant, options, resultDir)
         .then(result => {
           results.push(result);
           completed++;
-          onProgress(completed, total, task.id, variant, result);
+          onProgress(completed, total, task.id, variant + suffix, result);
+
+          // Write trace file on failure or verbose
+          if (!result.pass || options.verbose) {
+            writeTrace(resultDir, task.id, variant, trial, trials);
+          }
           
           // Auto-save progress every 5 results
           if (completed % 5 === 0) {
@@ -168,7 +210,7 @@ async function runParallel(
           const errMsg = error instanceof Error ? error.message : String(error);
           errors.push(new Error(`${task.id} (${variant}): ${errMsg}`));
           completed++;
-          onProgress(completed, total, task.id, variant);
+          onProgress(completed, total, task.id, variant + suffix);
           running.delete(promise);
           startNext();
         });
@@ -203,7 +245,7 @@ export async function runBenchmark(
   const benchmarkResults: BenchmarkRunResult[] = [];
 
   const variants = options.variants ?? ABLATION_CELLS.map(cellToVariant);
-  const totalRuns = limitedTasks.length * variants.length;
+  const totalRuns = limitedTasks.length * variants.length * (options.repeat ?? 1);
 
   console.log("╔══════════════════════════════════════════════════════════════╗");
   console.log("║           TALKING CLI BENCHMARK RUNNER v0.6                 ║");
@@ -212,6 +254,7 @@ export async function runBenchmark(
   console.log(`📋 Configuration:`);
   console.log(`   Tasks: ${limitedTasks.length} | Variants: ${variants.join(", ")} | Total runs: ${totalRuns}`);
   console.log(`   Parallel: ${options.parallel ? `Yes (max ${options.maxConcurrency ?? 3})` : "No"}`);
+  console.log(`   Repeat: ${options.repeat ?? 1} | Verbose: ${options.verbose ? "Yes" : "No"}`);
   console.log(`   Resume: ${options.resume ? "Yes" : "No"}`);
   console.log(`   Output: ${resultDir}`);
   console.log("");
@@ -230,23 +273,32 @@ export async function runBenchmark(
       printProgress,
     ));
   } else {
+    const trials = options.repeat ?? 1;
     let completed = 0;
     for (const task of limitedTasks) {
       for (const variant of variants) {
-        completed++;
-        printProgress(completed, totalRuns, task.id, variant);
-        
-        const result = await runTaskWithTimeout(executor, task, variant, options, resultDir);
-        benchmarkResults.push(result);
-        printProgress(completed, totalRuns, task.id, variant, result);
-        
-        // Auto-save every 5 results
-        if (completed % 5 === 0) {
-          writeFileSync(
-            resolve(resultDir, "results.jsonl"),
-            benchmarkResults.map(r => JSON.stringify(r)).join("\n") + "\n",
-            "utf-8",
-          );
+        for (let trial = 0; trial < trials; trial++) {
+          completed++;
+          const suffix = trials > 1 ? ` (trial ${trial + 1}/${trials})` : "";
+          printProgress(completed, totalRuns, task.id, variant + suffix);
+
+          const result = await runTaskWithTimeout(executor, task, variant, options, resultDir);
+          benchmarkResults.push(result);
+          printProgress(completed, totalRuns, task.id, variant + suffix, result);
+
+          // Write trace file on failure or verbose
+          if (!result.pass || options.verbose) {
+            writeTrace(resultDir, task.id, variant, trial, trials);
+          }
+
+          // Auto-save every 5 results
+          if (completed % 5 === 0) {
+            writeFileSync(
+              resolve(resultDir, "results.jsonl"),
+              benchmarkResults.map(r => JSON.stringify(r)).join("\n") + "\n",
+              "utf-8",
+            );
+          }
         }
       }
     }
