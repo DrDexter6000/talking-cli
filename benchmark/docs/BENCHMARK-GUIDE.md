@@ -140,7 +140,7 @@ Hints fire on these tool states:
 
 The benchmark has **30 active tasks** (structured as 3×3 matrix: 3 difficulty tiers × 3 hint-trigger types + none) and **21 archived tasks**.
 
-### Active Tasks (25)
+### Active Tasks (30)
 
 | File | Description | Difficulty |
 |------|-------------|-----------|
@@ -176,58 +176,42 @@ The benchmark has **30 active tasks** (structured as 3×3 matrix: 3 difficulty t
 
 `task-edit-dry-run.json`, `task-edit-recovery-dry-run.json`, `task-get-file-info.json`, `task-info-recovery-not-found.json`, `task-list-directory-sorted.json`, `task-list-directory-with-unicode.json`, `task-list-directory.json`, `task-list-recovery-empty-dir.json`, `task-move-file-cross-directory.json`, `task-move-rename-same-dir.json`, `task-read-access-denied.json`, `task-read-binary-file.json`, `task-read-empty-file.json`, `task-read-recovery-multiple-fail.json`, `task-read-recovery-wrong-path.json`, `task-search-empty-root.json`, `task-search-not-found.json`, `task-search-recovery-nested.json`, `task-tail-file.json`, `task-write-new-file.json`, `task-write-overwrite-existing.json`
 
-### Tier Analysis
+### Tier Analysis (3×3 Matrix)
 
-| Tier | Count | Description |
-|------|-------|-------------|
-| Tier 2 core | 6 tasks | Representative coverage of the 7 failure categories |
-| Tier 3 stress | 14 tasks | Harder multi-step tasks for capability headroom |
-| Removal recommended | 5 tasks | Low discrimination value; both variants tend to tie |
+| | Tier-easy (≥85% baseline) | Tier-medium (60–75% baseline) | Tier-hard (20–40% baseline) |
+|---|---|---|---|
+| **Empty-result trigger** | 3 | 5 | 2 |
+| **Permission/path trigger** | 3 | 5 | 2 |
+| **Schema-ambiguity trigger** | 3 | 5 | 2 |
+| **Total** | **9** | **15** | **6** |
+
+See [`CORPUS-MATRIX.md`](./CORPUS-MATRIX.md) for full matrix with task assignments. Tier baselines are design targets — **not yet empirically verified** (see Research Note RN-004 in `.internal/RESEARCH-NOTES.md`).
 
 ---
 
 ## 3. Benchmark Results
 
-### DeepSeek Chat (full-run-2026-04-22-0813, 50/50 complete)
+> **Full run history**: See [`RUN-LOG.md`](./RUN-LOG.md) for indexed registry of all runs with pointers to detailed reports.
 
-| Metric | Mute | Talking | Delta |
-|--------|------|---------|-------|
-| Pass rate | 10/25 (40%) | 7/25 (28%) | -12pp |
-| Avg total tokens | 41,465 | 12,960 | **-69%** |
-| Avg walltime | ~35s | ~35s | ~0 |
+### Summary of Key Findings (across all runs)
 
-**Verdict: SUCCESS** — Token savings are robust and reproducible. Quality delta (-12pp) is within the range explained by model noise.
+| Finding | Evidence | Run |
+|---------|----------|-----|
+| Token savings reproducible | −69% (DeepSeek), −8% (MiniMax) | R1, R2 |
+| Quality hypothesis NOT validated | Pass rate delta within noise on tested models | R1, R2 |
+| Server effect dominates skill effect | −17% tokens from talking server vs −0.3% from talking skill | R4 |
+| Interaction effect observed | talking+talking underperforms talking+mute | R4 |
+| Per-task variance up to 4× | Single trial insufficient, need k≥3 | R4 |
+| MCP infrastructure validated | All 12 cells completed with init fix | R4 |
 
----
+### Cross-Model Comparison (v1 runs)
 
-### MiniMax M2.7 HS (full-run-minimax-2026-04-22, 50/50, 37min)
+| Model | Mute Wins | Talking Wins | Ties | Token Delta |
+|-------|-----------|--------------|------|-------------|
+| DeepSeek Chat | 8 | 3 | 14 | −69% |
+| MiniMax M2.7 HS | 8 | 3 | 14 | −8% |
 
-| Metric | Mute | Talking | Delta |
-|--------|------|---------|-------|
-| Pass rate | 13/25 (52%) | 11/25 (44%) | -8pp |
-| Avg total tokens | 41,841 | 38,674 | **-8%** |
-| Avg walltime | ~37s/task | ~37s/task | ~0 |
-
-**Verdict: PARTIAL** — Token savings confirmed but smaller magnitude. Quality delta (-8pp) also within noise. Smaller delta likely reflects the model's lower baseline token efficiency rather than methodology failure.
-
----
-
-### DeepSeek Reasoner (abandoned after 30/50)
-
-- Avg walltime ~200s per task (vs Chat ~35s)
-- 27% timeout rate
-- Skipped per user decision
-
----
-
-### Cross-Model Comparison
-
-| Model | Mute Wins | Talking Wins | Ties |
-|-------|-----------|--------------|------|
-| DeepSeek Chat | 8 | 3 | 14 |
-| MiniMax M2.7 HS | 8 | 3 | 14 |
-
-**Key finding:** Token savings are robust and reproducible across models (DeepSeek -69%, MiniMax -8%). The "talking improves quality" hypothesis is NOT validated on tested models. Model capability is the bottleneck, not the methodology. Validation requires stronger models (Claude/GPT-4 class).
+**Key finding**: Token savings are robust and reproducible. The "talking improves quality" hypothesis is NOT validated on tested models. Model capability is the current bottleneck, not the methodology. Validation requires stronger models (Claude/GPT-4 class) and k≥3 trials.
 
 ---
 
@@ -287,9 +271,16 @@ npm run benchmark:smoke
 
 ### Success Verdict Criteria
 
-From `benchmark/docs/BENCHMARK-REPORT-STANDARD.md`:
+From [`BENCHMARK-REPORT-STANDARD.md`](./BENCHMARK-REPORT-STANDARD.md):
 
+**Current (v1)**:
 - **SUCCESS**: Token consumption reduced; pass rate delta within ±5pp
 - **GREAT_SUCCESS**: Token consumption reduced; talking wins > mute wins
 - **PARTIAL**: Token consumption reduced; quality dropped noticeably
 - **FAILURE**: Token consumption not reduced, or quality severely degraded
+
+**Upcoming (v2, Phase D)**:
+- **PROVEN**: total_tokens ↓ p < .05 AND turns ↓ p < .05 AND medium-tier pass rate ↑ ≥ 10pp
+- **SUCCESS**: total_tokens ↓ p < .05 AND pass rate 95% CI ⊃ 0
+- **PARTIAL**: One of {total_tokens, turns} ↓ p < .05
+- **FAILURE**: No metric significant at p < .05
