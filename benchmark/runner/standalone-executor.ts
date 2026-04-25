@@ -11,7 +11,7 @@ import type {
   BenchmarkToolDefinition,
 } from "./types.js";
 import { SCHEMA_VERSION, variantToCell, type AblationCell } from "./types.js";
-import { checkers } from "./checker.js";
+import { checkers, type CheckerResult } from "./checker.js";
 
 type LLMContentBlock =
   | { type: "text"; text: string }
@@ -89,8 +89,13 @@ const BENCHMARK_DIR = basename(dirname(RUNNER_DIR)) === "dist"
 class McpSubprocess {
   private proc: ChildProcess | null = null;
   private nextId = 1;
-  private pending = new Map<number | string, (msg: JsonRpcMsg) => void>();
+  private pending = new Map<
+    number | string,
+    { resolve: (msg: JsonRpcMsg) => void; reject: (err: Error) => void }
+  >();
   private buffer = "";
+  private stderrBuf = "";
+  private dead = false;
 
   constructor(command: string, args: string[], cwd?: string) {
     this.proc = spawn(command, args, {
@@ -99,10 +104,40 @@ class McpSubprocess {
       env: { ...process.env },
       windowsHide: true,
     });
-    this.proc.stderr?.on("data", () => {
-      /* drain */
+    // Capture stderr for diagnostics (replace silent drain)
+    this.proc.stderr?.on("data", (chunk: Buffer) => {
+      this.stderrBuf += chunk.toString("utf-8");
+    });
+    this.proc.on("exit", (code, signal) => {
+      const detail = signal ? `signal ${signal}` : `code ${code}`;
+      const stderrSnippet = this.stderrBuf.slice(-500);
+      const err = new Error(
+        `Server process exited (${detail})${stderrSnippet ? `\nStderr (last 500 chars):\n${stderrSnippet}` : ""}`,
+      );
+      for (const [, entry] of this.pending) {
+        entry.reject(err);
+      }
+      this.pending.clear();
+      this.dead = true;
+    });
+    this.proc.on("error", (err) => {
+      for (const [, entry] of this.pending) {
+        entry.reject(new Error(`Server process error: ${err.message}`));
+      }
+      this.pending.clear();
+      this.dead = true;
     });
     this.proc.stdout?.on("data", (chunk: Buffer) => this.onData(chunk));
+    this.proc.stdout?.on("end", () => {
+      if (!this.dead) {
+        const err = new Error("Server stdout closed unexpectedly");
+        for (const [, entry] of this.pending) {
+          entry.reject(err);
+        }
+        this.pending.clear();
+        this.dead = true;
+      }
+    });
   }
 
   async initialize(timeoutMs = 10000): Promise<void> {
@@ -160,19 +195,66 @@ class McpSubprocess {
     }
     this.proc = null;
     this.pending.clear();
+    this.dead = false;
+    this.stderrBuf = "";
+  }
+
+  async waitForReady(timeoutMs = 15000): Promise<void> {
+    // Check if server already signaled ready or is dead
+    if (this.stderrBuf.includes("running on stdio")) return;
+    if (this.dead) throw new Error("Server process died before becoming ready");
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const snippet = this.stderrBuf.slice(-500);
+        reject(
+          new Error(
+            `Server never signaled ready within ${timeoutMs}ms${snippet ? `\nStderr (last 500 chars):\n${snippet}` : ""}`,
+          ),
+        );
+      }, timeoutMs);
+
+      const onData = (chunk: Buffer): void => {
+        this.stderrBuf += chunk.toString("utf-8");
+        if (this.stderrBuf.includes("running on stdio")) {
+          clearTimeout(timer);
+          this.proc?.stderr?.removeListener("data", onData);
+          resolve();
+        }
+      };
+
+      this.proc?.stderr?.on("data", onData);
+
+      // Also reject if process dies while waiting
+      this.proc?.on("exit", () => {
+        clearTimeout(timer);
+        reject(new Error("Server process exited while waiting for ready signal"));
+      });
+    });
   }
 
   private request(method: string, params: unknown, timeoutMs = 10000): Promise<JsonRpcMsg> {
+    if (this.dead) {
+      return Promise.reject(new Error(`Cannot send ${method}: server process is dead`));
+    }
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+        const stderrSnippet = this.stderrBuf.slice(-500);
+        reject(
+          new Error(
+            `${method} timed out after ${timeoutMs}ms${stderrSnippet ? `\nStderr (last 500 chars):\n${stderrSnippet}` : ""}`,
+          ),
+        );
       }, timeoutMs);
-      this.pending.set(id, (msg) => {
+      this.pending.set(id, { resolve: (msg) => {
         clearTimeout(timer);
         resolve(msg);
-      });
+      }, reject: (err) => {
+        clearTimeout(timer);
+        reject(err);
+      } });
       const payload: JsonRpcOut = { jsonrpc: "2.0", id, method, params };
       this.proc?.stdin?.write(`${JSON.stringify(payload)}\n`);
     });
@@ -195,9 +277,9 @@ class McpSubprocess {
       try {
         const msg = JSON.parse(trimmed) as JsonRpcMsg;
         if (msg.id !== undefined && this.pending.has(msg.id)) {
-          const resolve = this.pending.get(msg.id);
+          const entry = this.pending.get(msg.id);
           this.pending.delete(msg.id);
-          if (resolve) resolve(msg);
+          if (entry) entry.resolve(msg);
         }
       } catch {
         // Ignore non-JSON lines from server logs.
@@ -209,16 +291,16 @@ class McpSubprocess {
 function getServerConfig(variant: string, sandboxDir: string): { command: string; args: string[] } {
   const benchDir = BENCHMARK_DIR;
   const serverDir = variant === "mute"
-    ? resolve(benchDir, "servers/mute/dist/index.js")
-    : resolve(benchDir, "servers/talking/dist/index.js");
+    ? resolve(benchDir, "servers/variants/mute/dist/variants/mute/index.js")
+    : resolve(benchDir, "servers/variants/talking/dist/variants/talking/index.js");
   return { command: "node", args: [serverDir, sandboxDir] };
 }
 
 function getServerConfigForCell(cell: AblationCell, sandboxDir: string): { command: string; args: string[] } {
   const benchDir = BENCHMARK_DIR;
   const serverDir = cell.server === "mute"
-    ? resolve(benchDir, "servers/mute/dist/index.js")
-    : resolve(benchDir, "servers/talking/dist/index.js");
+    ? resolve(benchDir, "servers/variants/mute/dist/variants/mute/index.js")
+    : resolve(benchDir, "servers/variants/talking/dist/variants/talking/index.js");
   return { command: "node", args: [serverDir, sandboxDir] };
 }
 
@@ -254,13 +336,26 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     return "You are a benchmark executor with access to MCP filesystem tools. Complete the user's request using the available tools. You may call tools multiple times if needed. When done, summarize the result.";
   }
 
-  private evaluateTask(task: BenchmarkTask, finalTurn: unknown): boolean {
+  private readonly RUBRIC_THRESHOLD = 0.6;
+
+  private isHardTask(task: BenchmarkTask): boolean {
+    return task.difficulty === "hard" || task.tier === "hard";
+  }
+
+  private computePass(task: BenchmarkTask, result: CheckerResult): boolean {
+    if (this.isHardTask(task) && result.score !== undefined) {
+      return result.score >= this.RUBRIC_THRESHOLD;
+    }
+    return result.pass;
+  }
+
+  private evaluateTask(task: BenchmarkTask, finalTurn: unknown): CheckerResult {
     const checker = checkers[task.checker];
     if (!checker) {
       throw new Error(`Unknown benchmark checker: ${task.checker}`);
     }
 
-    return checker(finalTurn, {}).pass;
+    return checker(finalTurn, {});
   }
 
   async runTask(
@@ -306,6 +401,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             : getServerConfig(variant, sandboxDir);
         mcp = new McpSubprocess(serverConf.command, serverConf.args);
         const initTimeout = options.mcpInitTimeout ?? 10000;
+        await mcp.waitForReady(initTimeout);
         await mcp.initialize(initTimeout);
         mcpTools = await mcp.listTools(initTimeout);
       } catch (mcpError) {
@@ -392,11 +488,13 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             .join("\n");
           messages.push({ role: "assistant", content: finalText });
           const elapsed = Date.now() - startTime;
+          const checkerResult = this.evaluateTask(task, finalText);
+          const passed = this.computePass(task, checkerResult);
           return {
             turns: turnCount,
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
-            pass: this.evaluateTask(task, finalText),
+            pass: passed,
             walltime: elapsed,
             outcome: "stop_reason_end_turn",
             taskId: task.id,
@@ -406,7 +504,9 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             errorRecoveries,
             toolCalls: totalToolCalls,
             timeToFirstTool: timeToFirstTool || elapsed,
-            timeToSuccess: this.evaluateTask(task, finalText) ? elapsed : 0,
+            timeToSuccess: passed ? elapsed : 0,
+            score: checkerResult.score,
+            passedSubchecks: checkerResult.passedSubchecks,
           };
         }
 

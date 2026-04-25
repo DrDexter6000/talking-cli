@@ -88,6 +88,10 @@ export interface BenchmarkRunResult {
   hintUtilization?: number;        // Percentage of hints that led to action
   timeToFirstTool?: number;        // Time until first tool call (ms)
   timeToSuccess?: number;          // Time until pass (ms), 0 if failed
+  /** Rubric score for hard-tier tasks (0.0–1.0) */
+  score?: number;
+  /** Named sub-checks that passed */
+  passedSubchecks?: string[];
 }
 
 export interface BenchmarkRunOptions {

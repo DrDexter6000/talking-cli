@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import {
   isLegacyVariant,
   ABLATION_CONTRASTS,
+  type BenchmarkRunResult,
+  type BenchmarkTask,
 } from "./types.js";
 
 // ─── Ablation Types ───────────────────────────────────────────────────────────
@@ -48,6 +50,7 @@ export interface ContrastAggregate {
 }
 
 export interface AblationSummaryJson {
+  schemaVersion?: number;
   provider?: string;
   providers?: string[];
   perTask: PerCellRow[];
@@ -108,6 +111,7 @@ export interface AggregateStats {
 }
 
 export interface SummaryJson {
+  schemaVersion?: number;
   provider?: string;
   perTask: PerTaskRow[];
   aggregate: AggregateStats;
@@ -302,6 +306,7 @@ function summarizeTaskMap<TEntry>(
   const { W: wilcoxonW, pValue: wilcoxonPValue } = wilcoxonSignedRank(allDeltas);
 
   return {
+    schemaVersion: 1,
     perTask,
     aggregate: {
       talkingWins,
@@ -458,6 +463,7 @@ export function computeAblationStats(resultPath: string, provider?: string): Abl
   );
 
   const result: AblationSummaryJson = {
+    schemaVersion: 1,
     perTask,
     contrasts: contrastAggregates,
     tieCount,
@@ -601,4 +607,40 @@ function normalCDF(z: number): number {
   const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
   const t = 1 / (1 + p * z);
   return 1 - (a1 * t + a2 * t * t + a3 * Math.pow(t, 3) + a4 * Math.pow(t, 4) + a5 * Math.pow(t, 5)) * Math.exp(-(z * z) / 2);
+}
+
+// ─── Rubric Score Aggregation ─────────────────────────────────────────────────
+
+export interface TierScoreRow {
+  tier: string;
+  avgScore: number;
+  count: number;
+}
+
+/**
+ * Compute average rubric scores per tier for tasks that have score data.
+ */
+export function computeTierScores(
+  results: BenchmarkRunResult[],
+  tasks: BenchmarkTask[],
+): TierScoreRow[] {
+  const tierMap = new Map<string, BenchmarkRunResult[]>();
+  for (const result of results) {
+    const task = tasks.find((t) => t.id === result.taskId);
+    const tier = task?.tier || task?.difficulty || "unknown";
+    if (!tierMap.has(tier)) tierMap.set(tier, []);
+    tierMap.get(tier)!.push(result);
+  }
+
+  return Array.from(tierMap.entries()).map(([tier, tierResults]) => {
+    const scored = tierResults.filter((r) => r.score !== undefined);
+    return {
+      tier,
+      avgScore:
+        scored.length > 0
+          ? scored.reduce((sum, r) => sum + r.score!, 0) / scored.length
+          : 0,
+      count: scored.length,
+    };
+  });
 }

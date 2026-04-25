@@ -120,7 +120,7 @@ This project maintains a strict documentation hierarchy. Each document has a def
 
 - `src/index.ts` is an empty stub — the public API is CLI-only via `src/cli.ts`
 - `benchmark/` has its own `tsconfig.json` and compiles to `benchmark/dist/` — separate build pipeline
-- `benchmark/servers/mute/` and `benchmark/servers/talking/` require `npm install && npm run build` before use
+- `benchmark/servers/variants/` requires `cd benchmark/servers && npm install && pwsh scripts/build.ps1` before use
 - Benchmark results in `benchmark/results/` are gitignored
 - `.internal/` contains PRD, phased TDD plans, and session handoff — operational, not archival
 - `checker.ts` (915 lines) is the largest file — benchmark result validation logic

@@ -10,8 +10,8 @@
 | Provider | Format | Model | Context Window | Max Tokens | Base URL |
 |----------|--------|-------|----------------|------------|----------|
 | **stub** | openai | stub | 0 | 0 | (local) |
-| **deepseek** | openai | deepseek-chat | 128K | 4096 | `https://api.deepseek.com` |
-| **deepseek-reasoner** | openai | deepseek-reasoner | 128K | 32768 | `https://api.deepseek.com` |
+| **deepseek** | openai | deepseek-v4-flash | 1M | 4096 | `https://api.deepseek.com` |
+| **deepseek-reasoner** | openai | deepseek-v4-pro | 1M | 32768 | `https://api.deepseek.com` |
 | **openai** | openai | gpt-4o | 128K | 4096 | `https://api.openai.com/v1` |
 | **minimax** | anthropic | MiniMax-M2.7-highspeed | 196K | 131072 | `https://api.minimaxi.com/anthropic` |
 | **gemini** | gemini | gemini-1.5-pro | 1M | 8192 | `https://generativelanguage.googleapis.com/v1beta` |
@@ -27,7 +27,7 @@
 export DEEPSEEK_API_KEY="sk-..."
 # 获取地址: https://platform.deepseek.com/api_keys
 # 国内直连: https://api.deepseek.com
-# 模型: deepseek-chat (DeepSeek-V3.2, 128K上下文)
+# 模型: deepseek-v4-flash / deepseek-v4-pro (1M上下文, V4系列)
 
 # OpenAI
 export OPENAI_API_KEY="sk-..."
@@ -57,30 +57,40 @@ export GEMINI_API_KEY="..."
 
 ## Provider Details
 
-### DeepSeek
+### DeepSeek (V4 Flash)
 
 - **Base URL**: `https://api.deepseek.com`
-- **Model**: `deepseek-chat` (DeepSeek-V3.2)
-- **Context Window**: 128K
-- **Max Tokens**: 4096 (default), up to 8192
+- **Model**: `deepseek-v4-flash`
+- **Context Window**: 1M
+- **Max Tokens**: 4096 (default), up to 384K
 - **Format**: OpenAI-compatible
 - **Temperature**: 1.0
 - **Timeout**: 300s
+- **Pricing** (per 1M tokens):
+  - Input (cache hit): ¥0.2 / ~$0.029
+  - Input (cache miss): ¥1 / ~$0.147
+  - Output: ¥2 / ~$0.293
+- **Features**: 支持思考/非思考模式切换
 
 **国内访问**:
 - 国内服务器: `https://api.deepseek.com`
 - 无需代理，直连可用
 
-### DeepSeek Reasoner
+### DeepSeek Reasoner (V4 Pro)
 
 - **Base URL**: `https://api.deepseek.com`
-- **Model**: `deepseek-reasoner` (DeepSeek-V3.2 thinking mode)
-- **Context Window**: 128K
-- **Max Tokens**: 32768 (default), up to 65536
+- **Model**: `deepseek-v4-pro`
+- **Context Window**: 1M
+- **Max Tokens**: 32768 (default), up to 384K
 - **Format**: OpenAI-compatible
-- **Temperature**: 1.0 (ignored — reasoner does not support temperature/top_p)
+- **Temperature**: 1.0
 - **Timeout**: 300s
-- **注意**: 传 `tools` 参数会静默回退到 `deepseek-chat`。返回 `reasoning_content` + `content` 两个字段。
+- **Pricing** (per 1M tokens):
+  - Input (cache hit): ¥1 / ~$0.145
+  - Input (cache miss): ¥12 / ~$1.758
+  - Output: ¥24 / ~$3.516
+- **Features**: 支持思考/非思考模式切换，返回 `reasoning_content` + `content`
+- **注意**: deepseek-chat 和 deepseek-reasoner 两个模型名已弃用，分别对应 v4-flash 的非思考与思考模式
 
 ### MiniMax
 

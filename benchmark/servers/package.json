@@ -1,0 +1,25 @@
+{
+  "name": "@talking-cli/benchmark-servers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vendored MCP server variants for benchmark: mute (upstream) vs talking (with hints)",
+  "type": "module",
+  "scripts": {
+    "build:mute": "tsc -p variants/mute/tsconfig.json",
+    "build:talking": "tsc -p variants/talking/tsconfig.json",
+    "build": "npm run build:mute && npm run build:talking"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "diff": "^8.0.3",
+    "glob": "^10.5.0",
+    "minimatch": "^10.0.1",
+    "zod-to-json-schema": "^3.23.5"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.0.9",
+    "@types/minimatch": "^5.1.2",
+    "@types/node": "^22",
+    "typescript": "^5.8.2"
+  }
+}

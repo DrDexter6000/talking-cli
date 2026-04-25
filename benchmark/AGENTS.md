@@ -45,8 +45,8 @@ benchmark/
 | Provider | model | format | contextWindow | API key env |
 |----------|-------|--------|---------------|-------------|
 | stub | stub | openai | 0 | none |
-| deepseek | deepseek-chat | openai | 128K | `DEEPSEEK_API_KEY` |
-| deepseek-reasoner | deepseek-reasoner | openai | 128K | `DEEPSEEK_API_KEY` |
+| deepseek | deepseek-v4-flash | openai | 1M | `DEEPSEEK_API_KEY` |
+| deepseek-reasoner | deepseek-v4-pro | openai | 1M | `DEEPSEEK_API_KEY` |
 | minimax | MiniMax-M2.7-highspeed | anthropic | 196K | `MINIMAX_API_KEY` |
 | openai | gpt-4o | openai | 128K | `OPENAI_API_KEY` |
 | gemini | gemini-1.5-pro | gemini | 1M | `GEMINI_API_KEY` |

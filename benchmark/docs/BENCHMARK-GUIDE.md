@@ -1,7 +1,7 @@
 # Benchmark Guide
 
 > SSOT for benchmark task design, execution, and findings.
-> Last updated: 2026-04-22
+> Last updated: 2026-04-25
 
 ---
 
@@ -92,9 +92,53 @@ The benchmark tests two variants of the same tool:
 
 ---
 
-## 2. Current Task Set
+## 2. Server Architecture
 
-The benchmark has **25 active tasks** and **21 archived tasks**.
+### Structure (v2 — shared core + variants)
+
+```
+servers/
+├── core/              # Shared logic (DRY)
+│   ├── lib.ts         # File operations (read, write, edit, search, tail, head)
+│   ├── path-utils.ts  # Path normalization (WSL-safe, cross-platform)
+│   ├── path-validation.ts  # Security: path-within-allowed-dirs check
+│   └── roots-utils.ts # MCP roots protocol handling
+├── variants/
+│   ├── mute/          # Control: upstream behavior, no hints
+│   │   ├── index.ts
+│   │   └── tsconfig.json
+│   └── talking/       # Treatment: tool responses include actionable hints
+│       ├── index.ts
+│       ├── hints.ts   # Centralized hint definitions
+│       └── tsconfig.json
+├── tsconfig.base.json # Shared compiler options
+├── package.json       # Shared dependencies (@modelcontextprotocol/sdk)
+└── scripts/
+    └── build.ps1      # Build both variants
+```
+
+Both variants import shared code from `../../core/*.js` (ESM paths). The only behavioral difference is that the `talking` variant wraps tool responses with `withHints()` from `hints.ts`.
+
+**Build**: `cd benchmark/servers && npm install && pwsh scripts/build.ps1`
+
+**Run**: `node benchmark/servers/variants/{mute,talking}/dist/variants/{mute,talking}/index.js /path/to/sandbox`
+
+### Hint Triggers (talking variant)
+
+Hints fire on these tool states:
+
+| State | Example Hint |
+|-------|-------------|
+| Empty result | "No files matched. Try broadening the pattern with `*` wildcards." |
+| Permission denied | "Access denied: path is outside allowed directories. Check the path." |
+| Schema ambiguity | "This is a directory, not a file. Use list_directory to see contents." |
+| Not found | "File not found. Use search_files to locate it." |
+
+---
+
+## 3. Current Task Set
+
+The benchmark has **30 active tasks** (structured as 3×3 matrix: 3 difficulty tiers × 3 hint-trigger types + none) and **21 archived tasks**.
 
 ### Active Tasks (25)
 

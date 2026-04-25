@@ -43,27 +43,28 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     name: "deepseek",
     baseUrl: "https://api.deepseek.com",
     apiKey: "${DEEPSEEK_API_KEY}",
-    model: "deepseek-chat",
+    model: "deepseek-v4-flash",
     maxTokens: 4096,
     temperature: 1.0,
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
     supportsSystemPrompt: true,
-    contextWindow: 128_000,
+    contextWindow: 1_000_000, // DeepSeek-V4: 1M context
+    // Both v4-flash and v4-pro support thinking/non-thinking mode toggle
   },
   "deepseek-reasoner": {
     name: "deepseek-reasoner",
     baseUrl: "https://api.deepseek.com",
     apiKey: "${DEEPSEEK_API_KEY}",
-    model: "deepseek-reasoner",
+    model: "deepseek-v4-pro",
     maxTokens: 32768,
     temperature: 1.0,
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
     supportsSystemPrompt: true,
-    contextWindow: 128_000,
+    contextWindow: 1_000_000, // DeepSeek-V4: 1M context
   },
   openai: {
     name: "openai",

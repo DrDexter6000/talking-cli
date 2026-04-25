@@ -40,6 +40,7 @@ function renderLegacyBenchmark(summary: SummaryJson): string {
   lines.push("# Benchmark Report — Talking CLI");
   lines.push("");
   lines.push("> Auto-generated from `summary.json`. Do not hand-edit.");
+  lines.push(`> **Schema version**: ${summary.schemaVersion ?? 0}`);
   lines.push("");
 
   if (summary.provider === "stub") {
@@ -56,7 +57,7 @@ function renderLegacyBenchmark(summary: SummaryJson): string {
   lines.push("");
   lines.push(`**Date**: ${new Date().toISOString().slice(0, 10)} ${new Date().toTimeString().slice(0, 5)}`);
   lines.push(`**Provider**: ${summary.provider || "unknown"}`);
-  lines.push(`**Model**: ${summary.provider === "deepseek" ? "deepseek-chat (DeepSeek-V3.2)" : summary.provider === "minimax" ? "MiniMax-M2.7-highspeed" : "unknown"}`);
+  lines.push(`**Model**: ${summary.provider === "deepseek" ? "deepseek-v4-flash" : summary.provider === "deepseek-reasoner" ? "deepseek-v4-pro" : summary.provider === "minimax" ? "MiniMax-M2.7-highspeed" : "unknown"}`);
   lines.push(`**Tasks**: ${summary.perTask.length} tasks`);
   lines.push(`**Variants**: mute, talking`);
   lines.push(`**Total Runs**: ${summary.perTask.length * 2}`);
@@ -352,6 +353,7 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
   lines.push("# Benchmark Report — Talking CLI (2×2 Ablation)");
   lines.push("");
   lines.push("> Auto-generated from ablation results. Do not hand-edit.");
+  lines.push(`> **Schema version**: ${summary.schemaVersion ?? 1}`);
   lines.push("");
 
   if (summary.provider === "stub") {
