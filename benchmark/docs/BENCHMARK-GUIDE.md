@@ -248,6 +248,24 @@ npm run benchmark:smoke
 - `benchmark/scripts/run-benchmark-bg.ps1` — Background benchmark runner
 - `benchmark/scripts/check-benchmark.ps1` — Check benchmark status
 
+### Monitoring Protocol (MANDATORY)
+
+When orchestrating a long-running benchmark (≥10 tasks) from an agent session, the following monitoring protocol is **mandatory**:
+
+1. **Poll interval**: Every 5 minutes while the run is in progress.
+2. **Output format**: Each poll MUST output structured progress visible to the user:
+
+```
+[Cell: {cell-name}] Progress: {done}/{total} tasks
+  ✅ Passed: {n} | ❌ Failed: {n} | ⏳ Running: {task-id}
+  Last completed: {task-id} ({pass|fail}, {turns}t, {tokens}tok, {walltime}s)
+  Elapsed: {mm}m | Est. remaining: ~{mm}m
+```
+
+3. **Completion signal**: Final poll must clearly state "DONE" with summary stats.
+4. **Parallel cell execution**: When running multiple cells (e.g., 2×2 ablation), cells CAN be run in parallel using separate `--output-dir` flags. Each cell must have its own output directory. Example: launch Cell 1 with `--output-dir results/cell1` and Cell 2 with `--output-dir results/cell2` simultaneously via separate `Start-Process` invocations. Within a single cell, tasks are already parallelized by the `--parallel` flag. This reduces 4-cell ablation from ~3h sequential to ~1h parallel.
+5. **No silent waits**: Never use `Start-Sleep` without an accompanying progress check. Every 5-minute block must produce visible output.
+
 ### New Metrics Tracked
 
 - `walltime`: Actual execution time per task
@@ -263,6 +281,7 @@ npm run benchmark:smoke
 | Decision | Rationale |
 |----------|-----------|
 | Parallel execution | Reduce 40min to ~15min runtime |
+| Parallel cell execution (R6+) | Multiple cells can run in parallel via `--output-dir`; verified in R6 with cells 3+4 running concurrently |
 | Resume capability | Avoid losing progress on interruptions |
 | Auto-save every 5 results | Checkpointing for long runs |
 | Extended metrics | Time, recovery, tool calls for deeper analysis |
@@ -284,3 +303,85 @@ From [`BENCHMARK-REPORT-STANDARD.md`](./BENCHMARK-REPORT-STANDARD.md):
 - **SUCCESS**: total_tokens ↓ p < .05 AND pass rate 95% CI ⊃ 0
 - **PARTIAL**: One of {total_tokens, turns} ↓ p < .05
 - **FAILURE**: No metric significant at p < .05
+
+---
+
+## R7 Lessons Learned: Task Curation & Execution
+
+> Last updated: 2026-04-26
+
+### 1. Floor Effect Diagnosis and Fix
+
+| Run | Tasks | Hard % | Baseline Pass | Effective n |
+|-----|-------|--------|--------------|------------|
+| R6 | 30 | 67% | 83% floor | n=5 |
+| R7 | 15 | 20% | balanced | n=10–12 |
+
+R6's hard-skewed corpus (67% hard tasks) produced a floor effect: 83% of tasks failed in both arms, leaving only 5 tasks with discriminative signal. R7 curates to 15 tasks with mixed difficulty (33% easy, 47% medium, 20% hard), restoring balance and improving effective sample size.
+
+Academic backing: tinyBenchmarks (ICML 2024, Polo et al.) proves curated subsets outperform uncurated full sets. MCP-Bench (NeurIPS 2025) uses 104 tasks as domain standard.
+
+### 2. Task Curation Methodology (SWE-bench Lite Pattern)
+
+1. Classify all tasks by R6 outcome: floor / mid / ceiling
+2. Keep mid-range tasks (some pass, some fail = discriminating)
+3. Restore easy and medium tasks from `archived/` for balance
+4. Target 40–70% baseline pass rate for each task
+
+Result: 5 easy + 7 medium + 3 hard = 15 curated tasks.
+
+### 3. Execution Strategy: 2-Cell Parallel
+
+| Configuration | Result |
+|---------------|--------|
+| 4 cells parallel | 100% failure rate |
+| 2 cells parallel, serial within cell | Stable |
+| Serial per cell | 0% failure rate |
+
+GLM-5.1 coding plan endpoint cannot handle 4+ concurrent API requests (all timeout). Recommended: always start with 1-cell pilot, then scale to 2-cell parallel.
+
+### 4. Mandatory 5-Minute Polling
+
+All benchmark runs MUST have 5-minute polling enabled. Without polling, a stuck or failed run wastes hours of API budget.
+
+Standard poll format:
+
+```
+[Cell: {cell-name}] Progress: {done}/{total} tasks
+  Passed: {n} | Failed: {n} | Running: {task-id}
+  Last completed: {task-id} ({pass|fail}, {turns}t, {tokens}tok, {walltime}s)
+  Elapsed: {mm}m | Est. remaining: ~{mm}m
+```
+
+### 5. CLI Enhancement: --task-dir Flag
+
+Added `--task-dir` flag to benchmark CLI for specifying custom task directories.
+
+```bash
+node benchmark/dist/cli.js --provider glm-5.1 --task-dir benchmark/tasks-curated --variants bloated+mute
+```
+
+This enables curated task sets without modifying the default `tasks/` directory.
+
+### 6. Curated Task Set Directory
+
+Created `benchmark/tasks-curated/` with 15 hand-selected tasks sourced from both `tasks/` (active) and `tasks/archived/`. Must be maintained alongside the full 30-task set.
+
+### 7. Provider-Specific Behavior: GLM-5.1
+
+| Behavior | Detail |
+|----------|--------|
+| Reasoning tokens | Count toward `max_tokens` but not `output_tokens` |
+| LLM call latency | 5–10s for simple tasks, 30–60s for complex multi-turn |
+| Context pressure | Bloated skill (887 lines) causes fast context growth, earlier timeouts |
+| Coding plan endpoint | `https://open.bigmodel.cn/api/coding/paas/v4` — separate from standard API |
+
+### 8. The 2x2 Signal
+
+R7 successfully demonstrated the 2x2 ablation design produces clear signal.
+
+| Effect | Delta |
+|--------|-------|
+| Skill compression | −61 to −64% input tokens |
+| Server hints | +6 to +20pp pass rate improvement |
+| Combined (synergistic) | +26pp > sum of individual effects |

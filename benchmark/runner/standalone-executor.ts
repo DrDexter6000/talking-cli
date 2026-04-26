@@ -391,23 +391,36 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     const systemPrompt = cell
       ? this.loadSystemPromptForCell(cell)
       : this.loadSystemPrompt(variant);
-    const messages: StandaloneConversationMessage[] = [
-      { role: "user", content: systemPrompt + "\n\nUser request: " + task.prompt },
-    ];
 
+    // Compute sandbox dir early so we can rewrite paths in the task prompt
     let useMcp = !options.disableMcp;
     let mcp: McpSubprocess | null = null;
     let mcpTools: BenchmarkToolDefinition[] = [];
     let isOwnSandbox = false;
-    let sandboxDir = "";
+    const sandboxDir = useMcp
+      ? (options.sandboxDir ?? mkdtempSync(join(tmpdir(), "talking-cli-benchmark-")))
+      : "";
 
     if (useMcp) {
       isOwnSandbox = !options.sandboxDir;
-      sandboxDir = options.sandboxDir
-        ?? mkdtempSync(join(tmpdir(), "talking-cli-benchmark-"));
       if (!isOwnSandbox && !existsSync(sandboxDir)) {
         mkdirSync(sandboxDir, { recursive: true });
       }
+    }
+
+    // Rewrite task prompt paths: /tmp/benchmark-sandbox → actual sandbox dir
+    // Use forward slashes to match the prompt style regardless of platform
+    const normalizedSandbox = sandboxDir.replace(/\\/g, "/");
+    const rewrittenPrompt = task.prompt.replace(
+      /\/tmp\/benchmark-sandbox/g,
+      normalizedSandbox,
+    );
+
+    const messages: StandaloneConversationMessage[] = [
+      { role: "user", content: systemPrompt + "\n\nUser request: " + rewrittenPrompt },
+    ];
+
+    if (useMcp) {
       try {
         const serverConf = options.serverCommand
           ? { command: options.serverCommand, args: options.serverArgs ?? [sandboxDir] }

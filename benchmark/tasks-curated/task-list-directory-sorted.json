@@ -1,0 +1,1 @@
+{"id":"task-list-directory-sorted","prompt":"List all files in '/tmp/benchmark-sandbox/project/src' sorted by size. What is the largest file?","checker":"checkListSorted","difficulty":"medium","category":"error/empty"}

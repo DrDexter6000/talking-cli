@@ -47,6 +47,7 @@ benchmark/
 | stub | stub | openai | 0 | none |
 | deepseek | deepseek-v4-flash | openai | 1M | `DEEPSEEK_API_KEY` |
 | deepseek-reasoner | deepseek-v4-pro | openai | 1M | `DEEPSEEK_API_KEY` |
+| **glm-5.1** | **glm-5.1** | **openai** | **200K** | **`ZHIPU_API_KEY`** |
 | minimax | MiniMax-M2.7-highspeed | anthropic | 196K | `MINIMAX_API_KEY` |
 | openai | gpt-4o | openai | 128K | `OPENAI_API_KEY` |
 | gemini | gemini-1.5-pro | gemini | 1M | `GEMINI_API_KEY` |

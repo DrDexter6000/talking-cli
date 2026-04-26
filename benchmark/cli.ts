@@ -10,6 +10,7 @@ type CliOptions = {
   provider: string;
   providers?: string[];
   taskLimit?: number;
+  taskDir?: string;
   outputDir: string;
   variants?: string[];
   parallel?: boolean;
@@ -28,6 +29,7 @@ function parseArgs(args: string[]): CliOptions {
   const today = new Date().toISOString().slice(0, 10);
   let provider = "stub";
   let taskLimit: number | undefined;
+  let taskDir: string | undefined;
   let outputDir = resolve(BENCHMARK_DIR, "results", today);
   let variants: string[] | undefined;
   let parallel = false;
@@ -70,6 +72,12 @@ function parseArgs(args: string[]): CliOptions {
 
     if (arg === "--output-dir") {
       outputDir = resolve(args[index + 1] ?? outputDir);
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--task-dir") {
+      taskDir = resolve(args[index + 1] ?? "");
       index += 1;
       continue;
     }
@@ -131,7 +139,7 @@ function parseArgs(args: string[]): CliOptions {
     }
   }
 
-  return { provider, providers, taskLimit, outputDir, variants, parallel, maxConcurrency, resume, listProviders, initConfig, repeat, verbose };
+  return { provider, providers, taskLimit, taskDir, outputDir, variants, parallel, maxConcurrency, resume, listProviders, initConfig, repeat, verbose };
 }
 
 export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
@@ -172,7 +180,7 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
     return;
   }
 
-  const taskDir = resolve(BENCHMARK_DIR, "tasks");
+  const resolvedTaskDir = options.taskDir ?? resolve(BENCHMARK_DIR, "tasks");
 
   mkdirSync(options.outputDir, { recursive: true });
 
@@ -184,7 +192,7 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
       console.log(`${"=".repeat(60)}\n`);
       const providerResultDir = resolve(options.outputDir, providerName);
       const executor = new StandaloneExecutor(createProvider(providerName));
-      await runBenchmark(executor, taskDir, providerResultDir, {
+      await runBenchmark(executor, resolvedTaskDir, providerResultDir, {
         taskLimit: options.taskLimit,
         disableMcp: providerName === "stub",
         provider: providerName,
@@ -217,7 +225,7 @@ export async function main(args: string[] = process.argv.slice(2)): Promise<void
     // Single provider (existing path)
     const providerName = options.providers?.[0] ?? options.provider;
     const executor = new StandaloneExecutor(createProvider(providerName));
-    await runBenchmark(executor, taskDir, options.outputDir, {
+    await runBenchmark(executor, resolvedTaskDir, options.outputDir, {
       taskLimit: options.taskLimit,
       disableMcp: providerName === "stub",
       provider: providerName,

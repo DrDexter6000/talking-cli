@@ -13,6 +13,8 @@
 | R2 | 2026-04-22 | minimax-m2.7 | 25 | 2 (mute/talking) | 1 | v1 legacy | PARTIAL | `results/full-run-minimax-2026-04-22/` |
 | R3 | 2026-04-22 | deepseek-reasoner | 25 | 2 | ~0.6 | v1 legacy | ABANDONED | — |
 | R4 | 2026-04-25 | deepseek-v4-flash | 3 | 4 (2×2 ablation) | 1 | v2 ablation | SUCCESS | `results/test-fix-2026-04-25/` |
+| R5 | 2026-04-25 | deepseek-v4-flash | 30 | 1 (bloated+mute) | 1 | v2 baseline | ⚠️ BELOW TARGET | `results/2026-04-25/` |
+| R6 | 2026-04-26 | deepseek-v4-flash | 30 | 4 (2×2 ablation) | 1 | v2 ablation | SUCCESS | `results/REPORT-2x2-R6.md` |
 
 ---
 
@@ -68,6 +70,65 @@
 
 - **Verdict**: SUCCESS (infrastructure validation)
 - **Full report**: `results/test-fix-2026-04-25/AUDIT-BENCHMARK.md`
+
+## R5 — DeepSeek V4 Flash (v2, baseline-only, 30-task)
+
+- **Provider**: DeepSeek V4 Flash
+- **Design**: Baseline-only (bloated+mute), 30 tasks, single trial
+- **Purpose**: Measure actual tier pass rates for corpus calibration
+- **Bug fix**: Sandbox path injection bug discovered in R4 (pre-run). Task prompts referenced `/tmp/benchmark-sandbox/` but actual sandbox was `C:\Users\...\Temp\talking-cli-benchmark-XXXXX`. Fixed in `standalone-executor.ts`.
+
+**Tier results**:
+
+| Tier | Target | Actual | Delta |
+|------|--------|--------|-------|
+| Easy (9 tasks) | ≥85% | 22% (2/9) | −63pp |
+| Medium (15 tasks) | 60-75% | 20% (3/15) | −40~55pp |
+| Hard (6 tasks) | 20-40% | 0% (0/6) | −20~40pp |
+
+**Hint trigger results**: empty 10%, permission 10%, schema 30%
+
+**Outcome breakdown**: 14 timeout, 15 end-turn, 1 error
+
+**Key finding**: ALL tiers significantly below target. Root cause: model capability ceiling, not task design. Budget-tier model cannot reliably complete multi-file tasks within 20 turns. See `benchmark/docs/BASELINE-RATES.md` for options.
+
+- **Verdict**: ⚠️ BELOW TARGET — baseline documented, tier targets need adjustment
+- **Full analysis**: `benchmark/docs/BASELINE-RATES.md`
+
+## R6 — DeepSeek V4 Flash (v2, 2×2 ablation, 30-task)
+
+- **Provider**: DeepSeek V4 Flash
+- **Design**: 2×2 ablation (Full/Lean Skill × Mute/Hints in Tools), 30 tasks, single trial, 120 total runs
+- **Purpose**: Isolate Skill compression vs Tool hint injection effects on tokens and quality
+- **Naming convention** (REPORT-STANDARD v1.1):
+  - Cell 1: Full Skill / Mute Tools (控制组)
+  - Cell 2: Full Skill / Hints in Tools
+  - Cell 3: Lean Skill / Mute Tools
+  - Cell 4: Lean Skill / Hints in Tools (完全实验组)
+
+**2×2 Ablation Matrix (total tokens/task)**:
+
+|  | Mute Tools | Hints in Tools | Tool Hint Effect |
+|---|---|---|---|
+| **Full Skill** (874行) | 198,453 tok | 188,361 tok | −5.1% |
+| **Lean Skill** (170行) | 69,509 tok | 69,993 tok | +0.7% |
+| **Skill Effect** | −65.0% | −62.9% | — |
+
+**Pass rates**: 17% / 20% / 10% / 20% (Cells 1-4)
+
+**Named contrasts**:
+- Full Treatment: −128K tok (−64.7%), 3 wins / 2 losses vs control
+- Tool Hint Effect: −10K tok (−5.1%), 4 wins / 3 losses
+- Skill Effect: −129K tok (−65%), 2 wins / 4 losses (quality dip without tool hints)
+
+**Key findings**:
+1. Token 节省几乎全部来自 Skill 文件压缩 (−65%)，而非 Tool hint (−5.1%)
+2. Lean Skill 不配合 Tool hints 时质量最差 (10%) — 需要两个通道配合
+3. Full Treatment 方向正确但统计不显著 (n=1, p≈1.0)
+
+- **Verdict**: SUCCESS — token −64.7%, quality direction correct, needs stronger model validation
+- **Full report**: `results/REPORT-2x2-R6.md`
+- **Data dirs**: `results/2026-04-25/` (Cell 1), `results/cell2-bloated-talking/`, `results/cell3-talking-mute/`, `results/cell4-talking-talking/`
 
 ---
 

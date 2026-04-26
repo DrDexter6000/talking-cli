@@ -203,6 +203,23 @@ See the latest benchmark report for reference:
 
 ---
 
+## Variant Naming Convention (变体命名规范)
+
+All reports MUST use the following display names for the 2×2 ablation cells:
+
+| Internal ID | Display Name | Meaning |
+|-------------|-------------|---------|
+| `bloated+mute` | **Full Skill / Mute Tools** | 完整 SKILL.md (887行) + 工具返回原始数据，不含 hint |
+| `bloated+talking` | **Full Skill / Hints in Tools** | 完整 SKILL.md + 工具在错误/空结果时返回 actionable hint |
+| `talking+mute` | **Lean Skill / Mute Tools** | 精简 SKILL.md (170行) + 工具返回原始数据，不含 hint |
+| `talking+talking` | **Lean Skill / Hints in Tools** | 精简 SKILL.md + 工具在错误/空结果时返回 actionable hint |
+
+**Why these names**: The two dimensions are (1) how much guidance is in the SKILL.md file, and (2) whether the tool responses contain contextual hints. "Full Skill / Lean Skill" describes the skill file; "Mute Tools / Hints in Tools" describes the tool behavior. Together they are immediately understandable without internal jargon.
+
+**Scope of applicability**: This benchmark validates the Distributed Prompting methodology using an MCP server as the experimental carrier. The methodology itself applies to **any** SKILL.md + tool combination — not limited to MCP servers.
+
+---
+
 ## Enforcement
 
 This format is **mandatory** for all future benchmark runs. The benchmark runner should generate reports following this standard automatically.
@@ -211,4 +228,5 @@ This format is **mandatory** for all future benchmark runs. The benchmark runner
 
 ## Changelog
 
+- **2026-04-26**: v1.1 — Added variant naming convention (Full Skill / Lean Skill × Mute Tools / Hints in Tools)
 - **2026-04-22**: v1.0 — Initial standard based on user requirements

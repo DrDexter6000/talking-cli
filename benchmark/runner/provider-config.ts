@@ -108,6 +108,21 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     supportsSystemPrompt: true,
     contextWindow: 1_000_000,
   },
+  "glm-5.1": {
+    name: "glm-5.1",
+    baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
+    apiKey: "${ZHIPU_API_KEY}",
+    model: "glm-5.1",
+    maxTokens: 8192,
+    temperature: 1.0,
+    timeout: 300_000,
+    format: "openai",
+    supportsTools: true,
+    supportsSystemPrompt: true,
+    contextWindow: 204_800, // 200K context (input + output + reasoning)
+    // GLM-5.1: text-only, thinking enabled by default, fully OpenAI-compatible
+    // Coding Plan endpoint: api/coding/paas/v4 (not the standard api/paas/v4)
+  },
 };
 
 /**

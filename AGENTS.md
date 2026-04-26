@@ -125,5 +125,5 @@ This project maintains a strict documentation hierarchy. Each document has a def
 - `.internal/` contains PRD, phased TDD plans, and session handoff — operational, not archival
 - `checker.ts` (915 lines) is the largest file — benchmark result validation logic
 - `src/mcp/` is a parallel audit subsystem with its own engine, rules (M1-M4), renderers, and runtime — mirrors `src/` structure for MCP server audits
-- API keys (DEEPSEEK_API_KEY, MINIMAX_API_KEY) are env-var only, never hardcoded
+- API keys (DEEPSEEK_API_KEY, ZHIPU_API_KEY, MINIMAX_API_KEY) are env-var only, never hardcoded
 - Build uses tsup (not tsc) for main package; tsc for benchmark

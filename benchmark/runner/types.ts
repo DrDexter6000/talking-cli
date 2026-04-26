@@ -43,10 +43,10 @@ export function isLegacyVariant(variant: string): boolean {
 
 /** Named pairwise comparisons for the 2×2 ablation */
 export const ABLATION_CONTRASTS = [
-  { name: "full_vs_control",  label: "Full vs Control",    treatment: "talking+talking", control: "bloated+mute" },
-  { name: "skill_effect",     label: "Skill Effect",       treatment: "talking+mute",    control: "bloated+mute" },
-  { name: "server_effect",    label: "Server Effect",      treatment: "bloated+talking", control: "bloated+mute" },
-  { name: "interaction",      label: "Skill + Server",     treatment: "talking+talking", control: "talking+mute" },
+  { name: "full_vs_control",  label: "Full vs Control (Lean+Hints vs Full+Mute)",  treatment: "talking+talking", control: "bloated+mute" },
+  { name: "skill_effect",     label: "Skill Effect (Lean Skill vs Full Skill)",     treatment: "talking+mute",    control: "bloated+mute" },
+  { name: "server_effect",    label: "Server Effect (Hints in Tools vs Mute Tools)", treatment: "bloated+talking", control: "bloated+mute" },
+  { name: "interaction",      label: "Skill + Server Interaction",                  treatment: "talking+talking", control: "talking+mute" },
 ] as const;
 
 // ─── Core Types ──────────────────────────────────────────────────────────────
