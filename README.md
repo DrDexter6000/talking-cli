@@ -364,6 +364,8 @@ Talking CLI is more than a linter. It's the implementation of **Distributed Prom
 | **H3 hint-budget ≤ 3** (G9 / P4.4) | Semantic dedup of hints, not field-count | ⏳ |
 | **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ⏳ |
 | **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 90/100, CI-enforced, README badge | ⏳ |
+| **Real-world validation** (R8) | Audit + before/after benchmark on real MCP servers/skills | ⏳ Candidates: `modelcontextprotocol/servers`, cursor-directory |
+| **Cross-provider validation** | Replicate R7 on ≥1 additional provider (DeepSeek / OpenAI) | ⏳ Requires API key |
 | **MCP spec proposal** (G10 / P4.7) | RFC / discussion on `modelcontextprotocol/*` for a first-class `agent_hints` field | 🔄 Ready to draft |
 
 ### Status of surfaces available today

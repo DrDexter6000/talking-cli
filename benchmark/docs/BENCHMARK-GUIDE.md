@@ -385,3 +385,92 @@ R7 successfully demonstrated the 2x2 ablation design produces clear signal.
 | Skill compression | −61 to −64% input tokens |
 | Server hints | +6 to +20pp pass rate improvement |
 | Combined (synergistic) | +26pp > sum of individual effects |
+
+### 9. Skill File Size Calibration (SkillsBench Cross-Validation)
+
+R7's full-skill at 873 lines is at **P99.5 of real-world skill sizes**. This was validated against two independent data sources:
+
+**Source 1 — SkillsBench (arXiv 2602.12670, Feb 2026)**
+- Dataset: 36,338 SKILL.md files across the Claude Code ecosystem
+- Median: ~120 lines | P90: ~300 | P95: ~400 | >500 lines: 0.7%
+- Finding 6: "Comprehensive" skills hurt performance (−2.9pp) vs "moderate detailed" (+18.8pp)
+
+**Source 2 — GitHub 6-repository survey (841 files)**
+- Repositories: trailofbits/skills, alirezarezvani/claude-skills, daymade/claude-code-skills, samber/cc-skills-golang, LjyYano/skill-pack, jshsakura/awesome-opencode-skills
+- Median: ~100-130 lines | P90: ~300 | Max: 892 | >500 lines: 0.7%
+
+**Source 3 — Local OpenCode skills (30 files)**
+- Median: 110 lines | P90: 240 | Max: 314 (wsl-browser)
+
+**Official specification limits**: agentskills.io, Anthropic SKILL-AUTHORING, and skillcheck all cap at **500 lines**.
+
+**Implication**: R7's full-skill is a deliberately extreme control. The effect direction (less skill = better performance) is independently confirmed by SkillsBench at ecosystem scale. For future benchmarks, consider calibrating the "full" control to ~400-500 lines (P95, at spec limit) for more conservative but more defensible results.
+
+### 10. Context Budget is Performance Budget (Core Insight from Cell 3 vs Cell 1)
+
+The surprise finding: **Lean Skill + Mute Tools (Cell 3) OUTPERFORMS Full Skill + Mute Tools (Cell 1)** — both fewer tokens AND higher pass rate.
+
+This is not because the full skill contains bad advice. The mechanism is **context window pressure**:
+
+| Task | Cell 1 context usage | Cell 3 context usage | Cell 1 result | Cell 3 result |
+|------|---------------------|---------------------|---------------|---------------|
+| task-dependency-update | **144%** (overran) | 47% | FAIL | FAIL |
+| task-documentation-website | **132%** | 52% | FAIL | FAIL |
+| task-service-path-resolution | **120%** | 35% | FAIL | FAIL |
+| task-stale-path-cleanup | **119%** | 64% | FAIL | FAIL |
+| task-database-migration-gen | 71% | 47% | FAIL | **PASS** |
+| task-performance-profile-parse | 49% | 22% | FAIL | **PASS** |
+
+Cell 1 had 4 tasks exceed 100% of GLM-5.1's 200K context window. Cell 3 had zero. The 873-line skill (~8,700 tokens) accumulates across conversation turns, consuming context budget that could otherwise be spent on task-relevant data.
+
+The counter-example exists: `task-search-empty-dir` went PASS→FAIL in Cell 3, confirming the effect is not universally monotonic — some tasks genuinely benefit from the richer guidance.
+
+**This insight is now cited in PHILOSOPHY.md as supporting evidence for the Distributed Prompting thesis.**
+
+### 11. Next Steps: Real-World Validation
+
+R7 establishes **directional findings** under controlled conditions. External validity requires testing against real-world skill distributions.
+
+#### 11a. Real-Case Audit (Qualitative)
+
+Select 5-10 well-known MCP servers or agent skills and run `talking-cli audit-mcp` / `talking-cli audit`:
+
+**Selection criteria**:
+- Known / high-visibility (≥100 GitHub stars or enterprise use)
+- Dense tool usage (≥10 distinct tools) — maximizes hint surface area
+- Skill file >100 lines — provides compression space
+- Non-trivial error paths — exercises Talking CLI's core audit scenarios
+- Publicly accessible on GitHub — reproducible
+
+**Candidate sources**:
+- `modelcontextprotocol/servers` official repository (20+ servers)
+- `anthropic/mcp-samples`
+- High-traffic third-party MCP servers
+- OpenCode skill registry community skills
+- `cursor-directory` community .cursorrules collection
+
+**Output**: AUDIT-REPORT.md per skill/server with H1-H4 or M1-M4 scores.
+
+#### 11b. Before/After Benchmark (Quantitative)
+
+For 3-5 audited skills with optimization potential:
+1. Run benchmark tasks against original (unoptimized) skill
+2. Apply Talking CLI optimization (add hints, compress skill)
+3. Run same benchmark tasks against optimized skill
+4. Compare: token usage + task success rate
+
+**Output**: REAL-WORLD-VALIDATION.md with per-skill before/after metrics.
+
+#### 11c. R8 Run Design
+
+- **Provider**: GLM-5.1 (proven stable with 2-cell parallel)
+- **Skill**: Calibrated "large" skill at ~400-500 lines (P95, at spec limit)
+- **Task set**: `tasks-curated/` (15 tasks, 5e+7m+3h)
+- **Design**: Full 2×2 ablation with ≥2 trials per cell for within-cell variance
+- **Estimated time**: ~4h (2 phases × 2 cells × ~60min each)
+
+#### 11d. Cross-Provider Validation
+
+Run R8-equivalent on ≥1 additional provider (DeepSeek-V4-Flash or OpenAI GPT-4o) to establish cross-model generalization. Requires separate API keys.
+
+**Priority order**: 11a (audit) → 11b (before/after) → 11c (R8 calibrated) → 11d (cross-provider)
