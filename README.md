@@ -144,7 +144,7 @@ For internal benchmark development today:
 
 ## What it looks like
 
-Coach mode running against a bloated, mute skill:
+Coach mode running against a full-skill, mute skill:
 
 ```
 Score: 0/100
@@ -198,7 +198,7 @@ Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastruct
 
 **Static analysis** (OpenClaw gh-issues skill):
 
-| Metric | Bloated | Talking | Delta |
+| Metric | Full Skill | Lean Skill | Delta |
 |--------|---------|---------|-------|
 | Lines of code | 887 | 170 | **−80.8%** |
 | Words | 4,939 | 772 | **−84.4%** |
@@ -249,8 +249,8 @@ We ran the full benchmark harness (25 tasks, mute vs talking) against **DeepSeek
 
 **Estimated cost savings per 1,000 tasks** (based on measured token ratios, assuming equivalent task quality):
 
-| Model | Bloated cost | Talking cost | Savings |
-|-------|-------------|--------------|---------|
+| Model | Full Skill cost | Lean Skill cost | Savings |
+|-------|----------------|----------------|---------|
 | DeepSeek-V3.2 | $83.00 | $20.00 | **$63.00 (76%)** |
 | Claude 3.5 Sonnet (est.) | $117.00 | $28.00 | **$89.00 (76%)** |
 | GPT-4o (est.) | $83.00 | $20.00 | **$63.00 (76%)** |
@@ -293,7 +293,7 @@ This section explains the experimental design behind the numbers above, what the
 - **Quality lift**: pass-rate delta of +4pp (36% → 40%) is within statistical noise on n = 25; sign test p = 1.0.
 - **Cross-model generalization**: cost extrapolations to Claude / GPT-4o / Gemini above use ratio math, not actual runs.
 - **Decomposition of savings**: how much of the −76% is initial-prompt shrink vs. fewer agent turns? v1 does not separate these.
-- **Variant integrity**: under default settings, v1's `mute` arm uses a hardcoded fallback prompt rather than `bloated-skill.md`. The 887 vs 170 line comparison is a static-document fact; the runtime experiment compares something narrower. v2 phase A fixes this.
+- **Variant integrity**: under default settings, v1's `mute` arm uses a hardcoded fallback prompt rather than `full-skill.md`. The 887 vs 170 line comparison is a static-document fact; the runtime experiment compares something narrower. v2 phase A fixes this.
 
 ### v2 design principles
 

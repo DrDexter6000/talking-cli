@@ -112,7 +112,7 @@ This is directionally right but has two structural gaps that the v2 verdict rubr
 - **Cross-model generalization**: cost extrapolations to Claude / GPT-4o / Gemini in the README use ratio math, not actual runs.
 - **Decomposition of savings**: how much of the −76% is initial-prompt shrink vs. fewer agent turns? v1 does not separate.
 - **Trigger-type effectiveness**: v1 corpus is not categorized by hint-trigger scenario, so per-category effect sizes cannot be computed.
-- **Variant integrity**: under default settings, v1's `mute` arm uses a hardcoded ~50-word fallback prompt rather than `bloated-skill.md` (873 lines). The README narrative compares static documents; the runtime experiment compares something else. v2's first phase fixes this.
+- **Variant integrity**: under default settings, v1's `mute` arm uses a hardcoded ~50-word fallback prompt rather than `full-skill.md` (873 lines). The README narrative compares static documents; the runtime experiment compares something else. v2's first phase fixes this.
 
 The integrity of acknowledging this last point is the basis for asking readers to take v2 seriously.
 

@@ -13,7 +13,7 @@
 | R2 | 2026-04-22 | minimax-m2.7 | 25 | 2 (mute/talking) | 1 | v1 legacy | PARTIAL | `results/full-run-minimax-2026-04-22/` |
 | R3 | 2026-04-22 | deepseek-reasoner | 25 | 2 | ~0.6 | v1 legacy | ABANDONED | — |
 | R4 | 2026-04-25 | deepseek-v4-flash | 3 | 4 (2×2 ablation) | 1 | v2 ablation | SUCCESS | `results/test-fix-2026-04-25/` |
-| R5 | 2026-04-25 | deepseek-v4-flash | 30 | 1 (bloated+mute) | 1 | v2 baseline | ⚠️ BELOW TARGET | `results/2026-04-25/` |
+| R5 | 2026-04-25 | deepseek-v4-flash | 30 | 1 (full-skill+mute) | 1 | v2 baseline | ⚠️ BELOW TARGET | `results/2026-04-25/` |
 | R6 | 2026-04-26 | deepseek-v4-flash | 30 | 4 (2×2 ablation) | 1 | v2 ablation | SUCCESS | `results/REPORT-2x2-R6.md` |
 
 ---
@@ -44,26 +44,26 @@
 ## R4 — DeepSeek V4 Flash (v2, 2×2 ablation, infrastructure validation)
 
 - **Provider**: DeepSeek V4 Flash
-- **Design**: 2×2 ablation (bloated/talking × mute/talking), 3 tasks, single trial
+- **Design**: 2×2 ablation (full-skill/lean-skill × mute/hinting), 3 tasks, single trial
 - **Purpose**: Validate MCP init timeout fix + 2×2 ablation infrastructure
 - **Key metrics**:
 
 | Cell | Avg Tokens | Avg Turns | Avg Walltime | Pass Rate |
 |------|-----------|-----------|-------------|-----------|
-| bloated+mute (control) | 470,755 | 13.0 | 170s | 0/3 |
-| bloated+talking (server effect) | 391,497 | 12.7 | 193s | 1/3 |
-| talking+mute (skill effect) | 469,343 | 14.7 | 147s | 1/3 |
-| talking+talking (full treatment) | 415,523 | 11.7 | 97s | 0/3 |
+| full-skill+mute (control) | 470,755 | 13.0 | 170s | 0/3 |
+| full-skill+hinting (server effect) | 391,497 | 12.7 | 193s | 1/3 |
+| lean-skill+mute (skill effect) | 469,343 | 14.7 | 147s | 1/3 |
+| lean-skill+hinting (full treatment) | 415,523 | 11.7 | 97s | 0/3 |
 
 **Named contrasts**:
 - Server effect: −79K tokens (−16.8%), +1 win — **only significant dimension**
 - Skill effect: −1.4K tokens (−0.3%), +1 win — negligible
 - Full vs control: −55K tokens (−11.7%), 0 wins — interaction effect
-- Interaction: talking+talking underperforms talking+mute — **investigate**
+- Interaction: lean-skill+hinting underperforms lean-skill+mute — **investigate**
 
 **Key findings**:
-1. Token savings come almost entirely from talking **server** (−17%), not talking skill (−0.3%)
-2. talking+talking is NOT the best cell — interaction effect needs investigation
+1. Token savings come almost entirely from hinting **server** (−17%), not lean skill (−0.3%)
+2. lean-skill+hinting is NOT the best cell — interaction effect needs investigation
 3. n=3 with single trial — all statistics insignificant (p=1.0)
 4. Per-task variance up to 4× — confirms need for `--repeat ≥3`
 5. MCP init timeout fix validated — all 12 cells completed successfully
@@ -74,7 +74,7 @@
 ## R5 — DeepSeek V4 Flash (v2, baseline-only, 30-task)
 
 - **Provider**: DeepSeek V4 Flash
-- **Design**: Baseline-only (bloated+mute), 30 tasks, single trial
+- **Design**: Baseline-only (full-skill+mute), 30 tasks, single trial
 - **Purpose**: Measure actual tier pass rates for corpus calibration
 - **Bug fix**: Sandbox path injection bug discovered in R4 (pre-run). Task prompts referenced `/tmp/benchmark-sandbox/` but actual sandbox was `C:\Users\...\Temp\talking-cli-benchmark-XXXXX`. Fixed in `standalone-executor.ts`.
 

@@ -355,7 +355,7 @@ export function isAblationResults(resultPath: string): boolean {
 }
 
 /**
- * Read results.jsonl with ablation variants (e.g. "talking+mute") and compute
+ * Read results.jsonl with ablation variants (e.g. "lean-skill+mute") and compute
  * per-cell stats + named contrasts with sign test & Wilcoxon.
  */
 export function computeAblationStats(resultPath: string, provider?: string): AblationSummaryJson {

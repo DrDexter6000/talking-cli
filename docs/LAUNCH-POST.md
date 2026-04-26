@@ -82,9 +82,9 @@ P3 is in progress. `optimize --apply` (auto-fix with git branch safety) and the 
 
 ## The Evidence (Updated)
 
-We didn't just theorize. We ran a controlled benchmark on MiniMax M2.7 Highspeed comparing an 887-line bloated SKILL.md against a 170-line Talking CLI version across 10 filesystem tasks.
+We didn't just theorize. We ran a controlled benchmark on MiniMax M2.7 Highspeed comparing an 887-line full-skill SKILL.md against a 170-line lean-skill version across 10 filesystem tasks.
 
-| Metric | Bloated | Talking | Delta |
+| Metric | Full Skill | Lean Skill | Delta |
 |--------|---------|---------|-------|
 | Initial prompt | 8,716 tokens | 1,370 tokens | **−84.3%** |
 | Total tokens | 16,228 tokens | 6,137 tokens | **−62.2%** |
@@ -94,8 +94,8 @@ The agent with the smaller prompt actually performed *better* because it receive
 
 **Cost impact per 1,000 tasks** (based on measured token ratios):
 
-| Model | Bloated cost | Talking cost | Savings |
-|-------|-------------|--------------|---------|
+| Model | Full Skill cost | Lean Skill cost | Savings |
+|-------|----------------|----------------|---------|
 | MiniMax M2.7 Highspeed | $15.50 | $10.80 | **$4.70 (30%)** |
 | Claude 3.5 Sonnet (est.) | $78.00 | $54.00 | **$24.00 (30%)** |
 | GPT-4o (est.) | $52.00 | $36.00 | **$16.00 (30%)** |

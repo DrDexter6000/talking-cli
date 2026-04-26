@@ -317,7 +317,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
 
   private loadSystemPromptForCell(cell: AblationCell): string {
     const skillDir = resolve(BENCHMARK_DIR, "skills");
-    const skillFile = cell.skill === "bloated" ? "bloated-skill.md" : "talking-skill.md";
+    const skillFile = cell.skill === "full-skill" ? "full-skill.md" : "lean-skill.md";
     const skillPath = join(skillDir, skillFile);
     if (existsSync(skillPath)) return readFileSync(skillPath, "utf-8");
     return "You are a benchmark executor with access to MCP filesystem tools. Complete the user's request using the available tools. You may call tools multiple times if needed. When done, summarize the result.";
@@ -326,17 +326,17 @@ export class StandaloneExecutor implements BenchmarkExecutor {
   private loadSystemPrompt(variant: string): string {
     const skillDir = resolve(BENCHMARK_DIR, "skills");
     
-    if (variant === "bloated") {
-      const bloatedPath = join(skillDir, "bloated-skill.md");
-      if (existsSync(bloatedPath)) {
-        return readFileSync(bloatedPath, "utf-8");
+    if (variant === "bloated" || variant === "full-skill") {
+      const fullPath = join(skillDir, "full-skill.md");
+      if (existsSync(fullPath)) {
+        return readFileSync(fullPath, "utf-8");
       }
     }
     
-    if (variant === "talking") {
-      const talkingPath = join(skillDir, "talking-skill.md");
-      if (existsSync(talkingPath)) {
-        return readFileSync(talkingPath, "utf-8");
+    if (variant === "talking" || variant === "lean-skill") {
+      const leanPath = join(skillDir, "lean-skill.md");
+      if (existsSync(leanPath)) {
+        return readFileSync(leanPath, "utf-8");
       }
     }
     

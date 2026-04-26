@@ -80,14 +80,14 @@ describe("benchmark runner task ordering", () => {
     await runBenchmark(executor, "virtual-task-dir", "virtual-results", { taskLimit: 2 });
 
     expect(executor.calls.map((call) => `${call.taskId}:${call.variant}`)).toEqual([
-      "task-a:bloated+mute",
-      "task-a:bloated+talking",
-      "task-a:talking+mute",
-      "task-a:talking+talking",
-      "task-b:bloated+mute",
-      "task-b:bloated+talking",
-      "task-b:talking+mute",
-      "task-b:talking+talking",
+      "task-a:full-skill+mute",
+      "task-a:full-skill+hinting",
+      "task-a:lean-skill+mute",
+      "task-a:lean-skill+hinting",
+      "task-b:full-skill+mute",
+      "task-b:full-skill+hinting",
+      "task-b:lean-skill+mute",
+      "task-b:lean-skill+hinting",
     ]);
     expect(writtenFiles.some((file) => file.path.endsWith("results.jsonl"))).toBe(true);
   });

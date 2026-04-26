@@ -373,7 +373,7 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
   lines.push(`**Provider**: ${providerLabel}`);
   lines.push(`**Tasks**: ${summary.perTask.length}`);
   lines.push(
-    "**Variants**: bloated+mute, bloated+talking, talking+mute, talking+talking",
+    "**Variants**: full-skill+mute, full-skill+hinting, lean-skill+mute, lean-skill+hinting",
   );
   lines.push(`**Total Runs**: ${summary.perTask.length * 4}`);
   lines.push("");
@@ -414,10 +414,10 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
     return `${avgTok} tok · ${passRate}% pass`;
   }
 
-  lines.push("| | Mute Server | Talking Server |");
+  lines.push("| | Mute Server | Hinting Server |");
   lines.push("|---|---|---|");
-  lines.push(`| **Bloated Skill** | ${fmtCell("bloated+mute")} | ${fmtCell("bloated+talking")} |`);
-  lines.push(`| **Talking Skill** | ${fmtCell("talking+mute")} | ${fmtCell("talking+talking")} |`);
+  lines.push(`| **Full Skill** | ${fmtCell("full-skill+mute")} | ${fmtCell("full-skill+hinting")} |`);
+  lines.push(`| **Lean Skill** | ${fmtCell("lean-skill+mute")} | ${fmtCell("lean-skill+hinting")} |`);
   lines.push("");
 
   // ─── 3. Named Contrasts ────────────────────────────────────────────────────
@@ -472,11 +472,11 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
   lines.push("");
   lines.push("## Appendix: Per-Task Results (逐任务详细结果)");
   lines.push("");
-  lines.push("| Task | bloated+mute | bloated+talking | talking+mute | talking+talking |");
-  lines.push("|------|-------------|----------------|-------------|----------------|");
+  lines.push("| Task | full-skill+mute | full-skill+hinting | lean-skill+mute | lean-skill+hinting |");
+  lines.push("|------|----------------|-------------------|----------------|-------------------|");
 
   for (const row of summary.perTask) {
-    const cells = ["bloated+mute", "bloated+talking", "talking+mute", "talking+talking"];
+    const cells = ["full-skill+mute", "full-skill+hinting", "lean-skill+mute", "lean-skill+hinting"];
     const cols = cells.map((c) => {
       const m = row.cells[c];
       if (!m) return "—";
@@ -492,13 +492,13 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
   lines.push("## Methodology");
   lines.push("");
   lines.push("This report uses a **2×2 ablation design** isolating two orthogonal factors:");
-  lines.push("- **Skill variant**: bloated (full SKILL.md, no hint references) vs talking (lean SKILL.md, references tool hints)");
-  lines.push("- **Server variant**: mute (raw data only) vs talking (data + actionable hints)");
+  lines.push("- **Skill variant**: full-skill (full SKILL.md, no hint references) vs lean-skill (lean SKILL.md, references tool hints)");
+  lines.push("- **Server variant**: mute (raw data only) vs hinting (data + actionable hints)");
   lines.push("");
   lines.push("Four named contrasts decompose the treatment effect:");
-  lines.push("- **Full vs Control**: combined effect of talking skill + talking server");
-  lines.push("- **Skill Effect**: talking skill alone (with mute server)");
-  lines.push("- **Server Effect**: talking server alone (with bloated skill)");
+  lines.push("- **Full vs Control**: combined effect of lean skill + hinting server");
+  lines.push("- **Skill Effect**: lean skill alone (with mute server)");
+  lines.push("- **Server Effect**: hinting server alone (with full skill)");
   lines.push("- **Interaction**: whether skill + server together exceed skill alone");
   lines.push("");
   lines.push("Statistical tests: paired sign test (pass/fail) + Wilcoxon signed-rank (token deltas).");

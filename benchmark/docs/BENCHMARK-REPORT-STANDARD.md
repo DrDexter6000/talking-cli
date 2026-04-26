@@ -209,10 +209,10 @@ All reports MUST use the following display names for the 2×2 ablation cells:
 
 | Internal ID | Display Name | Meaning |
 |-------------|-------------|---------|
-| `bloated+mute` | **Full Skill / Mute Tools** | 完整 SKILL.md (887行) + 工具返回原始数据，不含 hint |
-| `bloated+talking` | **Full Skill / Hints in Tools** | 完整 SKILL.md + 工具在错误/空结果时返回 actionable hint |
-| `talking+mute` | **Lean Skill / Mute Tools** | 精简 SKILL.md (170行) + 工具返回原始数据，不含 hint |
-| `talking+talking` | **Lean Skill / Hints in Tools** | 精简 SKILL.md + 工具在错误/空结果时返回 actionable hint |
+| `full-skill+mute` | **Full Skill / Mute Tools** | 完整 SKILL.md (887行) + 工具返回原始数据，不含 hint |
+| `full-skill+hinting` | **Full Skill / Hints in Tools** | 完整 SKILL.md + 工具在错误/空结果时返回 actionable hint |
+| `lean-skill+mute` | **Lean Skill / Mute Tools** | 精简 SKILL.md (170行) + 工具返回原始数据，不含 hint |
+| `lean-skill+hinting` | **Lean Skill / Hints in Tools** | 精简 SKILL.md + 工具在错误/空结果时返回 actionable hint |
 
 **Why these names**: The two dimensions are (1) how much guidance is in the SKILL.md file, and (2) whether the tool responses contain contextual hints. "Full Skill / Lean Skill" describes the skill file; "Mute Tools / Hints in Tools" describes the tool behavior. Together they are immediately understandable without internal jargon.
 

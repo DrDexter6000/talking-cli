@@ -26,8 +26,8 @@ benchmark/
 │   └── talking/            # Same server — WITH hints via withHints() helper
 ├── tasks/                  # 25 benchmark task JSONs + archived/
 ├── skills/
-│   ├── bloated-skill.md    # Control variant: full skill, no tool hints
-│   ├── talking-skill.md    # Treatment variant: references tool hints
+│   ├── full-skill.md        # Control variant: full skill, no tool hints
+│   ├── lean-skill.md        # Treatment variant: references tool hints
 │   └── reference-server-filesystem.md  # Server documentation
 ├── docs/
 │   ├── BENCHMARK-GUIDE.md  # SSOT: task design, execution guide, findings
@@ -57,8 +57,8 @@ Config priority: explicit → `~/.talking-cli/providers.json` → `.talking-cli-
 ## EXECUTION FLOW
 
 1. `cli.ts` parses args → creates `StandaloneExecutor` with provider
-2. `run-benchmark.ts` loads tasks, loops tasks × variants (mute/talking)
-3. `standalone-executor.ts`: loads skill (bloated/talking), spawns MCP server subprocess, runs LLM turn loop (max 20 turns, 5min per call)
+2. `run-benchmark.ts` loads tasks, loops tasks × variants (mute/hinting)
+3. `standalone-executor.ts`: loads skill (full-skill/lean-skill), spawns MCP server subprocess, runs LLM turn loop (max 20 turns, 5min per call)
 4. Each LLM call includes system prompt + conversation + MCP tool definitions
 5. `checker.ts` validates final result against 85 registered checker functions
 6. `stats.ts` computes Wilcoxon + sign test on per-task deltas

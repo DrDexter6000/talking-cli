@@ -358,7 +358,7 @@ Standard poll format:
 Added `--task-dir` flag to benchmark CLI for specifying custom task directories.
 
 ```bash
-node benchmark/dist/cli.js --provider glm-5.1 --task-dir benchmark/tasks-curated --variants bloated+mute
+node benchmark/dist/cli.js --provider glm-5.1 --task-dir benchmark/tasks-curated --variants full-skill+mute
 ```
 
 This enables curated task sets without modifying the default `tasks/` directory.
@@ -373,7 +373,7 @@ Created `benchmark/tasks-curated/` with 15 hand-selected tasks sourced from both
 |----------|--------|
 | Reasoning tokens | Count toward `max_tokens` but not `output_tokens` |
 | LLM call latency | 5–10s for simple tasks, 30–60s for complex multi-turn |
-| Context pressure | Bloated skill (887 lines) causes fast context growth, earlier timeouts |
+| Context pressure | Full skill (887 lines) causes fast context growth, earlier timeouts |
 | Coding plan endpoint | `https://open.bigmodel.cn/api/coding/paas/v4` — separate from standard API |
 
 ### 8. The 2x2 Signal

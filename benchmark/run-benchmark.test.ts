@@ -14,7 +14,7 @@ class FakeExecutor implements BenchmarkExecutor {
     options: BenchmarkRunOptions,
   ): Promise<BenchmarkRunResult> {
     this.calls.push({ taskId: task.id, variant, outputDir: options.outputDir });
-    const talking = variant === "talking" || variant.startsWith("talking+");
+    const talking = variant === "talking" || variant.startsWith("talking+") || variant === "lean-skill" || variant.startsWith("lean-skill+");
     return {
       taskId: task.id,
       variant,
@@ -75,14 +75,14 @@ describe("benchmark runner entrypoint", () => {
 
     expect(executor.calls).toHaveLength(8);
     expect(executor.calls.map((call) => `${call.taskId}:${call.variant}`)).toEqual([
-      "task-a:bloated+mute",
-      "task-a:bloated+talking",
-      "task-a:talking+mute",
-      "task-a:talking+talking",
-      "task-b:bloated+mute",
-      "task-b:bloated+talking",
-      "task-b:talking+mute",
-      "task-b:talking+talking",
+      "task-a:full-skill+mute",
+      "task-a:full-skill+hinting",
+      "task-a:lean-skill+mute",
+      "task-a:lean-skill+hinting",
+      "task-b:full-skill+mute",
+      "task-b:full-skill+hinting",
+      "task-b:lean-skill+mute",
+      "task-b:lean-skill+hinting",
     ]);
 
     expect(existsSync(resolve(resultDir, "results.jsonl"))).toBe(true);
@@ -124,14 +124,14 @@ describe("benchmark runner entrypoint", () => {
     await runBenchmark(executor, taskDir, resultDir, { taskLimit: 2 });
 
     expect(executor.calls.map((call) => `${call.taskId}:${call.variant}`)).toEqual([
-      "task-a:bloated+mute",
-      "task-a:bloated+talking",
-      "task-a:talking+mute",
-      "task-a:talking+talking",
-      "task-b:bloated+mute",
-      "task-b:bloated+talking",
-      "task-b:talking+mute",
-      "task-b:talking+talking",
+      "task-a:full-skill+mute",
+      "task-a:full-skill+hinting",
+      "task-a:lean-skill+mute",
+      "task-a:lean-skill+hinting",
+      "task-b:full-skill+mute",
+      "task-b:full-skill+hinting",
+      "task-b:lean-skill+mute",
+      "task-b:lean-skill+hinting",
     ]);
   });
 });

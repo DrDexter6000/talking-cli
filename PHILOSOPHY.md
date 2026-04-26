@@ -64,7 +64,6 @@ The analogy is exact:
 | One monolithic document (SKILL.md) carries all guidance | Guidance is distributed across every node (tool response) |
 | Every turn pays the full cost, regardless of which tools are called | Each turn only loads the guidance relevant to the tools that were actually invoked |
 | Single point of failure: one bloated document | Resilient: each tool owns its own guidance |
-
 The discipline that makes Distributed Prompting work is the same discipline that makes distributed systems work: **a shared protocol**. In Talking CLI, that protocol is the Four Rules of Talk (below). Without the rules, Distributed Prompting collapses into chaos — every tool invents its own voice, and the agent drowns in incompatible guidance.
 
 > **Distributed Prompting = Prompt-On-Call + the Four Rules protocol**
@@ -309,10 +308,10 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 
 ## Evidence: Token Efficiency Benchmark
 
-We validated the prompt-surface claim with a controlled benchmark on MiniMax M2.7 Highspeed. Ten filesystem tasks were executed twice: once with an 887-line bloated SKILL.md (all error handling inline) and once with a 170-line Talking CLI skill (error handling moved to tool hints).
+We validated the prompt-surface claim with a controlled benchmark on MiniMax M2.7 Highspeed. Ten filesystem tasks were executed twice: once with an 887-line full-skill SKILL.md (all error handling inline) and once with a 170-line lean-skill (error handling moved to tool hints).
 
-| Metric | Bloated | Talking | Delta |
-|--------|---------|---------|-------|
+| Metric | Full Skill | Lean Skill | Delta |
+|--------|------------|------------|-------|
 | Initial prompt | 8,716 tokens | 1,370 tokens | **−84.3%** |
 | Runtime input | 13,024 tokens | 2,166 tokens | **−83.4%** |
 | Total tokens | 16,228 tokens | 6,137 tokens | **−62.2%** |

@@ -1,8 +1,8 @@
 // ─── 2×2 Ablation Types ──────────────────────────────────────────────────────
 
 /** The two orthogonal dimensions of the ablation */
-export type SkillVariant = "bloated" | "talking";
-export type ServerVariant = "mute" | "talking";
+export type SkillVariant = "full-skill" | "lean-skill";
+export type ServerVariant = "mute" | "hinting";
 
 /** A single cell in the 2×2 matrix */
 export interface AblationCell {
@@ -12,10 +12,10 @@ export interface AblationCell {
 
 /** The 4 canonical cells, in fixed order */
 export const ABLATION_CELLS: AblationCell[] = [
-  { skill: "bloated", server: "mute" },      // Cell 1: pure control
-  { skill: "bloated", server: "talking" },    // Cell 2: server-only effect
-  { skill: "talking", server: "mute" },        // Cell 3: skill-only effect
-  { skill: "talking", server: "talking" },     // Cell 4: full treatment
+  { skill: "full-skill", server: "mute" },      // Cell 1: pure control
+  { skill: "full-skill", server: "hinting" },    // Cell 2: server-only effect
+  { skill: "lean-skill", server: "mute" },        // Cell 3: skill-only effect
+  { skill: "lean-skill", server: "hinting" },     // Cell 4: full treatment
 ];
 
 /** Serialize to flat string for JSONL storage */
@@ -27,9 +27,13 @@ export function cellToVariant(cell: AblationCell): string {
 export function variantToCell(variant: string): AblationCell | null {
   const parts = variant.split("+");
   if (parts.length === 2) {
-    const [skill, server] = parts;
-    if ((skill === "bloated" || skill === "talking") &&
-        (server === "mute" || server === "talking")) {
+    let [skill, server] = parts;
+    // Support legacy variant strings for reading old result files
+    if (skill === "bloated") skill = "full-skill";
+    if (skill === "talking") skill = "lean-skill";
+    if (server === "talking") server = "hinting";
+    if ((skill === "full-skill" || skill === "lean-skill") &&
+        (server === "mute" || server === "hinting")) {
       return { skill: skill as SkillVariant, server: server as ServerVariant };
     }
   }
@@ -43,10 +47,10 @@ export function isLegacyVariant(variant: string): boolean {
 
 /** Named pairwise comparisons for the 2×2 ablation */
 export const ABLATION_CONTRASTS = [
-  { name: "full_vs_control",  label: "Full vs Control (Lean+Hints vs Full+Mute)",  treatment: "talking+talking", control: "bloated+mute" },
-  { name: "skill_effect",     label: "Skill Effect (Lean Skill vs Full Skill)",     treatment: "talking+mute",    control: "bloated+mute" },
-  { name: "server_effect",    label: "Server Effect (Hints in Tools vs Mute Tools)", treatment: "bloated+talking", control: "bloated+mute" },
-  { name: "interaction",      label: "Skill + Server Interaction",                  treatment: "talking+talking", control: "talking+mute" },
+  { name: "full_vs_control",  label: "Full vs Control (Lean+Hints vs Full+Mute)",  treatment: "lean-skill+hinting", control: "full-skill+mute" },
+  { name: "skill_effect",     label: "Skill Effect (Lean Skill vs Full Skill)",     treatment: "lean-skill+mute",    control: "full-skill+mute" },
+  { name: "server_effect",    label: "Server Effect (Hints in Tools vs Mute Tools)", treatment: "full-skill+hinting", control: "full-skill+mute" },
+  { name: "interaction",      label: "Skill + Server Interaction",                  treatment: "lean-skill+hinting", control: "lean-skill+mute" },
 ] as const;
 
 // ─── Core Types ──────────────────────────────────────────────────────────────
