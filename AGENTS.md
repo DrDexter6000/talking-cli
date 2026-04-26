@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-04-22
+**Generated:** 2026-04-26
 **Commit:** 5ba968e
 **Branch:** master
 
@@ -21,9 +21,10 @@ Talking CLI — a linter/auditor that checks if agent skills and MCP servers ret
 │   └── runner/     # Fixture runner for test fixtures
 ├── benchmark/      # Standalone benchmark harness (own tsconfig, own dist/, own providers)
 │   ├── runner/     # Provider config, stats, checker, standalone executor
-│   ├── servers/    # Vendored MCP server variants (mute/ talking/) — npm install + build required
+│   ├── servers/    # Vendored MCP server variants (mute/ talking/) — NOT renamed; npm install + build required
 │   ├── tasks/      # 25 benchmark task JSONs + archived/
-│   ├── skills/     # Reference skill files for benchmarking
+│   ├── tasks-curated/  # 15 curated tasks (5 easy + 7 medium + 3 hard) for ablation studies
+│   ├── skills/     # Reference skill files: full-skill.md, lean-skill.md (renamed from bloated/talking)
 │   ├── docs/       # BENCHMARK-GUIDE (SSOT), REPORT-STANDARD, PROVIDER-CONFIG
 │   └── scripts/    # run-benchmark-bg.ps1, check-benchmark.ps1
 ├── docs/           # Public docs (CN-001 redirect, LAUNCH-POST archived)
@@ -39,7 +40,8 @@ Talking CLI — a linter/auditor that checks if agent skills and MCP servers ret
 | Change output format | `src/renderers/` (skill) or `src/mcp/renderers/` (MCP) | Coach/CI/JSON triple |
 | Add a persona | `src/personas/` | Register in `src/personas/index.ts` + `PERSONA_KEYS` |
 | Modify benchmark tasks | `benchmark/tasks/*.json` | Schema: `{id, tool, scenario, command, assert}` |
-| Change benchmark providers | `benchmark/runner/provider-config.ts` | Authoritative source for model params |
+| Change benchmark providers | `benchmark/runner/provider-config.ts` | Authoritative source for model params; glm-5.1 added |
+| Run ablation benchmark | `benchmark/cli.ts` | `--task-dir benchmark/tasks-curated` for 15-task curated set |
 | Benchmark execution flow | `benchmark/runner/run-benchmark.ts` → `standalone-executor.ts` | `checker.ts` validates results (915 lines, largest file) |
 | Discovery logic | `src/discovery.ts` (skills) or `src/mcp/discovery.ts` (MCP) | File-walking, fixture parsing |
 | Types | `src/types.ts` | Domain types: `HeuristicResult`, `EngineOutput`, `Fixture`, `DiscoveryResult` |
@@ -67,7 +69,7 @@ Talking CLI — a linter/auditor that checks if agent skills and MCP servers ret
 - **Runtime type guards**: `isValidFixture()` / `assertFixture()` in `src/types.ts` — no Zod/ schema library
 - **Process.exit spy**: `vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)` in tests
 - **Sentence-case test names**: `"outputs coach report by default"`, not `testOutputsCoachReport`
-- **Benchmark providers**: Separate provider system (deepseek, minimax, stub) with env-var API keys
+- **Benchmark providers**: Separate provider system (stub, deepseek, glm-5.1, minimax) with env-var API keys
 - **`src/index.ts` is empty placeholder** — package is CLI-only, not importable as library
 
 ## COMMANDS
@@ -91,6 +93,7 @@ npm run typecheck              # tsc --noEmit
 # Benchmark
 npm run benchmark:smoke        # stub provider, 3 tasks, local-only
 npm run benchmark:build        # tsc -p benchmark/tsconfig.json
+npm run benchmark -- --provider glm-5.1 --task-dir benchmark/tasks-curated --variants full-skill+lean-skill+mute+hinting
 ```
 
 ## DOCUMENTATION GUIDE
@@ -125,5 +128,9 @@ This project maintains a strict documentation hierarchy. Each document has a def
 - `.internal/` contains PRD, phased TDD plans, and session handoff — operational, not archival
 - `checker.ts` (915 lines) is the largest file — benchmark result validation logic
 - `src/mcp/` is a parallel audit subsystem with its own engine, rules (M1-M4), renderers, and runtime — mirrors `src/` structure for MCP server audits
+- `benchmark/tasks-curated/` is the curated 15-task set for ablation studies (targets 40–70% baseline pass rate)
+- Variant naming: SkillVariant = "full-skill" | "lean-skill"; ServerVariant = "mute" | "hinting"
+- GLM-5.1 uses coding plan endpoint `api/coding/paas/v4` (not standard `api/paas/v4`)
+- Benchmark uses 2-cell parallel execution (not 4-cell — GLM-5.1 can't handle >2 concurrent)
 - API keys (DEEPSEEK_API_KEY, ZHIPU_API_KEY, MINIMAX_API_KEY) are env-var only, never hardcoded
 - Build uses tsup (not tsc) for main package; tsc for benchmark
