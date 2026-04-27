@@ -117,11 +117,20 @@ npx talking-cli audit ./my-skill --persona emotional-damage-dad
 npx talking-cli audit-mcp ./my-mcp-server
 
 # Deep audit — runtime M3/M4 heuristics (spawns server)
+# ⚠ Only use --deep on servers you trust. See SECURITY.md.
 npx talking-cli audit-mcp ./my-mcp-server --deep
+
+# Force static-only (never spawns a server, safe for CI)
+npx talking-cli audit-mcp ./my-mcp-server --no-spawn
 
 # Generate optimization plan (plan-only, never touches source files)
 npx talking-cli optimize ./my-skill
 # → writes TALKING-CLI-OPTIMIZATION.md at the skill root
+
+# Scaffold a new skill directory with templates that pass audit
+npx talking-cli init my-skill
+cd my-skill
+npx talking-cli audit .
 ```
 
 ## API key requirements

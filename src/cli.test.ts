@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { runAudit, runMcpAudit, runOptimize } from './cli.js';
+import { runAudit, runInit, runMcpAudit, runOptimize } from './cli.js';
 import { DiscoveryError } from './discovery.js';
 import { McpDiscoveryError } from './mcp/discovery.js';
 
@@ -310,6 +310,99 @@ describe('runOptimize', () => {
       await expect(runOptimize(dir, { apply: true })).rejects.toThrow('Not a git repository');
     } finally {
       rmSync(dir, { recursive: true });
+    }
+  });
+});
+
+describe('runInit', () => {
+  it('creates skill directory with SKILL.md and fixtures', () => {
+    const tmpBase = mkdtempSync(join(tmpdir(), 'talking-cli-init-'));
+    const skillDir = join(tmpBase, 'my-test-skill');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      runInit('my-test-skill', { dir: skillDir });
+
+      expect(existsSync(skillDir)).toBe(true);
+      expect(existsSync(join(skillDir, 'SKILL.md'))).toBe(true);
+      expect(existsSync(join(skillDir, 'talking-cli-fixtures'))).toBe(true);
+      expect(existsSync(join(skillDir, 'talking-cli-fixtures', 'search-error.fixture.json'))).toBe(
+        true,
+      );
+      expect(existsSync(join(skillDir, 'talking-cli-fixtures', 'search-empty.fixture.json'))).toBe(
+        true,
+      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Created skill directory'));
+    } finally {
+      logSpy.mockRestore();
+      rmSync(tmpBase, { recursive: true });
+    }
+  });
+
+  it('generates SKILL.md under 150 lines', () => {
+    const tmpBase = mkdtempSync(join(tmpdir(), 'talking-cli-init-'));
+    const skillDir = join(tmpBase, 'my-skill');
+    try {
+      runInit('my-skill', { dir: skillDir });
+
+      const content = readFileSync(join(skillDir, 'SKILL.md'), 'utf-8');
+      const lineCount = content.split('\n').length;
+      expect(lineCount).toBeLessThan(150);
+    } finally {
+      rmSync(tmpBase, { recursive: true });
+    }
+  });
+
+  it('includes skill name in SKILL.md title', () => {
+    const tmpBase = mkdtempSync(join(tmpdir(), 'talking-cli-init-'));
+    const skillDir = join(tmpBase, 'cool-search');
+    try {
+      runInit('cool-search', { dir: skillDir });
+
+      const content = readFileSync(join(skillDir, 'SKILL.md'), 'utf-8');
+      expect(content).toContain('Cool Search');
+    } finally {
+      rmSync(tmpBase, { recursive: true });
+    }
+  });
+
+  it('generates valid fixture files', () => {
+    const tmpBase = mkdtempSync(join(tmpdir(), 'talking-cli-init-'));
+    const skillDir = join(tmpBase, 'fixture-test');
+    try {
+      runInit('fixture-test', { dir: skillDir });
+
+      const errorFixture = JSON.parse(
+        readFileSync(join(skillDir, 'talking-cli-fixtures', 'search-error.fixture.json'), 'utf-8'),
+      );
+      expect(errorFixture.tool).toBe('search');
+      expect(errorFixture.scenario).toBe('error');
+      expect(errorFixture.assert.output_has_field).toBe('hints');
+
+      const emptyFixture = JSON.parse(
+        readFileSync(join(skillDir, 'talking-cli-fixtures', 'search-empty.fixture.json'), 'utf-8'),
+      );
+      expect(emptyFixture.tool).toBe('search');
+      expect(emptyFixture.scenario).toBe('empty');
+      expect(emptyFixture.assert.output_has_field).toBe('hints');
+    } finally {
+      rmSync(tmpBase, { recursive: true });
+    }
+  });
+
+  it('rejects if directory already exists', () => {
+    const tmpBase = mkdtempSync(join(tmpdir(), 'talking-cli-init-'));
+    const skillDir = join(tmpBase, 'existing-skill');
+    mkdirSync(skillDir, { recursive: true });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    try {
+      runInit('existing-skill', { dir: skillDir });
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('already exists'));
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally {
+      errorSpy.mockRestore();
+      exitSpy.mockRestore();
+      rmSync(tmpBase, { recursive: true });
     }
   });
 });

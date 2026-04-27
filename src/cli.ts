@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Command } from 'commander';
 import { discoverFixtures, discoverSkillMd, discoverTools } from './discovery.js';
@@ -53,12 +53,13 @@ export async function runMcpAudit(
     json?: boolean;
     persona?: string;
     deep?: boolean;
+    noSpawn?: boolean;
     command?: string[];
     staticDir?: string;
   },
 ): Promise<void> {
   const engineOutput = await runMcpEngine(serverDir, {
-    deep: options.deep,
+    deep: options.deep && !options.noSpawn,
     command: options.command,
     staticDir: options.staticDir,
   });
@@ -101,6 +102,106 @@ export async function runOptimize(skillDir: string, options: { apply?: boolean }
   console.log(`Optimization plan written to: ${planPath}`);
 }
 
+function generateSkillMd(skillName: string): string {
+  const title = skillName.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return `# ${title} — Agent Skill Definition
+
+## What This Tool Does
+
+${title} provides [describe core functionality here].
+It [describe what the agent should know about this tool].
+
+## Commands
+
+### \`search --query <term>\`
+Searches for [resource]. Returns matching results with hints.
+
+### \`list\`
+Lists available [resources]. Returns a summary with guidance.
+
+## Error Handling
+
+When a command encounters issues, the response includes a \`hints\` array
+with specific recovery steps:
+
+- **No results found** → hints suggest broadening the query or trying
+  alternative terms
+- **Invalid input** → hints describe the expected format and provide
+  an example
+- **Permission denied** → hints explain what access level is needed
+
+Example error response:
+\`\`\`json
+{
+  "error": "No results for 'xyz'",
+  "hints": ["Try broadening your query with fewer filters",
+            "Use 'list' to see available categories"]
+}
+\`\`\`
+
+## Integration
+
+\`\`\`bash
+# CLI usage
+${skillName} search --query "example"
+
+# In agent workflows, always check the hints field:
+# response.hints → array of actionable next-step suggestions
+\`\`\`
+
+## Scoring
+
+| Score | Verdict |
+|-------|---------|
+| ≥80   | PASS — ship it |
+| 50–79 | PARTIAL — fix before release |
+| <50   | FAIL — needs significant work |
+`;
+}
+
+export function runInit(skillName: string, options: { dir?: string }): void {
+  const baseDir = options.dir ?? skillName;
+
+  if (existsSync(baseDir)) {
+    console.error(`Directory already exists: ${baseDir}`);
+    process.exit(1);
+  }
+
+  mkdirSync(baseDir, { recursive: true });
+
+  writeFileSync(resolve(baseDir, 'SKILL.md'), generateSkillMd(skillName), 'utf-8');
+
+  const fixturesDir = resolve(baseDir, 'talking-cli-fixtures');
+  mkdirSync(fixturesDir, { recursive: true });
+
+  const errorFixture = {
+    tool: 'search',
+    scenario: 'error',
+    command: [
+      'echo',
+      '{"error":"search failed","hints":["Try broadening your query with fewer filters"]}',
+    ],
+    assert: { output_has_field: 'hints' },
+  };
+  writeFileSync(
+    resolve(fixturesDir, 'search-error.fixture.json'),
+    JSON.stringify(errorFixture, null, 2),
+  );
+
+  const emptyFixture = {
+    tool: 'search',
+    scenario: 'empty',
+    command: ['echo', '{"results":[],"hints":["No results found. Try removing some filters"]}'],
+    assert: { output_has_field: 'hints' },
+  };
+  writeFileSync(
+    resolve(fixturesDir, 'search-empty.fixture.json'),
+    JSON.stringify(emptyFixture, null, 2),
+  );
+
+  console.log(`Created skill directory: ${baseDir}/`);
+}
+
 const program = new Command();
 
 program
@@ -132,6 +233,7 @@ program
   .option('--ci', 'machine-readable CI mode')
   .option('--json', 'JSON output')
   .option('--deep', 'run runtime M3/M4 heuristics (spawns server)')
+  .option('--no-spawn', 'force static-only analysis (M1/M2), never spawn a server')
   .option(
     '--command <parts...>',
     'override server launch command (e.g. --command npx --command -y --command @modelcontextprotocol/server-memory)',
@@ -149,6 +251,7 @@ program
         json?: boolean;
         persona?: string;
         deep?: boolean;
+        noSpawn?: boolean;
         command?: string[];
         staticDir?: string;
       },
@@ -164,6 +267,14 @@ program
       }
     },
   );
+
+program
+  .command('init <skill-name>')
+  .description('Scaffold a new skill directory')
+  .option('--dir <path>', 'output directory (default: <skill-name>)')
+  .action((skillName: string, options: { dir?: string }) => {
+    runInit(skillName, options);
+  });
 
 program
   .command('optimize <skill-dir>')
