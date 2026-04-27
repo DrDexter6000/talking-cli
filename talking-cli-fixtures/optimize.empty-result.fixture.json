@@ -1,0 +1,1 @@
+{"tool":"optimize","scenario":"empty-result","command":["node","tools/optimize.js"],"env":{"SCENARIO":"empty"},"assert":{"output_has_field":"hints"}}
