@@ -144,6 +144,109 @@ describe('evaluateM4', () => {
     const r = evaluateM4(results);
     expect(r.score).toBe(100);
   });
+  it('excludes Pydantic "Input validation error" as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: { content: [{ type: 'text', text: 'Input validation error' }], isError: true },
+        responseText: 'Input validation error',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('excludes Pydantic "Input validation error: field required" as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [{ type: 'text', text: "Input validation error: field 'path' is required" }],
+          isError: true,
+        },
+        responseText: "Input validation error: field 'path' is required",
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('excludes Zod "required property" as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [{ type: 'text', text: 'required property: path' }],
+          isError: true,
+        },
+        responseText: 'required property: path',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('excludes "Field required" as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: { content: [{ type: 'text', text: 'Field required' }], isError: true },
+        responseText: 'Field required',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('excludes "Expected X, received Y" as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [{ type: 'text', text: 'Expected string, received number' }],
+          isError: true,
+        },
+        responseText: 'Expected string, received number',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('excludes "invalid_type" Zod error as SDK boilerplate', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [{ type: 'text', text: 'invalid_type: expected string, received number' }],
+          isError: true,
+        },
+        responseText: 'invalid_type: expected string, received number',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(0);
+  });
+
+  it('still scores real guidance with "required" as actionable (SDK boundary)', () => {
+    const results: ScenarioResult[] = [
+      {
+        scenario: { toolName: 'get', args: {}, expectedType: 'error', description: '' },
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: 'name is required. Please provide a valid name.',
+            },
+          ],
+          isError: true,
+        },
+        responseText: 'name is required. Please provide a valid name.',
+      },
+    ];
+    const r = evaluateM4(results);
+    expect(r.score).toBe(100);
+  });
 });
 
 describe('M4_ACTIONABLE_PATTERNS', () => {

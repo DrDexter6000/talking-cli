@@ -29,7 +29,7 @@ function createSkillDir(opts: {
   const toolEntries = tools.map((name) => {
     writeFileSync(
       join(dir, 'tools', `${name}.js`),
-      `console.log(JSON.stringify({ hints: ['hint'] }));`,
+      `console.log(JSON.stringify({ hints: ['Review the available options'] }));`,
     );
     return { name, ext: '.js', path: join(dir, 'tools', `${name}.js`) };
   });

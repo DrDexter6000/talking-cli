@@ -60,6 +60,13 @@ export async function runMcpEngine(
   try {
     await transport.initialize();
     const runtimeTools = await transport.listTools();
+
+    // R1: If static discovery failed, use runtime tools for M1/M2
+    if (m1.verdict === 'NOT_APPLICABLE' && runtimeTools.length > 0) {
+      m1 = evaluateM1(runtimeTools);
+      m2 = evaluateM2(runtimeTools);
+    }
+
     const scenarioResults = await executeScenarios(transport, runtimeTools);
     m3 = evaluateM3(scenarioResults);
     m4 = evaluateM4(scenarioResults);

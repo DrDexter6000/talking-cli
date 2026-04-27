@@ -168,7 +168,7 @@ export const defaultPersona: PersonaRenderer = {
 
     lines.push(
       chalk.cyan('→ ') +
-        'Descriptions are C1 (Contract) — they constrain, not explain. Move "when to use" / "how to use" / "first do X" guidance into the tool response (C3 Voice).',
+        'Descriptions are C1 (Contract) — they constrain, not explain. Move "when to use" / "how to use" / "first do X" guidance into the tool response (Prompt-On-Call).',
     );
     return lines.join('\n');
   },

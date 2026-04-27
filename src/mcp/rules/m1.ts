@@ -9,8 +9,8 @@ import type { McpToolDefinition } from '../types.js';
  *
  * In MCP, the `description` field is part of C1 (Contract). It should tell
  * the agent what the tool accepts and returns — not how to use it, when to
- * call it, or what to do after it returns. Those belong in C3 (Voice), i.e.
- * the tool's runtime response (prompt-on-call).
+ * call it, or what to do after it returns. Those belong in Prompt-On-Call,
+ * i.e. the tool's runtime response.
  *
  * Because MCP has no SKILL.md, developers often shove usage guidance into
  * descriptions. This makes descriptions bloated with strategy that should

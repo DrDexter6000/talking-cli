@@ -40,7 +40,7 @@ Talking CLI is a **three-leg stool** built around one idea: **Distributed Prompt
 
 You can also think of this as **Prompt-On-Call**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
 
-1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Names the Voice channel (C3), budgets the prompt surface, enumerates anti-patterns. The formal name for Distributed Prompting's theoretical anchor is *Tool-Scoped Progressive Disclosure*.
+1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Defines the four prompt channels, budgets the prompt surface, enumerates anti-patterns. *Tool-Scoped Progressive Disclosure* is the formal academic name (now called Distributed Prompting).
 2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
 3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
 
@@ -107,9 +107,6 @@ npx talking-cli audit ./my-skill --ci
 npx talking-cli audit ./my-skill --json
 
 # Persona mode — same audit, different voice
-npx talking-cli audit ./my-skill --persona nba-coach
-npx talking-cli audit ./my-skill --persona british-critic
-npx talking-cli audit ./my-skill --persona zen-master
 npx talking-cli audit ./my-skill --persona emotional-damage-dad
 
 # Audit an MCP server — static analysis (fast, safe)
@@ -346,7 +343,7 @@ Two reasons: (1) the design is critiqueable on its own merits, not defended afte
 Talking CLI is more than a linter. It's the implementation of **Distributed Prompting**: every tool response is a designed prompt surface, not a data dump. **Prompt-On-Call** is the concrete pattern for achieving this.
 
 - **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
-- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*).
+- **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*, now called Distributed Prompting).
 
 ---
 
@@ -362,7 +359,7 @@ Talking CLI is more than a linter. It's the implementation of **Distributed Prom
 | **Ecosystem audit publication** (G8 / P4.2) | `AUDIT-BENCHMARK.md` as re-runnable artifact, public post | 🔄 Ready for re-run with stronger models |
 | **H4 semantic upgrade** (G9 / P4.3) | Haiku-class classifier replaces the `≥ 10 chars` stub; graceful fallback without API key | ⏳ |
 | **H3 hint-budget ≤ 3** (G9 / P4.4) | Semantic dedup of hints, not field-count | ⏳ |
-| **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ⏳ |
+| **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ✅ `nba-coach`, `british-critic`, `zen-master` archived |
 | **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 90/100, CI-enforced, README badge | ⏳ |
 | **Real-world validation** (R8) | Audit + before/after benchmark on real MCP servers/skills | ⏳ Candidates: `modelcontextprotocol/servers`, cursor-directory |
 | **Cross-provider validation** | Replicate R7 on ≥1 additional provider (DeepSeek / OpenAI) | ⏳ Requires API key |
@@ -373,7 +370,7 @@ Talking CLI is more than a linter. It's the implementation of **Distributed Prom
 - ✅ H1–H4 skill audit (`audit`) — v1 heuristics; H3/H4 will harden in P4.3–4.4
 - ✅ M1–M4 MCP server audit (`audit-mcp --deep`)
 - ✅ `optimize` plan + `--apply` with git branch safety
-- 🧪 Multiple personas (`--persona`) — **experimental**, surface will shrink in P4.5
+- 🧪 Two personas (`--persona`) — `default` and `emotional-damage-dad`
 - ⛔ `optimize --workflow` (9-step pipeline) — specified in PRD §11, deferred past P4
 
 ## License

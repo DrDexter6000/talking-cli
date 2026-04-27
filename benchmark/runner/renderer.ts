@@ -4,9 +4,177 @@ import type {
   PerTaskRow,
   AblationSummaryJson,
   PerCellRow,
+  ContrastAggregate,
 } from "./stats.ts";
 import { ABLATION_CELLS, cellToVariant } from "./types.js";
 import { isAblationResults, computeAblationStats } from "./stats.js";
+
+// ─── Verdict Types ─────────────────────────────────────────────────────────────
+
+type Verdict = "PROVEN" | "SUCCESS" | "PARTIAL" | "FAILURE";
+
+interface VerdictResult {
+  verdict: Verdict;
+  tokenPValue: number;
+  turnsPValue: number;
+  passRateDelta: number;
+  passRateCIDelta: number;
+  tokenDeltaPct: string;
+}
+
+// ─── Wilcoxon Signed-Rank Test (renderer-local copy) ──────────────────────────
+
+function wilcoxonSignedRank(values: number[]): { W: number; pValue: number } {
+  const nonZero = values.filter((v) => v !== 0);
+  const n = nonZero.length;
+  if (n === 0) return { W: 0, pValue: 1 };
+
+  const absValues = nonZero.map((v) => Math.abs(v));
+  const sorted = [...absValues].sort((a, b) => a - b);
+
+  const rankMap = new Map<number, number>();
+  for (let i = 0; i < sorted.length; i++) {
+    const val = sorted[i];
+    if (!rankMap.has(val)) {
+      const start = i;
+      let end = i;
+      while (end < sorted.length && sorted[end] === val) end++;
+      const avgRank = (start + 1 + end) / 2;
+      rankMap.set(val, avgRank);
+      i = end - 1;
+    }
+  }
+
+  let Wplus = 0;
+  for (const v of nonZero) {
+    if (v > 0) {
+      Wplus += rankMap.get(Math.abs(v))!;
+    }
+  }
+
+  const totalRank = (n * (n + 1)) / 2;
+  const Wminus = totalRank - Wplus;
+  const W = Math.min(Wplus, Wminus);
+
+  let pValue: number;
+  if (n >= 20) {
+    const meanW = (n * (n + 1)) / 4;
+    const varW = (n * (n + 1) * (2 * n + 1)) / 24;
+    const z = Math.abs(W - meanW) / Math.sqrt(varW);
+    pValue = 2 * (1 - normalCDF(z));
+  } else {
+    pValue = exactWilcoxonP(W, n);
+  }
+
+  return { W, pValue: Math.min(pValue, 1) };
+}
+
+function exactWilcoxonP(W: number, n: number): number {
+  const totalRank = (n * (n + 1)) / 2;
+  const dp: number[] = new Array(totalRank + 1).fill(0);
+  dp[0] = 1;
+
+  for (let i = 1; i <= n; i++) {
+    for (let s = totalRank; s >= i; s--) {
+      dp[s] += dp[s - i];
+    }
+  }
+
+  const total = 2 ** n;
+  let count = 0;
+  for (let s = 0; s <= totalRank; s++) {
+    if (s <= W || s >= totalRank - W) {
+      count += dp[s];
+    }
+  }
+
+  return count / total;
+}
+
+function normalCDF(z: number): number {
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+  const t = 1 / (1 + p * z);
+  return 1 - (a1 * t + a2 * t * t + a3 * t ** 3 + a4 * t ** 4 + a5 * t ** 5) * Math.exp(-(z * z) / 2);
+}
+
+// ─── Pass Rate 95% CI ─────────────────────────────────────────────────────────
+
+function passRateDeltaCI(
+  p1: number,
+  n1: number,
+  p2: number,
+  n2: number,
+): { delta: number; ciHalf: number } {
+  const delta = p2 - p1;
+  const se = Math.sqrt((p1 * (1 - p1)) / n1 + (p2 * (1 - p2)) / n2);
+  return { delta, ciHalf: 1.96 * se };
+}
+
+// ─── Verdict Computation ──────────────────────────────────────────────────────
+
+function computeVerdict(
+  tokenDeltas: number[],
+  turnDeltas: number[],
+  passCountTreatment: number,
+  passCountControl: number,
+  totalTasks: number,
+  tokenDeltaPctStr: string,
+): VerdictResult {
+  const tokenWR = wilcoxonSignedRank(tokenDeltas);
+  const turnWR = wilcoxonSignedRank(turnDeltas);
+
+  const pControl = passCountControl / totalTasks;
+  const pTreatment = passCountTreatment / totalTasks;
+  const { delta: prDelta, ciHalf: prCI } = passRateDeltaCI(
+    pControl, totalTasks, pTreatment, totalTasks,
+  );
+
+  const tokenSignificant = tokenWR.pValue < 0.05;
+  const turnsSignificant = turnWR.pValue < 0.05;
+  const passRateImprovement = prDelta * 100 >= 10;
+  const passRateDegraded = prDelta - prCI > 0;
+  const passRateCIExcludesZero = prDelta + prCI <= 0 || prDelta - prCI >= 0;
+
+  let verdict: Verdict;
+  if (tokenSignificant && turnsSignificant && passRateImprovement) {
+    verdict = "PROVEN";
+  } else if (tokenSignificant && !passRateDegraded) {
+    verdict = "SUCCESS";
+  } else if (tokenSignificant || turnsSignificant) {
+    verdict = "PARTIAL";
+  } else {
+    verdict = "FAILURE";
+  }
+
+  return {
+    verdict,
+    tokenPValue: tokenWR.pValue,
+    turnsPValue: turnWR.pValue,
+    passRateDelta: prDelta * 100,
+    passRateCIDelta: prCI * 100,
+    tokenDeltaPct: tokenDeltaPctStr,
+  };
+}
+
+function computeVerdictFromContrast(
+  contrast: ContrastAggregate,
+  totalTasks: number,
+  tokenDeltaPctStr: string,
+): VerdictResult {
+  return computeVerdict(
+    Array(totalTasks).fill(-contrast.meanDeltaInputTokens),
+    Array(totalTasks).fill(-contrast.meanDeltaTurns),
+    contrast.talkingWins,
+    contrast.controlWins,
+    totalTasks,
+    tokenDeltaPctStr,
+  );
+}
 
 /**
  * Render a summary.json into AUDIT-BENCHMARK.md following the standard format.
@@ -143,30 +311,30 @@ function renderLegacyBenchmark(summary: SummaryJson): string {
   lines.push(`- **Wilcoxon Signed-Rank**: W = ${a.wilcoxonW}, p-value: ${a.wilcoxonPValue.toFixed(4)}`);
   lines.push("");
 
-  // ─── 4. Success Criteria Evaluation ────────────────────────────────────────
-  lines.push("## 4. Success Criteria Evaluation (成功评判标准)");
+  // ─── 4. Verdict ─────────────────────────────────────────────────────────────
+  lines.push("## 4. Verdict");
   lines.push("");
 
-  const tokenReduced = totalDelta < 0;
-  const qualityMaintained = Math.abs(passRateDelta) <= 5;
-  const qualityImproved = a.talkingWins > a.muteWins;
+  const tokenDeltas = summary.perTask.map(r => r.deltaInputTokens + r.deltaOutputTokens);
+  const turnDeltas = summary.perTask.map(r => r.deltaTurns);
+  const vr = computeVerdict(
+    tokenDeltas, turnDeltas,
+    talkingPassed, mutePassed, summary.perTask.length,
+    totalDeltaPct,
+  );
 
-  let verdict: string;
-  if (tokenReduced && qualityImproved) {
-    verdict = "GREAT_SUCCESS (大成功)";
-  } else if (tokenReduced && qualityMaintained) {
-    verdict = "SUCCESS (成功)";
-  } else if (tokenReduced) {
-    verdict = "PARTIAL (部分成功)";
-  } else {
-    verdict = "FAILURE (失败)";
-  }
-
-  lines.push(`✅ **Token Reduction**: ${tokenReduced ? "YES" : "NO"} (${totalDeltaPct}%)`);
-  lines.push(`✅ **Quality Maintained**: ${qualityMaintained ? "YES" : "NO"} (pass rate delta: ${passRateDelta > 0 ? "+" : ""}${passRateDelta.toFixed(1)}pp)`);
-  lines.push(`✅ **Quality Improved**: ${qualityImproved ? "YES" : "NO"} (Talking wins: ${a.talkingWins})`);
+  lines.push(`- **Token Wilcoxon p**: ${vr.tokenPValue.toFixed(4)} ${vr.tokenPValue < 0.05 ? "(significant)" : "(not significant)"}`);
+  lines.push(`- **Turn Wilcoxon p**: ${vr.turnsPValue.toFixed(4)} ${vr.turnsPValue < 0.05 ? "(significant)" : "(not significant)"}`);
+  lines.push(`- **Pass rate delta**: ${vr.passRateDelta > 0 ? "+" : ""}${vr.passRateDelta.toFixed(1)}pp (95% CI: [${(vr.passRateDelta - vr.passRateCIDelta).toFixed(1)}, ${(vr.passRateDelta + vr.passRateCIDelta).toFixed(1)}])`);
   lines.push("");
-  lines.push(`**Verdict**: ${verdict}`);
+  lines.push(`**Verdict**: ${vr.verdict}`);
+  lines.push("");
+  lines.push("| Verdict | Criteria |");
+  lines.push("|---------|----------|");
+  lines.push("| **PROVEN** | total_tokens ↓ p < .05 AND turns ↓ p < .05 AND pass rate ↑ ≥ 10pp |");
+  lines.push("| **SUCCESS** | total_tokens ↓ p < .05 AND pass rate 95% CI excludes degradation |");
+  lines.push("| **PARTIAL** | One of {tokens, turns} ↓ p < .05; others neutral |");
+  lines.push("| **FAILURE** | No metric significant at p < .05 |");
   lines.push("");
 
   // ─── 5. Detailed Conclusion ────────────────────────────────────────────────
@@ -203,23 +371,23 @@ function renderLegacyBenchmark(summary: SummaryJson): string {
   lines.push("- High tie rate suggests model capability is the bottleneck, not methodology");
   lines.push("");
 
-  lines.push("### 5.4 Recommendations (建议)");
+  lines.push("### 5.4 Recommendations");
   lines.push("");
-  if (verdict === "GREAT_SUCCESS (大成功)") {
-    lines.push("1. ✅ Distributed Prompting is highly effective for this model");
-    lines.push("2. Consider running on additional models to confirm generalizability");
-  } else if (verdict === "SUCCESS (成功)") {
-    lines.push("1. ✅ Token savings are significant — recommend adoption for cost-sensitive use cases");
-    lines.push("2. Task quality is maintained — no regression in success rates");
+  if (vr.verdict === "PROVEN") {
+    lines.push("1. Distributed Prompting is proven effective for this model — both efficiency and quality gains are statistically significant");
+    lines.push("2. Run on additional models to confirm generalizability");
+  } else if (vr.verdict === "SUCCESS") {
+    lines.push("1. Token savings are statistically significant — recommend adoption for cost-sensitive use cases");
+    lines.push("2. Pass rate shows no significant degradation — quality is preserved");
     lines.push("3. Consider testing on stronger models to unlock quality improvements");
-  } else if (verdict === "PARTIAL (部分成功)") {
-    lines.push("1. ⚠️ Token savings achieved but quality declined");
-    lines.push("2. Review hint quality — hints may be misleading or insufficient");
-    lines.push("3. Consider model upgrade or task simplification");
+  } else if (vr.verdict === "PARTIAL") {
+    lines.push("1. One metric shows statistical improvement, but the full picture is incomplete");
+    lines.push("2. Review hint quality and task difficulty distribution");
+    lines.push("3. Consider larger sample size to improve statistical power");
   } else {
-    lines.push("1. ❌ No token savings or quality improvement");
-    lines.push("2. Review methodology implementation");
-    lines.push("3. Consider stronger model or different task set");
+    lines.push("1. No metric reached statistical significance at p < .05");
+    lines.push("2. Review methodology implementation and task set");
+    lines.push("3. Consider stronger model, different task set, or larger sample");
   }
   lines.push("");
 
@@ -444,24 +612,21 @@ export function renderAblationBenchmark(summary: AblationSummaryJson): string {
   }
 
   // ─── 4. Verdict ────────────────────────────────────────────────────────────
-  lines.push("## 4. Verdict (判定)");
+  lines.push("## 4. Verdict");
   lines.push("");
   const fullContrast = summary.contrasts["full_vs_control"];
   if (fullContrast) {
-    const tokenSaved = fullContrast.meanDeltaInputTokens < 0;
-    const sigTokens = fullContrast.wilcoxonPValue < 0.05;
-    const qualityUp = fullContrast.talkingWins > fullContrast.controlWins;
-    const qualityNeutral = fullContrast.talkingWins === fullContrast.controlWins;
+    const totalTasks = summary.perTask.length;
+    const tokenDeltaPctStr = (
+      (fullContrast.meanDeltaInputTokens + fullContrast.meanDeltaOutputTokens) /
+      Math.max(1, Math.abs(fullContrast.meanDeltaInputTokens + fullContrast.meanDeltaOutputTokens) + (fullContrast.meanDeltaInputTokens + fullContrast.meanDeltaOutputTokens)) * 100
+    ).toFixed(1);
+    const avr = computeVerdictFromContrast(fullContrast, totalTasks, tokenDeltaPctStr);
 
-    let verdict: string;
-    if (tokenSaved && qualityUp) verdict = "GREAT_SUCCESS (大成功)";
-    else if (tokenSaved && qualityNeutral) verdict = "SUCCESS (成功)";
-    else if (tokenSaved) verdict = "PARTIAL (部分成功)";
-    else verdict = "FAILURE (失败)";
-
-    lines.push(`- **Token efficiency**: ${tokenSaved ? "✅ saved" : "❌ not saved"} (${sigTokens ? "significant" : "not significant"})`);
-    lines.push(`- **Quality**: treatment wins ${fullContrast.talkingWins} / control wins ${fullContrast.controlWins}`);
-    lines.push(`- **Verdict**: ${verdict}`);
+    lines.push(`- **Token Wilcoxon p**: ${fullContrast.wilcoxonPValue.toFixed(4)} ${fullContrast.wilcoxonPValue < 0.05 ? "(significant)" : "(not significant)"}`);
+    lines.push(`- **Turn delta**: ${fullContrast.meanDeltaTurns > 0 ? "+" : ""}${fullContrast.meanDeltaTurns.toFixed(1)} (p = ${avr.turnsPValue.toFixed(4)})`);
+    lines.push(`- **Pass rate delta**: ${avr.passRateDelta > 0 ? "+" : ""}${avr.passRateDelta.toFixed(1)}pp (95% CI: [${(avr.passRateDelta - avr.passRateCIDelta).toFixed(1)}, ${(avr.passRateDelta + avr.passRateCIDelta).toFixed(1)}])`);
+    lines.push(`- **Verdict**: ${avr.verdict}`);
   } else {
     lines.push("- Insufficient data for verdict");
   }
@@ -555,18 +720,10 @@ export function renderMultiProviderComparison(
       ? (server.meanDeltaInputTokens < 0 ? "✅" : "❌")
       : "—";
 
-    const tokenSaved = full.meanDeltaInputTokens < 0;
-    const qualityUp = full.talkingWins > full.controlWins;
-    const qualityNeutral = full.talkingWins === full.controlWins;
-
-    let verdict: string;
-    if (tokenSaved && qualityUp) verdict = "GREAT_SUCCESS";
-    else if (tokenSaved && qualityNeutral) verdict = "SUCCESS";
-    else if (tokenSaved) verdict = "PARTIAL";
-    else verdict = "FAILURE";
+    const mpvr = computeVerdictFromContrast(full, summary.perTask.length, deltaTok);
 
     lines.push(
-      `| ${provider} | ${deltaTok} | ${deltaPassStr} | ${skillEff} | ${serverEff} | ${verdict} |`,
+      `| ${provider} | ${deltaTok} | ${deltaPassStr} | ${skillEff} | ${serverEff} | ${mpvr.verdict} |`,
     );
   }
 

@@ -43,7 +43,7 @@ interface PersonaRenderer {
 }
 ```
 
-5 implementations: `default`, `nba-coach`, `british-critic`, `zen-master`, `emotional-damage-dad`.
+2 implementations: `default`, `emotional-damage-dad`. (Archived: `nba-coach`, `british-critic`, `zen-master` in `personas/archive/`.)
 
 ## CONVENTIONS
 

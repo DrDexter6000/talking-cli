@@ -17,7 +17,15 @@ benchmark/
 │   ├── providers.ts        # OpenAI/Anthropic/Gemini/Stub HTTP clients
 │   ├── run-benchmark.ts    # Orchestrator: sequential or parallel execution
 │   ├── standalone-executor.ts # Task execution: LLM + MCP subprocess + turn loop
-│   ├── checker.ts          # 85 checker functions (915 lines) — validates task results
+│   ├── checker.ts          # Barrel re-export of checkers/ directory
+│   ├── checkers/           # 85 checker functions split by category
+│   │   ├── types.ts        # CheckerResult, RubricDimension, CheckerFn
+│   │   ├── basic-checkers.ts       # 25 basic + expanded task checkers
+│   │   ├── recovery-checkers.ts    # 11 multi-turn recovery checkers
+│   │   ├── edge-case-checkers.ts   # 14 edge-case checkers
+│   │   ├── real-scenario-checkers.ts # 10 real-world incident checkers
+│   │   ├── rubric-checkers.ts      # 6 rubric-scoring checkers (buildRubricResult)
+│   │   └── generation-checkers.ts  # 19 code-gen/analysis checkers
 │   ├── stats.ts            # Wilcoxon signed-rank + sign test + aggregates
 │   ├── renderer.ts         # Renders AUDIT-BENCHMARK.md report
 │   └── types.ts            # BenchmarkTask, BenchmarkRunResult interfaces
@@ -87,4 +95,4 @@ interface BenchmarkTask {
 - **Results gitignored** — `benchmark/results/` is in `.gitignore`
 - **WSL paths** — servers contain `path-utils.ts` with NEVER-convert rules for `/mnt/` paths
 - **API keys via env-var only** — never hardcoded; `provider-config.ts` supports `${ENV_VAR}` syntax
-- **checker.ts is 915 lines** — largest file, 85 registered checkers by name
+- **checker.ts is now a barrel** — 85 checkers split into `checkers/` subdirectory; checker.ts re-exports all

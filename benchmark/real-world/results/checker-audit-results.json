@@ -1,0 +1,219 @@
+{
+  "timestamp": "2026-04-27T11:47:30.068Z",
+  "model": "glm-5.1",
+  "sampleSize": 20,
+  "validScores": 15,
+  "kappa": 0.18604651162790695,
+  "Po": 0.5333333333333333,
+  "Pe": 0.4266666666666667,
+  "confusionMatrix": {
+    "a": 2,
+    "b": 7,
+    "c": 0,
+    "d": 6
+  },
+  "checkerPassRate": 0.6,
+  "modelPassRate": 0.13333333333333333,
+  "verdicts": [
+    {
+      "taskId": "task-everything-resource-links",
+      "variant": "full-skill+mute",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The agent's outcome was a timeout, meaning no resource links were retrieved or described. The task was not completed.",
+      "checkerReason": "LLM call timed out",
+      "taskPrompt": "Use get-resource-links to retrieve 5 resource links. For each link, describe its name, URI, and whether it's a text or blob resource. Also explain what types of resources they point to overall.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-everything-resource-links",
+      "variant": "full-skill+talking",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The agent's LLM call timed out, so no resource links were retrieved or described. The task was not completed.",
+      "checkerReason": "LLM call timed out",
+      "taskPrompt": "Use get-resource-links to retrieve 5 resource links. For each link, describe its name, URI, and whether it's a text or blob resource. Also explain what types of resources they point to overall.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-everything-resource-links",
+      "variant": "lean-skill+talking",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The agent's outcome was a timeout, meaning no resource links were retrieved or described. The task was not completed.",
+      "checkerReason": "LLM call timed out",
+      "taskPrompt": "Use get-resource-links to retrieve 5 resource links. For each link, describe its name, URI, and whether it's a text or blob resource. Also explain what types of resources they point to overall.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-everything-sum-calculator",
+      "variant": "full-skill+mute",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL: The agent timed out and did not complete any part of the task - no tools were used and no results were reported.",
+      "checkerReason": "LLM call timed out",
+      "taskPrompt": "Calculate the sum of 42 and 17 using the get-sum tool. Then use the echo tool to report the result as 'The calculation result is: [sum]'. Report both tool results.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-memory-delete-cleanup",
+      "variant": "lean-skill+talking",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL: The task requires confirming that only PermanentUser remains after deletion, but the outcome explicitly states the response does not confirm PermanentUser remains, meaning the final verification step was not completed.",
+      "checkerReason": "delete-cleanup: response does not confirm PermanentUser remains",
+      "taskPrompt": "Manage a knowledge graph by creating and cleaning up entities: 1) Create entities: TempUser1 (type: user, observations: ['temporary account']), TempUser2 (type: user, observations: ['temporary account']), PermanentUser (type: user, observations: ['permanent account', 'admin role']). 2) Read the full graph and confirm all 3 entities exist. 3) Delete TempUser1 and TempUser2 only. 4) Read the graph again and confirm only PermanentUser remains. Report the final graph state.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-memory-full-crud-cycle",
+      "variant": "talking",
+      "checkerPass": false,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The agent only completed 1 out of 4 checked operations (relation deletion), while failing to create entities properly, add the observation, and delete the observation. A complete CRUD cycle requires all steps to succeed.",
+      "checkerReason": "full-crud: passed [relation_deleted], missed [entities_exist, observation_added, observation_deleted] (score 0.25)",
+      "taskPrompt": "Perform a complete CRUD cycle on a knowledge graph: 1) Create entities: ProjectAlpha (type: project, observations: ['started in 2024', 'React-based']), ReactLib (type: library, observations: ['UI framework', 'version 18']). 2) Create relation: ProjectAlpha uses ReactLib. 3) Add observation 'has 3 team members' to ProjectAlpha. 4) Delete the observation 'started in 2024' from ProjectAlpha. 5) Delete the relation between ProjectAlpha and ReactLib. 6) Read the entire graph and report the final state, confirming the deletions took effect correctly.",
+      "difficulty": "hard"
+    },
+    {
+      "taskId": "task-memory-relations",
+      "variant": "full-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL",
+      "checkerReason": "relations: agent correctly identified employees through relations",
+      "taskPrompt": "Build a knowledge graph about people and companies: 1) Create entities: Alice (type: person, observations: ['senior engineer']), Bob (type: person, observations: ['product manager']), Carol (type: person, observations: ['designer']), Google (type: company, observations: ['search engine giant']), and Microsoft (type: company, observations: ['makes Windows']). 2) Create relations: Alice works_at Google, Bob works_at Microsoft, Carol works_at Google. 3) Now search for 'Google' and list all people who work there. Summarize the results.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-everything-echo-basics",
+      "variant": "full-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": true,
+      "modelResponse": "PASS - The outcome confirms the agent used the echo tool and correctly reported the echoed message, which fulfills both requirements of the task.",
+      "checkerReason": "echo-basics: agent reported the echoed message correctly",
+      "taskPrompt": "Use the echo tool to send the message 'Hello from the everything server!' and report exactly what was returned.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-everything-sum-calculator",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": null,
+      "modelResponse": "",
+      "checkerReason": "sum-calculator: agent correctly calculated 42+17=59 and echoed result",
+      "taskPrompt": "Calculate the sum of 42 and 17 using the get-sum tool. Then use the echo tool to report the result as 'The calculation result is: [sum]'. Report both tool results.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-everything-weather-comparison",
+      "variant": "full-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": null,
+      "modelResponse": "",
+      "checkerReason": "weather-comparison: agent compared all 3 cities and identified temperature extremes",
+      "taskPrompt": "Get weather data for all three available cities using get-structured-content. Compare the temperatures and identify which city is the hottest and which is the coldest. Report each city's temperature, conditions, and humidity.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-memory-complex-query",
+      "variant": "full-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": true,
+      "modelResponse": "PASS - The agent correctly identified Alice as responsible for the authentication",
+      "checkerReason": "complex-query: agent correctly identified Alice via relation tracing",
+      "taskPrompt": "Build a knowledge graph about a software project called 'WebApp': 1) Create these entities: WebApp (type: project, observations: ['main product', 'React frontend']), AuthModule (type: module, observations: ['handles login and tokens']), DatabaseLayer (type: module, observations: ['PostgreSQL backend']), Alice (type: developer, observations: ['team lead']), Bob (type: developer, observations: ['junior dev']), Carol (type: developer, observations: ['senior architect']). 2) Create relations: Alice maintains AuthModule, Carol maintains DatabaseLayer, Bob maintains WebApp, WebApp depends_on AuthModule, WebApp depends_on DatabaseLayer. 3) Now answer: Which developer is responsible for the authentication module? Explain your reasoning by tracing the relations.",
+      "difficulty": "hard"
+    },
+    {
+      "taskId": "task-everything-multi-tool-workflow",
+      "variant": "full-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": null,
+      "modelResponse": "",
+      "checkerReason": "multi-tool: completed 5/5 workflow steps [echo_start, both_cities, sum_or_combined, success_msg, summary]",
+      "taskPrompt": "Complete this multi-step workflow: 1) Use echo to confirm you are starting the workflow with message 'Starting multi-tool workflow'. 2) Get weather for New York and Los Angeles using get-structured-content. 3) Use get-sum to add their temperatures together. 4) Use get-annotated-message with messageType 'success' and includeImage false to generate a success message. 5) Finally, use echo to report a summary like 'Workflow complete: NY temp [X], LA temp [Y], combined [Z], success message generated'.",
+      "difficulty": "hard"
+    },
+    {
+      "taskId": "task-everything-resource-links",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The outcome is too vague; it doesn't confirm that each",
+      "checkerReason": "resource-links: agent described 5 links with both text and blob resource types",
+      "taskPrompt": "Use get-resource-links to retrieve 5 resource links. For each link, describe its name, URI, and whether it's a text or blob resource. Also explain what types of resources they point to overall.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-memory-create-and-query",
+      "variant": "full-skill+talking",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL: The outcome description is too vague and doesn't demonstrate that the specific entities were created with",
+      "checkerReason": "create-and-query: agent created entities and reported search results",
+      "taskPrompt": "Create a small knowledge graph about tech companies. 1) Create entities for: Google (type: company, observations: ['search engine giant', 'owns YouTube', 'headquartered in Mountain View']), Apple (type: company, observations: ['makes iPhones', 'headquartered in Cupertino']), and Microsoft (type: company, observations: ['makes Windows', 'headquartered in Redmond']). 2) After creating all entities, search for 'Google' and report what you found including all its observations. Summarize the results.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-everything-weather-comparison",
+      "variant": "lean-skill+talking",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The outcome is too vague; it doesn't show that the agent reported each city's specific temperature",
+      "checkerReason": "weather-comparison: agent compared all 3 cities and identified temperature extremes",
+      "taskPrompt": "Get weather data for all three available cities using get-structured-content. Compare the temperatures and identify which city is the hottest and which is the coldest. Report each city's temperature, conditions, and humidity.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-memory-full-crud-cycle",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL: The agent missed the \"observation_deleted\" check, meaning the deletion of the observation 'started in 2024' from ProjectAlpha did not take effect, so the complete CRUD cycle was not successfully performed.",
+      "checkerReason": "full-crud: passed [entities_exist, observation_added, relation_deleted], missed [observation_deleted] (score 0.75)",
+      "taskPrompt": "Perform a complete CRUD cycle on a knowledge graph: 1) Create entities: ProjectAlpha (type: project, observations: ['started in 2024', 'React-based']), ReactLib (type: library, observations: ['UI framework', 'version 18']). 2) Create relation: ProjectAlpha uses ReactLib. 3) Add observation 'has 3 team members' to ProjectAlpha. 4) Delete the observation 'started in 2024' from ProjectAlpha. 5) Delete the relation between ProjectAlpha and ReactLib. 6) Read the entire graph and report the final state, confirming the deletions took effect correctly.",
+      "difficulty": "hard"
+    },
+    {
+      "taskId": "task-memory-create-and-query",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The outcome description is too vague and doesn't demonstrate that the specific entities were created with the correct types and observations, nor does it show the search results for 'Google' with its observations or a summary.",
+      "checkerReason": "create-and-query: agent created entities and reported search results",
+      "taskPrompt": "Create a small knowledge graph about tech companies. 1) Create entities for: Google (type: company, observations: ['search engine giant', 'owns YouTube', 'headquartered in Mountain View']), Apple (type: company, observations: ['makes iPhones', 'headquartered in Cupertino']), and Microsoft (type: company, observations: ['makes Windows', 'headquartered in Redmond']). 2) After creating all entities, search for 'Google' and report what you found including all its observations. Summarize the results.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-memory-update-observations",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": false,
+      "modelResponse": "FAIL - The",
+      "checkerReason": "update-observations: agent confirmed 4/4 observations present",
+      "taskPrompt": "Work with a knowledge graph about programming languages: 1) Create an entity 'Python' (type: language, observations: ['interpreted language', 'created by Guido van Rossum']). 2) Add two more observations to Python: 'supports type hints since 3.5' and 'has async/await syntax since 3.5'. 3) Open the Python entity and verify it now has all 4 observations. Report the complete list of observations.",
+      "difficulty": "medium"
+    },
+    {
+      "taskId": "task-memory-empty-graph-operations",
+      "variant": "lean-skill+mute",
+      "checkerPass": true,
+      "modelVerdict": null,
+      "modelResponse": "",
+      "checkerReason": "empty-graph: agent described empty state and suggested population actions",
+      "taskPrompt": "Start with a fresh knowledge graph. 1) Read the entire graph and report what you see. 2) Search for 'anything' and report results. 3) Try to open nodes named 'test'. 4) Based on what happened in steps 1-3, describe the current state of the graph and what actions would be needed to populate it with useful data.",
+      "difficulty": "easy"
+    },
+    {
+      "taskId": "task-memory-empty-graph-operations",
+      "variant": "talking",
+      "checkerPass": true,
+      "modelVerdict": null,
+      "modelResponse": "",
+      "checkerReason": "empty-graph: agent described empty state and suggested population actions",
+      "taskPrompt": "Start with a fresh knowledge graph. 1) Read the entire graph and report what you see. 2) Search for 'anything' and report results. 3) Try to open nodes named 'test'. 4) Based on what happened in steps 1-3, describe the current state of the graph and what actions would be needed to populate it with useful data.",
+      "difficulty": "easy"
+    }
+  ]
+}

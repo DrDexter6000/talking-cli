@@ -30,7 +30,7 @@ function createSkillDir(opts: {
   for (const name of tools) {
     writeFileSync(
       join(dir, 'tools', `${name}.js`),
-      `console.log(JSON.stringify({ hints: ['hint'] }));`,
+      `console.log(JSON.stringify({ hints: ['Review the available options'] }));`,
     );
   }
 
@@ -131,7 +131,7 @@ describe('runAudit', () => {
     }
   });
 
-  it('uses --persona nba-coach for custom voice', async () => {
+  it('uses --persona emotional-damage-dad for custom voice', async () => {
     const dir = createSkillDir({
       skillLines: 200,
       tools: ['search'],
@@ -142,10 +142,10 @@ describe('runAudit', () => {
     });
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     try {
-      await runAudit(dir, { persona: 'nba-coach' });
+      await runAudit(dir, { persona: 'emotional-damage-dad' });
       expect(logSpy).toHaveBeenCalled();
       const output = logSpy.mock.calls[0][0] as string;
-      expect(output).toContain('playbook');
+      expect(output).toContain('Your Essay Too Long');
     } finally {
       logSpy.mockRestore();
       rmSync(dir, { recursive: true });
@@ -237,7 +237,7 @@ describe('runMcpAudit', () => {
     }
   });
 
-  it('uses --persona nba-coach for custom voice', async () => {
+  it('uses --persona emotional-damage-dad for custom voice', async () => {
     const strategyDesc = 'Use this tool when you need to search files. First, check permissions.';
     const dir = createMcpServerDir({
       tools: [
@@ -250,10 +250,10 @@ describe('runMcpAudit', () => {
     });
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     try {
-      await runMcpAudit(dir, { persona: 'nba-coach' });
+      await runMcpAudit(dir, { persona: 'emotional-damage-dad' });
       expect(logSpy).toHaveBeenCalled();
       const output = logSpy.mock.calls[0][0] as string;
-      expect(output).toContain('Playbook Purity');
+      expect(output).toContain('Essay Purity');
     } finally {
       logSpy.mockRestore();
       rmSync(dir, { recursive: true });

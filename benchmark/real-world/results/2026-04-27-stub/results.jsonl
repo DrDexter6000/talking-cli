@@ -1,0 +1,2 @@
+{"taskId":"task-memory-complex-query","variant":"mute","turns":1,"inputTokens":0,"outputTokens":0,"walltime":220,"outcome":"timeout","pass":false,"checkerReason":"complex-query: response does not identify Alice as the answer","errorRecoveries":0}
+{"taskId":"task-memory-create-and-query","variant":"mute","turns":1,"inputTokens":0,"outputTokens":0,"walltime":189,"outcome":"timeout","pass":false,"checkerReason":"create-and-query: response does not mention creating entities","errorRecoveries":0}

@@ -148,7 +148,7 @@ function createOpenAICompatibleProvider(config: ProviderConfig): StandaloneLLMPr
           };
           finish_reason: string;
         }>;
-        usage?: { prompt_tokens: number; completion_tokens: number };
+        usage?: { prompt_tokens: number; completion_tokens: number; prompt_tokens_details?: { cached_tokens?: number } };
         error?: { message: string };
       };
 
@@ -195,6 +195,7 @@ function createOpenAICompatibleProvider(config: ProviderConfig): StandaloneLLMPr
         usage: {
           input_tokens: body.usage?.prompt_tokens ?? 0,
           output_tokens: body.usage?.completion_tokens ?? 0,
+          cache_read_input_tokens: body.usage?.prompt_tokens_details?.cached_tokens,
         },
       };
     },
@@ -288,7 +289,7 @@ function createAnthropicCompatibleProvider(config: ProviderConfig): StandaloneLL
       const body = await response.json() as {
         content?: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }>;
         stop_reason?: string;
-        usage?: { input_tokens: number; output_tokens: number };
+        usage?: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number };
         error?: { message: string };
       };
 
@@ -310,6 +311,8 @@ function createAnthropicCompatibleProvider(config: ProviderConfig): StandaloneLL
         usage: {
           input_tokens: body.usage?.input_tokens ?? 0,
           output_tokens: body.usage?.output_tokens ?? 0,
+          cache_read_input_tokens: body.usage?.cache_read_input_tokens,
+          cache_creation_input_tokens: body.usage?.cache_creation_input_tokens,
         },
       };
     },

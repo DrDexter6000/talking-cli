@@ -126,7 +126,7 @@ This project maintains a strict documentation hierarchy. Each document has a def
 - `benchmark/servers/variants/` requires `cd benchmark/servers && npm install && pwsh scripts/build.ps1` before use
 - Benchmark results in `benchmark/results/` are gitignored
 - `.internal/` contains PRD, phased TDD plans, and session handoff — operational, not archival
-- `checker.ts` (915 lines) is the largest file — benchmark result validation logic
+- `checker.ts` (barrel, ~180 lines) re-exports 85 checker functions from `checkers/` subdirectory (was 915 lines)
 - `src/mcp/` is a parallel audit subsystem with its own engine, rules (M1-M4), renderers, and runtime — mirrors `src/` structure for MCP server audits
 - `benchmark/tasks-curated/` is the curated 15-task set for ablation studies (targets 40–70% baseline pass rate)
 - Variant naming: SkillVariant = "full-skill" | "lean-skill"; ServerVariant = "mute" | "hinting"

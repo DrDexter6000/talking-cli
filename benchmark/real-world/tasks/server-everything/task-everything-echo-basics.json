@@ -1,0 +1,1 @@
+{"id":"task-everything-echo-basics","prompt":"Use the echo tool to send the message 'Hello from the everything server!' and report exactly what was returned.","checker":"checkEverythingEchoBasics","difficulty":"easy","tier":"easy","hint_trigger":"none"}

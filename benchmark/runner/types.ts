@@ -98,6 +98,9 @@ export interface BenchmarkRunResult {
   passedSubchecks?: string[];
   /** Captured MCP server stderr (last 50KB) */
   serverStderr?: string;
+  /** Cache-aware token fields (Anthropic / OpenAI format) */
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
 }
 
 export interface BenchmarkRunOptions {

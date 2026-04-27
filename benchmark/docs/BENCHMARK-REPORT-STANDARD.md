@@ -1,8 +1,8 @@
 # Benchmark Report Standard
 
 > **SSOT (Single Source of Truth)** for benchmark report format.
-> Version: 1.0
-> Last updated: 2026-04-22
+> Version: 2.0
+> Last updated: 2026-04-27
 
 ---
 
@@ -146,23 +146,28 @@ Wilcoxon Test: W={N}, p={N.NNNN}
 
 ---
 
-### 4. Success Criteria Evaluation (成功评判标准)
+### 4. Verdict (判定)
 
 ```
-Success Evaluation
+Verdict Evaluation
 ==================
-✅ Token Reduction: {YES/NO} ({N}% reduction)
-✅ Quality Maintained: {YES/NO} (pass rate delta: {±N}pp)
-✅ Quality Improved: {YES/NO} (Talking wins: {N})
+✅ Token Reduction: {YES/NO} ({N}% reduction, Wilcoxon p={N})
+✅ Turn Reduction: {YES/NO} ({N}% reduction, Wilcoxon p={N})
+✅ Quality Maintained: {YES/NO} (pass rate delta: {±N}pp, 95% CI: [{N}, {N}])
 
-Verdict: {SUCCESS / GREAT_SUCCESS / PARTIAL / FAILURE}
+Verdict: {PROVEN / SUCCESS / PARTIAL / FAILURE}
 ```
 
-**Verdict rules**:
-- **SUCCESS** (成功): Token消耗减少，执行质量保持不变 (pass rate delta within ±5pp)
-- **GREAT_SUCCESS** (大成功): Token消耗减少，执行质量还获得提高 (Talking wins > Mute wins)
-- **PARTIAL** (部分成功): Token消耗减少，但质量下降明显
-- **FAILURE** (失败): Token消耗未减少，或质量严重下降
+**Verdict rules** (statistically rigorous, English-only):
+
+| Verdict | Required conditions |
+|---|---|
+| **PROVEN** | total_tokens ↓ p < .05 **AND** turns ↓ p < .05 **AND** medium-tier pass rate ↑ ≥ 10pp |
+| **SUCCESS** | total_tokens ↓ p < .05 **AND** pass rate 95% CI does not cross significant degradation |
+| **PARTIAL** | One of {total_tokens, turns} ↓ p < .05; other metrics neutral |
+| **FAILURE** | No metric significant at p < .05 |
+
+**95% CI for pass rate delta**: Normal approximation `sqrt(p1*(1-p1)/n1 + p2*(1-p2)/n2)`.
 
 ---
 

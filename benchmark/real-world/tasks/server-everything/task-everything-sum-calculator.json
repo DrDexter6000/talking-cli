@@ -1,0 +1,1 @@
+{"id":"task-everything-sum-calculator","prompt":"Calculate the sum of 42 and 17 using the get-sum tool. Then use the echo tool to report the result as 'The calculation result is: [sum]'. Report both tool results.","checker":"checkEverythingSumCalculator","difficulty":"easy","tier":"easy","hint_trigger":"none"}

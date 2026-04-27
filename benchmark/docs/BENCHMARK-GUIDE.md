@@ -1,4 +1,4 @@
-# Benchmark Guide
+﻿# Benchmark Guide
 
 > SSOT for benchmark task design, execution, and findings.
 > Last updated: 2026-04-25
@@ -185,7 +185,7 @@ The benchmark has **30 active tasks** (structured as 3×3 matrix: 3 difficulty t
 | **Schema-ambiguity trigger** | 3 | 5 | 2 |
 | **Total** | **9** | **15** | **6** |
 
-See [`CORPUS-MATRIX.md`](./CORPUS-MATRIX.md) for full matrix with task assignments. Tier baselines are design targets — **not yet empirically verified** (see Research Note RN-004 in `.internal/RESEARCH-NOTES.md`).
+See [`CORPUS-MATRIX.md`](./CORPUS-MATRIX.md) for full matrix with task assignments. Tier baselines are design targets — **not yet empirically verified** (see Research Note RN-004 in `.internal/archive/real-world-validation/RESEARCH-NOTES.md`).
 
 ---
 

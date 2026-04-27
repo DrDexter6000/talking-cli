@@ -210,7 +210,7 @@ Every possible scenario is foreseen and pre-written into `SKILL.md`. The documen
 
 The tool's Voice is used to lecture. Hints become multi-step procedures, doctrinal statements, and general advice. C3 has been repurposed as a pocket `SKILL.md`.
 
-*Why it happens*: having discovered the Voice channel, the developer overcorrects and dumps everything into it.
+*Why it happens*: having discovered Prompt-On-Call, the developer overcorrects and dumps everything into it.
 
 ### 4. The Hallucinating Handshake
 
@@ -356,7 +356,7 @@ MiniMax validated the efficiency claim on a smaller task set; the 2x2 ablation o
 
 ## Reference
 
-- **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor. Talking CLI is its public-facing synthesis.
+- **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal academic name (now called Distributed Prompting). Talking CLI is its public-facing synthesis.
 - **`talking-cli` linter** — P3 in progress. `npx talking-cli audit <skill-dir>` runs H1–H4 heuristics; `optimize` generates actionable fix plans. See `README.md` for usage.
 
 ---

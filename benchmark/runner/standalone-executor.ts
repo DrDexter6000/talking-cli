@@ -21,7 +21,7 @@ type LLMContentBlock =
 type LLMResponse = {
   content: LLMContentBlock[];
   stop_reason: string;
-  usage: { input_tokens: number; output_tokens: number };
+  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number };
 };
 
 export type StandaloneConversationMessage =
@@ -381,6 +381,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     const startTime = Date.now();
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+    let totalCacheReadInputTokens = 0;
+    let totalCacheCreationInputTokens = 0;
     let turnCount = 0;
     let errorRecoveries = 0;
     let totalToolCalls = 0;
@@ -480,6 +482,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             toolCalls: totalToolCalls,
             timeToFirstTool: timeToFirstTool || elapsed,
             serverStderr: mcp?.getStderr(),
+            cacheReadInputTokens: totalCacheReadInputTokens,
+            cacheCreationInputTokens: totalCacheCreationInputTokens,
           };
         }
 
@@ -487,6 +491,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
         const outputToks = response.usage?.output_tokens ?? 0;
         totalInputTokens += inputToks;
         totalOutputTokens += outputToks;
+        totalCacheReadInputTokens += response.usage?.cache_read_input_tokens ?? 0;
+        totalCacheCreationInputTokens += response.usage?.cache_creation_input_tokens ?? 0;
 
         const assistantText = response.content
           .filter((block): block is Extract<LLMContentBlock, { type: "text" }> => block.type === "text")
@@ -537,6 +543,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             score: checkerResult.score,
             passedSubchecks: checkerResult.passedSubchecks,
             serverStderr: mcp?.getStderr(),
+            cacheReadInputTokens: totalCacheReadInputTokens,
+            cacheCreationInputTokens: totalCacheCreationInputTokens,
           };
         }
 
@@ -641,6 +649,8 @@ export class StandaloneExecutor implements BenchmarkExecutor {
         toolCalls: totalToolCalls,
         timeToFirstTool: timeToFirstTool || elapsed,
         serverStderr: mcp?.getStderr(),
+        cacheReadInputTokens: totalCacheReadInputTokens,
+        cacheCreationInputTokens: totalCacheCreationInputTokens,
       };
     } finally {
       if (mcp) await mcp.close();
