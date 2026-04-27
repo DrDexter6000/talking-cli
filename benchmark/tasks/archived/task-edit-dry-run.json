@@ -1,7 +1,0 @@
-{
-  "id": "task-edit-dry-run",
-  "prompt": "Open '/tmp/benchmark-sandbox/config.json' and apply a dry-run edit: replace 'oldConfig' with 'newConfig'. Show me the diff but don't actually write the file.",
-  "checker": "checkEditDryRun",
-  "difficulty": "hard",
-  "category": "error/empty"
-}

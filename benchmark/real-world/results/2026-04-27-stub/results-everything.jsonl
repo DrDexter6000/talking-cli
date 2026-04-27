@@ -1,2 +1,0 @@
-{"taskId":"task-everything-annotated-messages","variant":"mute","turns":1,"inputTokens":0,"outputTokens":0,"walltime":370,"outcome":"timeout","pass":false,"checkerReason":"annotated-messages: only found 1/3 message types in response","errorRecoveries":0,"target":"server-everything"}
-{"taskId":"task-everything-echo-basics","variant":"mute","turns":1,"inputTokens":0,"outputTokens":0,"walltime":325,"outcome":"timeout","pass":false,"checkerReason":"echo-basics: response does not show the Echo: prefix from the tool","errorRecoveries":0,"target":"server-everything"}

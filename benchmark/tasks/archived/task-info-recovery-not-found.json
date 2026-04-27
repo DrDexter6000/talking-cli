@@ -1,1 +1,0 @@
-{"id":"task-info-recovery-not-found","prompt":"Get file info for '/tmp/benchmark-sandbox/important.doc'. If the file doesn't exist, search for any .doc files in the directory and report info on the first one found.","checker":"checkInfoRecovery","difficulty":"hard","category":"error/empty"}

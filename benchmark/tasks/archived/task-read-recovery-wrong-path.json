@@ -1,1 +1,0 @@
-{"id":"task-read-recovery-wrong-path","prompt":"Read the configuration file from '/tmp/benchmark-sandbox/config.yaml'. If the file doesn't exist, look for alternative config files in the same directory and read the first one you find.","checker":"checkReadRecovery","difficulty":"hard","category":"error/empty"}

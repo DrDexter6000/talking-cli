@@ -1,1 +1,0 @@
-{"id":"task-write-new-file","prompt":"Create a new file '/tmp/benchmark-sandbox/new-document.txt' with the content 'Hello, this is a test file.'","checker":"checkWriteFile","difficulty":"medium","category":"neutral"}

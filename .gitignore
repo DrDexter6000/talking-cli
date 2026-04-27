@@ -60,3 +60,13 @@ __pycache__/
 
 # Internal planning docs (SSOT, handoffs, roadmaps — dev-only, not public)
 .internal/
+
+# AI agent knowledge bases (dev-only, not for public repo)
+AGENTS.md
+
+# Benchmark run results (local-only, regenerated per run)
+benchmark/real-world/results/
+
+# Benchmark server lock files (npm install regenerates these)
+benchmark/servers/package-lock.json
+benchmark/real-world/servers/*/package-lock.json

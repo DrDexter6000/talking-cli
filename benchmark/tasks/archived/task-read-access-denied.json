@@ -1,7 +1,0 @@
-{
-  "id": "task-read-access-denied",
-  "prompt": "Read the file '/etc/shadow' and show me its contents.",
-  "checker": "checkAccessDenied",
-  "difficulty": "medium",
-  "category": "error/empty"
-}
