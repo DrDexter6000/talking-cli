@@ -1,3 +1,4 @@
+import { HEURISTIC_VERSION } from '../rules/VERSION.js';
 import { discoverMcpTools, McpDiscoveryError } from './discovery.js';
 import { evaluateM1 } from './rules/m1.js';
 import { evaluateM2 } from './rules/m2.js';
@@ -6,7 +7,6 @@ import { evaluateM4 } from './rules/m4.js';
 import { detectServerCommand } from './runtime/detect-server-command.js';
 import { executeScenarios } from './runtime/executor.js';
 import { StdioMcpTransport } from './runtime/stdio-transport.js';
-import { HEURISTIC_VERSION } from '../rules/VERSION.js';
 import type { McpEngineOutput } from './types.js';
 
 export async function runMcpEngine(

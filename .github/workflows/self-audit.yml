@@ -23,14 +23,14 @@ jobs:
 
       - name: Run talking-cli self-audit
         run: |
-          npx talking-cli audit . --ci
-          SCORE=$(npx talking-cli audit . --json | node -e "
+          SCORE=$(node dist/cli.js audit . --json | node -e "
             let d = '';
             process.stdin.on('data', c => d += c);
             process.stdin.on('end', () => console.log(JSON.parse(d).totalScore));
           ")
           echo "self-audit-score=$SCORE" >> "$GITHUB_OUTPUT"
           echo "::notice::Self-audit score: $SCORE/100"
+          node dist/cli.js audit . --ci
           if [ "$SCORE" -lt 80 ]; then
             echo "::error::Self-audit score $SCORE is below threshold 80"
             exit 1
