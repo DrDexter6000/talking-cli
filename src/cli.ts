@@ -207,7 +207,7 @@ const program = new Command();
 program
   .name('talking-cli')
   .description('A linter that audits agent skills: is your CLI mute?')
-  .version(`0.1.0 (ruleset ${HEURISTIC_VERSION})`);
+  .version(`0.2.0 (ruleset ${HEURISTIC_VERSION})`);
 
 program
   .command('audit <skill-dir>')
