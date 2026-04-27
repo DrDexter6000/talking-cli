@@ -176,7 +176,7 @@ Hints are meant to whisper. If you find yourself returning five or ten, you are 
 
 If a piece of advice lives in both `SKILL.md` and `tool_result.hints`, one of them is misplaced. Budget waste compounds: you pay for it every call *and* every turn.
 
-These four heuristics map directly onto the first four rules of the planned `talking-cli` linter.
+These four heuristics map directly onto the four rules of the `talking-cli` linter (`audit` command).
 
 ### Tradeoffs
 
@@ -306,6 +306,12 @@ Formalize `hints`, `ambiguity`, and (optionally) `next_steps` fields in your too
 
 ---
 
+## Known Limitations
+
+Distributed Prompting is not a panacea. We have documented four concrete failure modes — over-hinting, imprecise actionability checks, legitimate multi-hint scenarios, and cross-tool hint contradiction — in the **[Adversarial Case Study](docs/ADVERSARIAL-CASE-STUDY.md)**. Each failure mode includes a code example and proposed mitigation.
+
+---
+
 ## Evidence: 2x2 Ablation Benchmark
 
 We ran a full 2x2 factorial ablation on GLM-5.1 using 15 curated filesystem tasks. Each cell was evaluated independently, isolating the effect of skill compression and server-side hint infrastructure.
@@ -357,7 +363,7 @@ MiniMax validated the efficiency claim on a smaller task set; the 2x2 ablation o
 ## Reference
 
 - **[CN-001: Tool-Scoped Progressive Disclosure](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal academic name (now called Distributed Prompting). Talking CLI is its public-facing synthesis.
-- **`talking-cli` linter** — P3 in progress. `npx talking-cli audit <skill-dir>` runs H1–H4 heuristics; `optimize` generates actionable fix plans. See `README.md` for usage.
+- **`talking-cli` linter** — shipped. `npx talking-cli audit <skill-dir>` runs H1–H4 heuristics (ruleset v1.0.0); `optimize` generates actionable fix plans. See `README.md` for usage.
 
 ---
 

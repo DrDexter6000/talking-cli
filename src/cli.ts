@@ -14,6 +14,7 @@ import { getPersona, isValidPersona, PERSONA_KEYS } from './personas/index.js';
 import { getExitCode, renderCI } from './renderers/ci.js';
 import { renderCoach } from './renderers/coach.js';
 import { renderJSON } from './renderers/json.js';
+import { HEURISTIC_VERSION } from './rules/VERSION.js';
 
 export async function runAudit(
   skillDir: string,
@@ -105,7 +106,7 @@ const program = new Command();
 program
   .name('talking-cli')
   .description('A linter that audits agent skills: is your CLI mute?')
-  .version('0.1.0');
+  .version(`0.1.0 (ruleset ${HEURISTIC_VERSION})`);
 
 program
   .command('audit <skill-dir>')

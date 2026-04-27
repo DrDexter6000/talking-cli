@@ -3,6 +3,7 @@ import { evaluateH1 } from './rules/h1.js';
 import { evaluateH2 } from './rules/h2.js';
 import { evaluateH3 } from './rules/h3.js';
 import { evaluateH4 } from './rules/h4.js';
+import { HEURISTIC_VERSION } from './rules/VERSION.js';
 import type { DiscoveryResult, EngineOutput } from './types.js';
 
 export async function runEngine(discovery: DiscoveryResult): Promise<EngineOutput> {
@@ -21,5 +22,6 @@ export async function runEngine(discovery: DiscoveryResult): Promise<EngineOutpu
     h4,
     totalScore: Math.round((h1.score + h2.score + h3.score + h4.score) / 4),
     hasCustomTools: discovery.tools.length > 0,
+    rulesetVersion: HEURISTIC_VERSION,
   };
 }

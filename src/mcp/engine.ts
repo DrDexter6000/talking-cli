@@ -6,6 +6,7 @@ import { evaluateM4 } from './rules/m4.js';
 import { detectServerCommand } from './runtime/detect-server-command.js';
 import { executeScenarios } from './runtime/executor.js';
 import { StdioMcpTransport } from './runtime/stdio-transport.js';
+import { HEURISTIC_VERSION } from '../rules/VERSION.js';
 import type { McpEngineOutput } from './types.js';
 
 export async function runMcpEngine(
@@ -38,6 +39,7 @@ export async function runMcpEngine(
       m1,
       m2,
       totalScore: Math.round((m1.score + m2.score) / 2),
+      rulesetVersion: HEURISTIC_VERSION,
     };
   }
 
@@ -87,5 +89,6 @@ export async function runMcpEngine(
     m3,
     m4,
     totalScore,
+    rulesetVersion: HEURISTIC_VERSION,
   };
 }

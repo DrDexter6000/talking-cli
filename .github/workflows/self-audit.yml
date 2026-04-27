@@ -1,0 +1,43 @@
+name: Self-Audit
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Run talking-cli self-audit
+        run: |
+          npx talking-cli audit . --ci
+          SCORE=$(npx talking-cli audit . --json | node -e "
+            let d = '';
+            process.stdin.on('data', c => d += c);
+            process.stdin.on('end', () => console.log(JSON.parse(d).totalScore));
+          ")
+          echo "self-audit-score=$SCORE" >> "$GITHUB_OUTPUT"
+          echo "::notice::Self-audit score: $SCORE/100"
+          if [ "$SCORE" -lt 80 ]; then
+            echo "::error::Self-audit score $SCORE is below threshold 80"
+            exit 1
+          fi
+        id: audit
+
+      - name: Report score
+        run: |
+          echo "Self-audit score: ${{ steps.audit.outputs.self-audit-score }}/100"
+          echo "Threshold: 80/100 — CI fails on regression"

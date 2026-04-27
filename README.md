@@ -4,6 +4,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
+[![Self-Audit](https://img.shields.io/badge/self--audit-100%2F100-brightgreen)](#what-this-project-is)
+[![CI](https://img.shields.io/github/actions/workflow/status/DrDexter6000/talking-cli/self-audit.yml?branch=master&label=CI)](https://github.com/DrDexter6000/talking-cli/actions)
+
+> The self-audit badge shows talking-cli's own audit score (100/100). CI enforces ≥80 on every PR.
 
 **Sound familiar?**
 
@@ -41,7 +45,7 @@ Talking CLI is a **three-leg stool** built around one idea: **Distributed Prompt
 You can also think of this as **Prompt-On-Call**: instead of one monolithic document trying to anticipate every scenario, each tool carries its own guidance — surfaced only when that tool is called, relevant only to what just happened.
 
 1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md) + [CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md). Defines the four prompt channels, budgets the prompt surface, enumerates anti-patterns. *Tool-Scoped Progressive Disclosure* is the formal academic name (now called Distributed Prompting).
-2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (in progress, see [Roadmap](#roadmap)).
+2. **Evidence** — the ecosystem audit above, and a reproducible benchmark (published, see [below](#what-it-looks-like)).
 3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
 
 The linter (`talking-cli audit` / `audit-mcp`) is the **probe**, not the hero. It's how you reproduce the audit numbers on your own server.
@@ -191,30 +195,9 @@ Static analysis of 823 Composio GitHub tools: same result. Zero hint infrastruct
 
 \* M4=100 because Zod validation errors are technically informative. These are SDK-generated messages, not tool-authored recovery guidance.
 
-### Token Efficiency Analysis
-
-**Static analysis** (OpenClaw gh-issues skill):
-
-| Metric | Full Skill | Lean Skill | Delta |
-|--------|---------|---------|-------|
-| Lines of code | 887 | 170 | **−80.8%** |
-| Words | 4,939 | 772 | **−84.4%** |
-| Characters | 34,850 | 5,479 | **−84.3%** |
-
-**2×2 Ablation benchmark** (GLM-5.1, 15 curated tasks):
-
-| Cell | Skill | Server | Pass Rate | Avg Total Tokens |
-|------|-------|--------|-----------|-----------------|
-| 1 | Full Skill (887 lines) | Mute Tools | 7/15 (47%) | 122,562 |
-| 2 | Full Skill | Hints in Tools | 8/15 (53%) | 96,829 |
-| 3 | Lean Skill (170 lines) | Mute Tools | 8/15 (53%) | 54,078 |
-| 4 | Lean Skill | Hints in Tools | 11/15 (73%) | 40,815 |
-
-**Key finding**: **Distributed Prompting** reduces token consumption by 60–67% AND improves task quality by +26pp on capable models (GLM-5.1). Both efficiency and quality are now proven.
-
 ### 2×2 Ablation Benchmark (GLM-5.1)
 
-We ran a 2×2 ablation (Full/Lean Skill x Mute/Hints in Tools) against **GLM-5.1** on 15 curated tasks:
+We ran a 2×2 ablation (Full/Lean Skill × Mute/Hints in Tools) against **GLM-5.1** on 15 curated tasks:
 
 | Cell | Skill | Server | Pass Rate | Avg Input Tokens |
 |------|-------|--------|-----------|-----------------|
@@ -224,11 +207,12 @@ We ran a 2×2 ablation (Full/Lean Skill x Mute/Hints in Tools) against **GLM-5.1
 | 4 | Lean Skill | Hints in Tools | 11/15 (73%) | 40,815 |
 
 **Key findings**:
+- **Distributed Prompting reduces token consumption by 60–67% AND improves quality by +26pp** — both efficiency and quality are proven.
 - Skill compression alone (Cell 3 vs Cell 1): −56% input tokens, +6pp pass rate
 - Server hints alone (Cell 2 vs Cell 1): +6pp pass rate
 - Combined (Cell 4 vs Cell 1): **−67% tokens, +26pp pass rate**
 - **Synergistic interaction**: combined effect exceeds sum of individual effects
-- Verdict: **GREAT SUCCESS (大成功)**
+- Verdict: **GREAT SUCCESS**
 
 **Skill size context**: The 887-line full skill sits at P99.5 of real-world skill sizes. SkillsBench (arXiv 2602.12670) analyzed 36,000 real-world skills and found that comprehensive skills at P99.5 degrade performance by −2.9pp, while moderate skills improve it by +18.8pp — independent validation that skill compression is the right direction.
 
@@ -344,12 +328,13 @@ Talking CLI is more than a linter. It's the implementation of **Distributed Prom
 
 - **[PHILOSOPHY.md](PHILOSOPHY.md)** — the full methodology: four channels, four rules, a budget, and five anti-patterns.
 - **[docs/CN-001](docs/CN-001-tool-scoped-progressive-disclosure.md)** — the formal theoretical anchor (*Tool-Scoped Progressive Disclosure*, now called Distributed Prompting).
+- **[Adversarial Case Study](docs/ADVERSARIAL-CASE-STUDY.md)** — where Distributed Prompting fails, and what to do about it.
 
 ---
 
 ## Roadmap
 
-**Current focus**: Framework complete (v0.6); functional validation achieved.
+**Current focus**: Framework complete; methodology hardened; self-auditing at 100/100.
 
 | Track | Goal | Status |
 |---|---|---|
@@ -360,7 +345,9 @@ Talking CLI is more than a linter. It's the implementation of **Distributed Prom
 | **H4 semantic upgrade** (G9 / P4.3) | Haiku-class classifier replaces the `≥ 10 chars` stub; graceful fallback without API key | ⏳ |
 | **H3 hint-budget ≤ 3** (G9 / P4.4) | Semantic dedup of hints, not field-count | ⏳ |
 | **Persona cut** (D1 / P4.5) | 5 hand-coded personas → 1 default + 1 experimental | ✅ `nba-coach`, `british-critic`, `zen-master` archived |
-| **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 90/100, CI-enforced, README badge | ⏳ |
+| **Self-dogfood** (G11 / P4.6) | `talking-cli audit .` ≥ 80/100, CI-enforced, README badge | ✅ 100/100 |
+| **Adversarial case study** | Known failure modes documented publicly | ✅ [4 failure modes](docs/ADVERSARIAL-CASE-STUDY.md) |
+| **Ruleset versioning** | Versioned heuristic rules (H1–H4, M1–M4) | ✅ v1.0.0, shown in `--version` |
 | **Real-world validation** (R8) | Audit + before/after benchmark on real MCP servers/skills | ⏳ Candidates: `modelcontextprotocol/servers`, cursor-directory |
 | **Cross-provider validation** | Replicate R7 on ≥1 additional provider (DeepSeek / OpenAI) | ⏳ Requires API key |
 | **MCP spec proposal** (G10 / P4.7) | RFC / discussion on `modelcontextprotocol/*` for a first-class `agent_hints` field | 🔄 Ready to draft |

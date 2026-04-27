@@ -22,4 +22,5 @@ export interface McpEngineOutput {
   m3?: HeuristicResult;
   m4?: HeuristicResult;
   totalScore: number;
+  rulesetVersion: string;
 }
