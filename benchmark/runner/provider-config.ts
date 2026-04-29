@@ -45,7 +45,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${DEEPSEEK_API_KEY}",
     model: "deepseek-v4-flash",
     maxTokens: 4096,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
@@ -59,7 +59,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${DEEPSEEK_API_KEY}",
     model: "deepseek-v4-pro",
     maxTokens: 32768,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
@@ -72,7 +72,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${OPENAI_API_KEY}",
     model: "gpt-4o",
     maxTokens: 4096,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
@@ -85,7 +85,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${MINIMAX_API_KEY}",
     model: "MiniMax-M2.7-highspeed",
     maxTokens: 131072,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     headers: {
       "anthropic-version": "2023-06-01",
@@ -101,7 +101,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${GEMINI_API_KEY}",
     model: "gemini-1.5-pro",
     maxTokens: 8192,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     format: "gemini",
     supportsTools: true,
@@ -114,7 +114,7 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     apiKey: "${ZHIPU_API_KEY}",
     model: "glm-5.1",
     maxTokens: 8192,
-    temperature: 1.0,
+    temperature: 0, // Deterministic for reproducible benchmarking
     timeout: 300_000,
     format: "openai",
     supportsTools: true,
@@ -122,6 +122,24 @@ export const DEFAULT_PROVIDERS: Record<string, ProviderConfig> = {
     contextWindow: 204_800, // 200K context (input + output + reasoning)
     // GLM-5.1: text-only, thinking enabled by default, fully OpenAI-compatible
     // Coding Plan endpoint: api/coding/paas/v4 (not the standard api/paas/v4)
+  },
+  openrouter: {
+    name: "openrouter",
+    baseUrl: "https://openrouter.ai/api/v1",
+    apiKey: "${OPENROUTER_API_KEY}",
+    model: "anthropic/claude-sonnet-4.6",
+    maxTokens: 16384,
+    temperature: 0, // Deterministic for reproducible benchmarking
+    timeout: 300_000,
+    format: "openai",
+    supportsTools: true,
+    supportsSystemPrompt: true,
+    contextWindow: 200_000, // Stay within ≤200K tier for $3/M pricing
+    headers: {
+      "HTTP-Referer": "https://github.com/DrDexter6000/talking-cli",
+    },
+    // OpenRouter: OpenAI-compatible, routes to Anthropic/Bedrock/Vertex
+    // Claude Sonnet 4.6: 1M context, 128K max output, $3/$15 per M tokens
   },
 };
 
@@ -243,7 +261,7 @@ export function generateProviderConfigTemplate(): string {
       "apiKey": "${MY_API_KEY}",
       "model": "model-name",
       "maxTokens": 4096,
-      "temperature": 1.0,
+      "temperature": 0,
       "timeout": 300000,
       "format": "openai",
       "supportsTools": true,

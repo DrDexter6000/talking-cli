@@ -1,6 +1,6 @@
 import type { HeuristicResult } from '../types.js';
 
-export type PersonaKey = 'default' | 'emotional-damage-dad';
+export type PersonaKey = 'default';
 
 export interface PersonaRenderer {
   readonly key: PersonaKey;

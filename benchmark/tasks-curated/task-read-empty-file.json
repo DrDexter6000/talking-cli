@@ -1,1 +1,1 @@
-{"id":"task-read-empty-file","prompt":"Read the file '/tmp/benchmark-sandbox/empty.txt' and tell me what it says.","checker":"checkReadEmpty","difficulty":"easy","category":"neutral"}
+{"id":"task-read-empty-file","prompt":"Read the file '/tmp/benchmark-sandbox/empty.txt' and tell me what it says.","checker":"checkReadEmpty","difficulty":"easy","category":"neutral","tier":"easy","hint_trigger":"empty"}

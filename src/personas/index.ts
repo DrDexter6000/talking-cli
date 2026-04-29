@@ -1,10 +1,8 @@
 import { defaultPersona } from './default.js';
-import { emotionalDamageDadPersona } from './emotional-damage-dad.js';
 import type { PersonaKey, PersonaRenderer } from './types.js';
 
 const PERSONA_MAP: Record<PersonaKey, PersonaRenderer> = {
   default: defaultPersona,
-  'emotional-damage-dad': emotionalDamageDadPersona,
 };
 
 export const PERSONA_KEYS: PersonaKey[] = Object.keys(PERSONA_MAP) as PersonaKey[];
@@ -21,4 +19,4 @@ export function isValidPersona(key: string): key is PersonaKey {
 }
 
 export type { PersonaKey, PersonaRenderer } from './types.js';
-export { defaultPersona, emotionalDamageDadPersona };
+export { defaultPersona };

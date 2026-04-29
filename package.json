@@ -1,6 +1,6 @@
 {
   "name": "talking-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A linter that audits agent skills: is your CLI mute?",
   "type": "module",
   "bin": {

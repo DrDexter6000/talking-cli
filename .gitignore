@@ -64,6 +64,15 @@ __pycache__/
 # AI agent knowledge bases (dev-only, not for public repo)
 AGENTS.md
 
+# Agent control directories (session state, continuation, plans)
+.sisyphus/
+
+# Windows env-var literal leaks
+%*%
+
+# Local dev tools (simulated fixtures for testing, not project artifacts)
+tools/
+
 # Benchmark run results (local-only, regenerated per run)
 benchmark/real-world/results/
 

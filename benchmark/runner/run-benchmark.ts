@@ -1,5 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { createHash } from "node:crypto";
 import { computeStats } from "./stats.js";
 import { renderBenchmark } from "./renderer.js";
 import { ABLATION_CELLS, cellToVariant } from "./types.js";
@@ -242,6 +243,14 @@ export async function runBenchmark(
     return JSON.parse(raw) as BenchmarkTask;
   });
   const limitedTasks = options.taskLimit ? tasks.slice(0, options.taskLimit) : tasks;
+
+  // Compute corpus hash for reproducibility
+  const corpusHash = createHash("sha256");
+  for (const task of limitedTasks) {
+    corpusHash.update(JSON.stringify(task));
+  }
+  const corpusHashHex = corpusHash.digest("hex").slice(0, 16);
+
   const benchmarkResults: BenchmarkRunResult[] = [];
 
   const variants = options.variants ?? ABLATION_CELLS.map(cellToVariant);
@@ -311,10 +320,18 @@ export async function runBenchmark(
     "utf-8",
   );
 
+  // Save corpus hash metadata
+  writeFileSync(
+    resolve(resultDir, "corpus-metadata.json"),
+    JSON.stringify({ corpusHash: corpusHashHex, taskCount: limitedTasks.length, taskDir, timestamp: new Date().toISOString() }, null, 2),
+    "utf-8",
+  );
+
   const elapsed = Date.now() - startTime;
   console.log("");
   console.log(`✅ Benchmark complete in ${formatDuration(elapsed)}`);
   console.log(`   Results: ${benchmarkResults.filter(r => r.pass).length}/${benchmarkResults.length} passed`);
+  console.log(`   Corpus hash: ${corpusHashHex}`);
 
   // Compute and save stats
   const summary = computeStats(resultDir);

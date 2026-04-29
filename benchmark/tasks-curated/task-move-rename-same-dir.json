@@ -1,1 +1,1 @@
-{"id":"task-move-rename-same-dir","prompt":"Rename the file '/tmp/benchmark-sandbox/old-name.txt' to '/tmp/benchmark-sandbox/new-name.txt' without changing its location.","checker":"checkRename","difficulty":"easy","category":"error/empty"}
+{"id":"task-move-rename-same-dir","prompt":"Rename the file '/tmp/benchmark-sandbox/old-name.txt' to '/tmp/benchmark-sandbox/new-name.txt' without changing its location.","checker":"checkRename","difficulty":"easy","category":"error/empty","tier":"easy","hint_trigger":"permission"}

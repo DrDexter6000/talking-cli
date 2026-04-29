@@ -55,7 +55,9 @@ We call this **Distributed Prompting**. It is progressive disclosure applied to 
 
 ## Implementation: Prompt-On-Call
 
-If "Distributed Prompting" sounds too abstract, call it **Prompt-On-Call**. This is the concrete implementation pattern: guidance is attached to the tool call itself, delivered in the response, at the moment the agent needs it.
+**Prompt-On-Call** is the concrete mechanism: guidance attached to a tool response, delivered at the moment the agent calls the tool, relevant to what just happened. It's the easy-to-remember name for "put hints in tool responses."
+
+**Distributed Prompting** is the cumulative effect — what happens when every tool in the system adopts Prompt-On-Call. The prompt surface is no longer centralized in one bloated document; it's distributed across every tool response, each carrying only the guidance relevant to its own calls. Distributed Prompting is the methodology; Prompt-On-Call is how you do it.
 
 The analogy is exact:
 
@@ -66,7 +68,7 @@ The analogy is exact:
 | Single point of failure: one bloated document | Resilient: each tool owns its own guidance |
 The discipline that makes Distributed Prompting work is the same discipline that makes distributed systems work: **a shared protocol**. In Talking CLI, that protocol is the Four Rules of Talk (below). Without the rules, Distributed Prompting collapses into chaos — every tool invents its own voice, and the agent drowns in incompatible guidance.
 
-> **Distributed Prompting = Prompt-On-Call + the Four Rules protocol**
+> **Prompt-On-Call is the mechanism. Distributed Prompting is the result.**
 
 ---
 
@@ -168,13 +170,15 @@ If you are above this, the excess is almost always post-call guidance that belon
 
 If your tool can return empty results or fail partially, and it says nothing about why or what to do next, you have a mute tool. Fix it.
 
-### Heuristic 3 — Cap the Voice at three hints per response.
+### Heuristic 3 — Tool outputs must contain structured hint fields.
 
-Hints are meant to whisper. If you find yourself returning five or ten, you are using C3 as a prose dump and will produce exactly the prompt flood you were trying to avoid.
+Every tool response should include a `hints`, `suggestions`, or `guidance` field alongside its data payload. A tool that returns raw JSON with no hint infrastructure is mute by design, even if the data is correct.
 
-### Heuristic 4 — The same guidance must not appear in both halves.
+### Heuristic 4 — Hints must be actionable.
 
-If a piece of advice lives in both `SKILL.md` and `tool_result.hints`, one of them is misplaced. Budget waste compounds: you pay for it every call *and* every turn.
+Hint values must be specific and non-empty. The v1 linter enforces this with a ≥10 character minimum; this is a known imprecise proxy — short hints like "retry" can be perfectly actionable while long filler can be vacuous. A semantic classifier (roadmap) will replace this check.
+
+> *Aspirational (not yet enforced by the linter):* future heuristics include a per-response hint cap (≤3) and deduplication of guidance that appears in both `SKILL.md` and tool hints.
 
 These four heuristics map directly onto the four rules of the `talking-cli` linter (`audit` command).
 
@@ -184,7 +188,7 @@ Adopting Talking CLI requires explicit design work in three areas:
 
 1. **A new layer must be designed.** `hints`, `ambiguity`, and (optionally) `next_steps` need formal definitions in your tool's response schema. This is upfront investment that mute tools avoid.
 
-2. **Hint growth must be restrained.** If every tool emits five or ten hints, the pattern reverts to the prompt flood it was designed to prevent. The three-hint cap (Heuristic 3) is not arbitrary — it is the enforcement mechanism for the budget.
+2. **Hint growth must be restrained.** If every tool emits five or ten hints, the pattern reverts to the prompt flood it was designed to prevent. A per-response hint cap (aspirational, not yet enforced by the linter) is the enforcement mechanism for the budget.
 
 3. **The schema/hint boundary must be explicit.** Without a clear line between what belongs in the Contract (C1) and what belongs in the Voice (C3), field semantics get duplicated across both surfaces and the budget wastes twice on the same guidance.
 

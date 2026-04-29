@@ -131,27 +131,6 @@ describe('runAudit', () => {
     }
   });
 
-  it('uses --persona emotional-damage-dad for custom voice', async () => {
-    const dir = createSkillDir({
-      skillLines: 200,
-      tools: ['search'],
-      fixtures: [
-        { tool: 'search', scenario: 'error' },
-        { tool: 'search', scenario: 'empty' },
-      ],
-    });
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    try {
-      await runAudit(dir, { persona: 'emotional-damage-dad' });
-      expect(logSpy).toHaveBeenCalled();
-      const output = logSpy.mock.calls[0][0] as string;
-      expect(output).toContain('Your Essay Too Long');
-    } finally {
-      logSpy.mockRestore();
-      rmSync(dir, { recursive: true });
-    }
-  });
-
   it('rejects invalid --persona with error', async () => {
     const dir = createSkillDir({ skillLines: 100 });
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -231,29 +210,6 @@ describe('runMcpAudit', () => {
       const output = logSpy.mock.calls[0][0] as string;
       expect(output).toContain('FAIL');
       expect(output).not.toContain('\x1b[');
-    } finally {
-      logSpy.mockRestore();
-      rmSync(dir, { recursive: true });
-    }
-  });
-
-  it('uses --persona emotional-damage-dad for custom voice', async () => {
-    const strategyDesc = 'Use this tool when you need to search files. First, check permissions.';
-    const dir = createMcpServerDir({
-      tools: [
-        {
-          name: 'bloat',
-          description: strategyDesc,
-          annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false },
-        },
-      ],
-    });
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    try {
-      await runMcpAudit(dir, { persona: 'emotional-damage-dad' });
-      expect(logSpy).toHaveBeenCalled();
-      const output = logSpy.mock.calls[0][0] as string;
-      expect(output).toContain('Essay Purity');
     } finally {
       logSpy.mockRestore();
       rmSync(dir, { recursive: true });

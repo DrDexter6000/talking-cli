@@ -387,6 +387,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
     let errorRecoveries = 0;
     let totalToolCalls = 0;
     let timeToFirstTool = 0;
+    const uniqueToolNames = new Set<string>();
 
     // Load system prompt based on variant
     const cell = variantToCell(variant);
@@ -480,6 +481,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             taskHash,
             errorRecoveries,
             toolCalls: totalToolCalls,
+            uniqueTools: uniqueToolNames.size,
             timeToFirstTool: timeToFirstTool || elapsed,
             serverStderr: mcp?.getStderr(),
             cacheReadInputTokens: totalCacheReadInputTokens,
@@ -538,6 +540,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
             taskHash,
             errorRecoveries,
             toolCalls: totalToolCalls,
+            uniqueTools: uniqueToolNames.size,
             timeToFirstTool: timeToFirstTool || elapsed,
             timeToSuccess: passed ? elapsed : 0,
             score: checkerResult.score,
@@ -553,6 +556,9 @@ export class StandaloneExecutor implements BenchmarkExecutor {
           timeToFirstTool = Date.now() - startTime;
         }
         totalToolCalls += toolUses.length;
+        for (const tool of toolUses) {
+          uniqueToolNames.add(tool.name);
+        }
 
         // Add assistant's full response to conversation history (preserves tool_use blocks
         // for multi-turn coherence — required by Anthropic API and MiniMax extended-thinking).
@@ -647,6 +653,7 @@ export class StandaloneExecutor implements BenchmarkExecutor {
         taskHash,
         errorRecoveries,
         toolCalls: totalToolCalls,
+        uniqueTools: uniqueToolNames.size,
         timeToFirstTool: timeToFirstTool || elapsed,
         serverStderr: mcp?.getStderr(),
         cacheReadInputTokens: totalCacheReadInputTokens,

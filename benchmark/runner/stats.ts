@@ -19,6 +19,26 @@ export interface MetricValues {
   toolCalls?: number;
 }
 
+export interface MetricStats {
+  mean: number;
+  ci95Low: number;
+  ci95High: number;
+  n: number;
+  stddev: number;
+}
+
+export interface CellVariance {
+  inputTokens: MetricStats;
+  outputTokens: MetricStats;
+  turns: MetricStats;
+  walltime: MetricStats;
+}
+
+export interface PerCellVarianceRow {
+  taskId: string;
+  cells: Record<string, CellVariance>;
+}
+
 export interface PerCellRow {
   taskId: string;
   cells: Record<string, MetricValues>;
@@ -56,6 +76,7 @@ export interface AblationSummaryJson {
   perTask: PerCellRow[];
   contrasts: Record<string, ContrastAggregate>;
   tieCount: number;
+  cellVariance?: PerCellVarianceRow[];
 }
 
 // ─── Legacy Types ─────────────────────────────────────────────────────────────
@@ -475,6 +496,105 @@ export function computeAblationStats(resultPath: string, provider?: string): Abl
     result.provider = [...providers][0];
   } else if (providers.size > 1) {
     result.providers = [...providers].sort();
+  }
+
+  return result;
+}
+
+// ─── Cell Variance (t-distribution 95% CI) ───────────────────────────────────
+
+/**
+ * Two-tailed 95% t-distribution critical values for small samples.
+ * For n >= 30, use 1.96 (normal approximation).
+ */
+const T_CRITICAL: Record<number, number> = {
+  2: 12.706,
+  3: 4.303,
+  4: 3.182,
+  5: 2.776,
+  6: 2.571,
+  7: 2.447,
+  8: 2.365,
+  9: 2.306,
+  10: 2.262,
+  11: 2.228,
+  12: 2.201,
+  13: 2.179,
+  14: 2.160,
+  15: 2.145,
+  16: 2.131,
+  17: 2.120,
+  18: 2.110,
+  19: 2.101,
+  20: 2.093,
+  21: 2.086,
+  22: 2.080,
+  23: 2.074,
+  24: 2.069,
+  25: 2.064,
+  26: 2.060,
+  27: 2.056,
+  28: 2.052,
+  29: 2.048,
+};
+
+function tCriticalFor(n: number): number {
+  if (n >= 30) return 1.96;
+  return T_CRITICAL[n] ?? 2.045; // fallback for n > 29
+}
+
+function computeVarianceStats(values: number[]): MetricStats {
+  const n = values.length;
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+  const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
+  const variance = squaredDiffs.reduce((s, d) => s + d, 0) / (n - 1);
+  const stddev = Math.sqrt(variance);
+  const se = stddev / Math.sqrt(n);
+  const t = tCriticalFor(n);
+  const margin = t * se;
+  return {
+    mean,
+    ci95Low: mean - margin,
+    ci95High: mean + margin,
+    n,
+    stddev,
+  };
+}
+
+const VARIANCE_METRICS = ["inputTokens", "outputTokens", "turns", "walltime"] as const;
+
+export function computeCellVariance(resultPath: string): Map<string, Map<string, CellVariance>> {
+  const entries = readNonEmptyLines(resultPath).map(
+    (line) => JSON.parse(line) as BenchmarkResultEntry,
+  );
+
+  // Group entries by (taskId, variant) -> array of entries (repeated observations)
+  const cellMap = new Map<string, BenchmarkResultEntry[]>();
+  for (const entry of entries) {
+    const key = `${entry.taskId}\t${entry.variant}`;
+    if (!cellMap.has(key)) cellMap.set(key, []);
+    cellMap.get(key)!.push(entry);
+  }
+
+  // Build Map<taskId, Map<variant, CellVariance>>
+  const result = new Map<string, Map<string, CellVariance>>();
+  for (const [key, groupEntries] of cellMap) {
+    if (groupEntries.length < 2) continue; // need k>=2 for variance
+    const [taskId, variant] = key.split("\t");
+    if (!result.has(taskId)) result.set(taskId, new Map());
+
+    const cellVar: CellVariance = {
+      inputTokens: computeVarianceStats(
+        groupEntries.map((e) => e.inputTokens),
+      ),
+      outputTokens: computeVarianceStats(
+        groupEntries.map((e) => e.outputTokens),
+      ),
+      turns: computeVarianceStats(groupEntries.map((e) => e.turns)),
+      walltime: computeVarianceStats(groupEntries.map((e) => e.walltime)),
+    };
+
+    result.get(taskId)!.set(variant, cellVar);
   }
 
   return result;

@@ -41,7 +41,7 @@ export async function runAudit(
       console.error(`Unknown persona: "${personaKey}". Available: ${PERSONA_KEYS.join(', ')}`);
       process.exit(1);
     }
-    const persona = getPersona(personaKey as 'default' | 'emotional-damage-dad' | undefined);
+    const persona = getPersona(personaKey as 'default' | undefined);
     console.log(renderCoach(engineOutput, persona));
   }
 }
@@ -75,7 +75,7 @@ export async function runMcpAudit(
       console.error(`Unknown persona: "${personaKey}". Available: ${PERSONA_KEYS.join(', ')}`);
       process.exit(1);
     }
-    const persona = getPersona(personaKey as 'default' | 'emotional-damage-dad' | undefined);
+    const persona = getPersona(personaKey as 'default' | undefined);
     console.log(renderMcpCoach(engineOutput, persona));
   }
 }
@@ -214,7 +214,7 @@ program
   .description('Audit a skill directory')
   .option('--ci', 'machine-readable CI mode')
   .option('--json', 'JSON output')
-  .option('--persona <name>', 'coach persona: default, emotional-damage-dad')
+  .option('--persona <name>', 'coach persona: default')
   .action(async (skillDir: string, options: { ci?: boolean; json?: boolean; persona?: string }) => {
     try {
       await runAudit(skillDir, options);
@@ -242,7 +242,7 @@ program
     '--static-dir <dir>',
     'directory for static analysis (M1/M2) when it differs from the server spawn directory',
   )
-  .option('--persona <name>', 'coach persona: default, emotional-damage-dad')
+  .option('--persona <name>', 'coach persona: default')
   .action(
     async (
       serverDir: string,
@@ -279,7 +279,7 @@ program
 program
   .command('optimize <skill-dir>')
   .description('Generate optimization plan')
-  .option('--apply', 'apply fixes (deferred to P3)')
+  .option('--apply', 'auto-apply fixes via git branch + per-fix commits')
   .action(async (skillDir: string, options: { apply?: boolean }) => {
     try {
       await runOptimize(skillDir, options);
