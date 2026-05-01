@@ -1,0 +1,30 @@
+{
+  "version": "round-4",
+  "total_tasks": 28,
+  "servers": {
+    "filesystem": 13,
+    "memory": 10,
+    "fetch": 5
+  },
+  "provenance": {
+    "field": 6,
+    "synth-error": 17,
+    "expert": 5
+  },
+  "difficulty": {
+    "easy": 7,
+    "medium": 13,
+    "hard": 8
+  },
+  "hint_trigger": {
+    "empty": 3,
+    "error": 12,
+    "ambiguous": 8,
+    "none": 5
+  },
+  "hint_coverage_pct": 82,
+  "created_date": "2026-04-30",
+  "locked": true,
+  "locked_date": "2026-04-30",
+  "calibration_notes": "GLM-5.1 pilot (lean-skill+mute, k=3). Memory: ceiling 100%. Filesystem: 62% raw, 92% excl timeouts. Fetch: 40% raw, 100% excl timeouts. Timeout contamination is execution-level (API rate limiting), not design-level. No task changes made post-pilot."
+}

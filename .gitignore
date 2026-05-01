@@ -34,10 +34,18 @@ benchmark/.env.*.local
 benchmark/.benchmark.env
 benchmark/*.env
 
-# Benchmark — entire directory kept local, not published yet
-benchmark/
+# Benchmark artifacts / local runs
+benchmark/results/
+benchmark/tmp/
+benchmark/*.local.json
+benchmark/config.local.json
 
 github-benchmark/
+
+# Benchmark build artifacts
+benchmark/dist/
+benchmark/servers/*/node_modules/
+benchmark/servers/*/dist/
 
 # Test / tool caches
 .nyc_output/
@@ -64,3 +72,10 @@ AGENTS.md
 
 # Local dev tools (simulated fixtures for testing, not project artifacts)
 tools/
+
+# Benchmark run results (local-only, regenerated per run)
+benchmark/real-world/results/
+
+# Benchmark server lock files (npm install regenerates these)
+benchmark/servers/package-lock.json
+benchmark/real-world/servers/*/package-lock.json

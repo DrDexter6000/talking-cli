@@ -1,0 +1,16 @@
+{
+  "name": "mute",
+  "version": "1.0.0",
+  "description": "Mute variant of server-filesystem for benchmarking",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "^2025.1.14"
+  }
+}

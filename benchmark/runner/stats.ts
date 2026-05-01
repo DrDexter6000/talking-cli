@@ -1,0 +1,807 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  isLegacyVariant,
+  ABLATION_CONTRASTS,
+  type BenchmarkRunResult,
+  type BenchmarkTask,
+} from "./types.js";
+
+// ─── Ablation Types ───────────────────────────────────────────────────────────
+
+export interface MetricValues {
+  pass: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  turns: number;
+  walltime: number;
+  errorRecoveries?: number;
+  toolCalls?: number;
+  score?: number;
+}
+
+export interface MetricStats {
+  mean: number;
+  ci95Low: number;
+  ci95High: number;
+  n: number;
+  stddev: number;
+}
+
+export interface CellVariance {
+  inputTokens: MetricStats;
+  outputTokens: MetricStats;
+  turns: MetricStats;
+  walltime: MetricStats;
+}
+
+export interface PerCellVarianceRow {
+  taskId: string;
+  cells: Record<string, CellVariance>;
+}
+
+export interface PerCellRow {
+  taskId: string;
+  cells: Record<string, MetricValues>;
+  contrasts: Record<string, ContrastResult>;
+}
+
+export interface ContrastResult {
+  label: string;
+  deltaPass: number;
+  deltaInputTokens: number;
+  deltaOutputTokens: number;
+  deltaTurns: number;
+  deltaWalltime: number;
+  deltaScore: number;
+}
+
+export interface ContrastAggregate {
+  label: string;
+  treatment: string;
+  control: string;
+  meanDeltaInputTokens: number;
+  meanDeltaOutputTokens: number;
+  meanDeltaTurns: number;
+  talkingWins: number;
+  controlWins: number;
+  ties: number;
+  signTestPValue: number;
+  wilcoxonW: number;
+  wilcoxonPValue: number;
+  /** Mean score delta across paired tasks. */
+  meanDeltaScore: number;
+  /** Wilcoxon on score deltas. */
+  scoreWilcoxonW: number;
+  scoreWilcoxonPValue: number;
+}
+
+export interface AblationSummaryJson {
+  schemaVersion?: number;
+  provider?: string;
+  providers?: string[];
+  perTask: PerCellRow[];
+  contrasts: Record<string, ContrastAggregate>;
+  tieCount: number;
+  cellVariance?: PerCellVarianceRow[];
+}
+
+// ─── Legacy Types ─────────────────────────────────────────────────────────────
+
+export interface PerTaskRow {
+  taskId: string;
+  mute: { 
+    pass: boolean; 
+    inputTokens: number; 
+    outputTokens: number; 
+    turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
+  };
+  talking: { 
+    pass: boolean; 
+    inputTokens: number; 
+    outputTokens: number; 
+    turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
+  };
+  delta: "talking_win" | "mute_win" | "tie";
+  deltaInputTokens: number; // talking - mute (negative = talking cheaper)
+  deltaOutputTokens: number;
+  deltaTurns: number;
+  deltaWalltime: number;
+}
+
+export interface AggregateStats {
+  talkingWins: number;
+  muteWins: number;
+  ties: number;
+  signTestN: number;
+  signTestPValue: number;
+  // Token deltas
+  meanDeltaInputTokens: number;
+  meanDeltaOutputTokens: number;
+  // Time deltas
+  meanDeltaWalltime: number;
+  medianDeltaWalltime: number;
+  // Recovery metrics
+  talkingRecoveries: number;
+  muteRecoveries: number;
+  // Efficiency
+  tokensPerTaskTalking: number;
+  tokensPerTaskMute: number;
+  // Wilcoxon
+  wilcoxonW: number;
+  wilcoxonPValue: number;
+}
+
+export interface SummaryJson {
+  schemaVersion?: number;
+  provider?: string;
+  perTask: PerTaskRow[];
+  aggregate: AggregateStats;
+  tieCount: number;
+}
+
+type LegacyRawEntry = {
+  taskId: string;
+  variant: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  outcome?: string;
+};
+
+type BenchmarkResultEntry = {
+  taskId: string;
+  variant: string;
+  provider?: string;
+  turns: number;
+  inputTokens: number;
+  outputTokens: number;
+  walltime: number;
+  outcome: string;
+  pass: boolean;
+  errorRecoveries?: number;
+  toolCalls?: number;
+  score?: number;
+};
+
+// ─── Main entry ───────────────────────────────────────────────────────────────
+
+/**
+ * Read raw.jsonl from fixtureDir and compute per-task + aggregate stats.
+ */
+export function computeStats(fixtureDir: string): SummaryJson {
+  const resultPath = resolve(fixtureDir, "results.jsonl");
+  const rawPath = resolve(fixtureDir, "raw.jsonl");
+
+  if (existsSync(resultPath)) {
+    return computeStatsFromResults(resultPath);
+  }
+
+  return computeStatsFromLegacyRaw(rawPath);
+}
+
+function computeStatsFromResults(resultPath: string): SummaryJson {
+  const entries = readNonEmptyLines(resultPath).map(
+    (line) => JSON.parse(line) as BenchmarkResultEntry,
+  );
+
+  const taskMap = new Map<string, { mute?: BenchmarkResultEntry; talking?: BenchmarkResultEntry }>();
+  for (const entry of entries) {
+    if (!taskMap.has(entry.taskId)) {
+      taskMap.set(entry.taskId, {});
+    }
+
+    const slot = taskMap.get(entry.taskId);
+    if (!slot) continue;
+
+    if (entry.variant === "mute") slot.mute = entry;
+    else if (entry.variant === "talking") slot.talking = entry;
+  }
+
+  return summarizeTaskMap(taskMap, (entry) => ({
+    pass: entry.pass,
+    inputTokens: entry.inputTokens,
+    outputTokens: entry.outputTokens,
+    turns: entry.turns,
+    walltime: entry.walltime,
+    errorRecoveries: entry.errorRecoveries,
+    toolCalls: entry.toolCalls,
+  }));
+}
+
+function computeStatsFromLegacyRaw(rawPath: string): SummaryJson {
+  const entries = readNonEmptyLines(rawPath).map((line) => JSON.parse(line) as LegacyRawEntry);
+
+  const taskMap = new Map<string, { mute?: LegacyRawEntry; talking?: LegacyRawEntry }>();
+  for (const entry of entries) {
+    if (!taskMap.has(entry.taskId)) {
+      taskMap.set(entry.taskId, {});
+    }
+    const slot = taskMap.get(entry.taskId);
+    if (!slot) continue;
+    if (entry.variant === "mute") slot.mute = entry;
+    else if (entry.variant === "talking") slot.talking = entry;
+  }
+
+  return summarizeTaskMap(taskMap, (entry) => ({
+    pass: entry.outcome !== "error" && entry.outcome !== "timeout",
+    inputTokens: entry.input_tokens ?? 0,
+    outputTokens: entry.output_tokens ?? 0,
+    turns: 1,
+    walltime: 0,
+  }));
+}
+
+function summarizeTaskMap<TEntry>(
+  taskMap: Map<string, { mute?: TEntry; talking?: TEntry }>,
+  toMetrics: (entry: TEntry) => {
+    pass: boolean;
+    inputTokens: number;
+    outputTokens: number;
+    turns: number;
+    walltime: number;
+    errorRecoveries?: number;
+    toolCalls?: number;
+  },
+): SummaryJson {
+  const perTask: PerTaskRow[] = [];
+  for (const [taskId, slot] of taskMap) {
+    const muteMetrics = slot.mute
+      ? toMetrics(slot.mute)
+      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0, walltime: 0 };
+    const talkingMetrics = slot.talking
+      ? toMetrics(slot.talking)
+      : { pass: false, inputTokens: 0, outputTokens: 0, turns: 0, walltime: 0 };
+
+    let delta: "talking_win" | "mute_win" | "tie";
+    if (talkingMetrics.pass && !muteMetrics.pass) delta = "talking_win";
+    else if (muteMetrics.pass && !talkingMetrics.pass) delta = "mute_win";
+    else delta = "tie";
+
+    perTask.push({
+      taskId,
+      mute: {
+        pass: muteMetrics.pass,
+        inputTokens: muteMetrics.inputTokens,
+        outputTokens: muteMetrics.outputTokens,
+        turns: muteMetrics.turns,
+        walltime: muteMetrics.walltime,
+        errorRecoveries: muteMetrics.errorRecoveries,
+        toolCalls: muteMetrics.toolCalls,
+      },
+      talking: {
+        pass: talkingMetrics.pass,
+        inputTokens: talkingMetrics.inputTokens,
+        outputTokens: talkingMetrics.outputTokens,
+        turns: talkingMetrics.turns,
+        walltime: talkingMetrics.walltime,
+        errorRecoveries: talkingMetrics.errorRecoveries,
+        toolCalls: talkingMetrics.toolCalls,
+      },
+      delta,
+      deltaInputTokens: talkingMetrics.inputTokens - muteMetrics.inputTokens,
+      deltaOutputTokens: talkingMetrics.outputTokens - muteMetrics.outputTokens,
+      deltaTurns: talkingMetrics.turns - muteMetrics.turns,
+      deltaWalltime: talkingMetrics.walltime - muteMetrics.walltime,
+    });
+  }
+
+  // Aggregate
+  const talkingWins = perTask.filter((r) => r.delta === "talking_win").length;
+  const muteWins = perTask.filter((r) => r.delta === "mute_win").length;
+  const ties = perTask.filter((r) => r.delta === "tie").length;
+  const signTestN = talkingWins + muteWins;
+  const signTestPValue = signTestP(signTestN, Math.max(talkingWins, muteWins));
+
+  // Mean token deltas (only for non-ties in outcome)
+  const nonTieRows = perTask.filter((r) => r.delta !== "tie");
+  const meanDeltaInputTokens = nonTieRows.length > 0
+    ? nonTieRows.reduce((s, r) => s + r.deltaInputTokens, 0) / nonTieRows.length
+    : 0;
+  const meanDeltaOutputTokens = nonTieRows.length > 0
+    ? nonTieRows.reduce((s, r) => s + r.deltaOutputTokens, 0) / nonTieRows.length
+    : 0;
+
+  // Time metrics
+  const meanDeltaWalltime = nonTieRows.length > 0
+    ? nonTieRows.reduce((s, r) => s + r.deltaWalltime, 0) / nonTieRows.length
+    : 0;
+  const sortedWalltime = [...perTask.map(r => r.deltaWalltime)].sort((a, b) => a - b);
+  const medianDeltaWalltime = sortedWalltime.length > 0
+    ? sortedWalltime[Math.floor(sortedWalltime.length / 2)]
+    : 0;
+
+  // Recovery metrics
+  const talkingRecoveries = perTask.reduce((sum, r) => sum + (r.talking.errorRecoveries ?? 0), 0);
+  const muteRecoveries = perTask.reduce((sum, r) => sum + (r.mute.errorRecoveries ?? 0), 0);
+
+  // Efficiency: tokens per successful task
+  const talkingSuccessCount = perTask.filter(r => r.talking.pass).length;
+  const muteSuccessCount = perTask.filter(r => r.mute.pass).length;
+  const tokensPerTaskTalking = talkingSuccessCount > 0
+    ? perTask.filter(r => r.talking.pass).reduce((s, r) => s + r.talking.inputTokens + r.talking.outputTokens, 0) / talkingSuccessCount
+    : 0;
+  const tokensPerTaskMute = muteSuccessCount > 0
+    ? perTask.filter(r => r.mute.pass).reduce((s, r) => s + r.mute.inputTokens + r.mute.outputTokens, 0) / muteSuccessCount
+    : 0;
+
+  // Wilcoxon signed-rank on input token deltas
+  const allDeltas = perTask.map((r) => r.deltaInputTokens);
+  const { W: wilcoxonW, pValue: wilcoxonPValue } = wilcoxonSignedRank(allDeltas);
+
+  return {
+    schemaVersion: 1,
+    perTask,
+    aggregate: {
+      talkingWins,
+      muteWins,
+      ties,
+      signTestN,
+      signTestPValue,
+      meanDeltaInputTokens,
+      meanDeltaOutputTokens,
+      meanDeltaWalltime,
+      medianDeltaWalltime,
+      talkingRecoveries,
+      muteRecoveries,
+      tokensPerTaskTalking,
+      tokensPerTaskMute,
+      wilcoxonW,
+      wilcoxonPValue,
+    },
+    tieCount: ties,
+  };
+}
+
+function readNonEmptyLines(filePath: string): string[] {
+  return readFileSync(filePath, "utf-8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+// ─── Ablation detection & computation ─────────────────────────────────────────
+
+/**
+ * Check whether a results.jsonl contains ablation-format entries (variant
+ * contains "+") rather than legacy "mute"/"talking" variants.
+ */
+export function isAblationResults(resultPath: string): boolean {
+  if (!existsSync(resultPath)) return false;
+  const lines = readNonEmptyLines(resultPath);
+  if (lines.length === 0) return false;
+  try {
+    const first = JSON.parse(lines[0]) as BenchmarkResultEntry;
+    return !isLegacyVariant(first.variant) && first.variant.includes("+");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Read results.jsonl with ablation variants (e.g. "lean-skill+mute") and compute
+ * per-cell stats + named contrasts with sign test & Wilcoxon.
+ */
+export function computeAblationStats(resultPath: string, provider?: string): AblationSummaryJson {
+  const entries = readNonEmptyLines(resultPath).map(
+    (line) => JSON.parse(line) as BenchmarkResultEntry,
+  );
+
+  // Group entries by (taskId, variant) — aggregate repeated trials into arrays
+  const taskMap = new Map<string, Map<string, BenchmarkResultEntry[]>>();
+  const providers = new Set<string>();
+  for (const entry of entries) {
+    if (!taskMap.has(entry.taskId)) {
+      taskMap.set(entry.taskId, new Map());
+    }
+    const variantMap = taskMap.get(entry.taskId)!;
+    if (!variantMap.has(entry.variant)) {
+      variantMap.set(entry.variant, []);
+    }
+    variantMap.get(entry.variant)!.push(entry);
+    if (entry.provider) providers.add(entry.provider);
+  }
+
+  // Helper: aggregate k trial entries into single MetricValues
+  function aggregateMetrics(trials: BenchmarkResultEntry[]): MetricValues {
+    const k = trials.length;
+    const passCount = trials.filter((e) => e.pass).length;
+    const scoredTrials = trials.filter((e) => e.score !== undefined);
+    const avgScore = scoredTrials.length > 0
+      ? scoredTrials.reduce((s, e) => s + e.score!, 0) / scoredTrials.length
+      : undefined;
+    return {
+      pass: passCount > k / 2, // majority rule for boolean pass
+      inputTokens: trials.reduce((s, e) => s + e.inputTokens, 0) / k,
+      outputTokens: trials.reduce((s, e) => s + e.outputTokens, 0) / k,
+      turns: trials.reduce((s, e) => s + e.turns, 0) / k,
+      walltime: trials.reduce((s, e) => s + e.walltime, 0) / k,
+      errorRecoveries: trials.reduce((s, e) => s + (e.errorRecoveries ?? 0), 0) / k,
+      toolCalls: trials.reduce((s, e) => s + (e.toolCalls ?? 0), 0) / k,
+      score: avgScore,
+    };
+  }
+
+  // Build per-task rows with cells + contrast results
+  const perTask: PerCellRow[] = [];
+  for (const [taskId, variantMap] of taskMap) {
+    const cells: Record<string, MetricValues> = {};
+    for (const [variant, trialEntries] of variantMap) {
+      cells[variant] = aggregateMetrics(trialEntries);
+    }
+
+    const contrasts: Record<string, ContrastResult> = {};
+    for (const contrast of ABLATION_CONTRASTS) {
+      const treatment = cells[contrast.treatment];
+      const control = cells[contrast.control];
+      if (treatment && control) {
+        contrasts[contrast.name] = {
+          label: contrast.label,
+          deltaPass:
+            treatment.pass && !control.pass ? 1 :
+            control.pass && !treatment.pass ? -1 : 0,
+          deltaInputTokens: treatment.inputTokens - control.inputTokens,
+          deltaOutputTokens: treatment.outputTokens - control.outputTokens,
+          deltaTurns: treatment.turns - control.turns,
+          deltaWalltime: treatment.walltime - control.walltime,
+          deltaScore: (treatment.score ?? 0) - (control.score ?? 0),
+        };
+      }
+    }
+
+    perTask.push({ taskId, cells, contrasts });
+  }
+
+  // Aggregate named contrasts
+  const contrastAggregates: Record<string, ContrastAggregate> = {};
+  for (const contrast of ABLATION_CONTRASTS) {
+    const rows = perTask.filter((r) => r.contrasts[contrast.name]);
+    if (rows.length === 0) continue;
+
+    const deltas = rows.map((r) => r.contrasts[contrast.name]);
+
+    const meanDeltaInputTokens =
+      deltas.reduce((s, d) => s + d.deltaInputTokens, 0) / deltas.length;
+    const meanDeltaOutputTokens =
+      deltas.reduce((s, d) => s + d.deltaOutputTokens, 0) / deltas.length;
+    const meanDeltaTurns =
+      deltas.reduce((s, d) => s + d.deltaTurns, 0) / deltas.length;
+
+    const talkingWins = deltas.filter((d) => d.deltaPass > 0).length;
+    const controlWins = deltas.filter((d) => d.deltaPass < 0).length;
+    const ties = deltas.filter((d) => d.deltaPass === 0).length;
+
+    const signTestN = talkingWins + controlWins;
+    const signTestPValue = signTestN > 0
+      ? signTestP(signTestN, Math.max(talkingWins, controlWins))
+      : 1;
+
+    const tokenDeltas = deltas.map((d) => d.deltaInputTokens);
+    const { W: wilcoxonW, pValue: wilcoxonPValue } = wilcoxonSignedRank(tokenDeltas);
+
+    // Score deltas + Wilcoxon on continuous scores
+    const scoreDeltas = deltas.map((d) => d.deltaScore);
+    const meanDeltaScore =
+      scoreDeltas.reduce((s, d) => s + d, 0) / deltas.length;
+    const { W: scoreWilcoxonW, pValue: scoreWilcoxonPValue } =
+      wilcoxonSignedRank(scoreDeltas);
+
+    contrastAggregates[contrast.name] = {
+      label: contrast.label,
+      treatment: contrast.treatment,
+      control: contrast.control,
+      meanDeltaInputTokens,
+      meanDeltaOutputTokens,
+      meanDeltaTurns,
+      talkingWins,
+      controlWins,
+      ties,
+      signTestPValue,
+      wilcoxonW,
+      wilcoxonPValue,
+      meanDeltaScore,
+      scoreWilcoxonW,
+      scoreWilcoxonPValue,
+    };
+  }
+
+  const tieCount = perTask.reduce(
+    (sum, r) => {
+      const fullContrast = r.contrasts["full_vs_control"];
+      return sum + (fullContrast ? (fullContrast.deltaPass === 0 ? 1 : 0) : 0);
+    },
+    0,
+  );
+
+  const result: AblationSummaryJson = {
+    schemaVersion: 1,
+    perTask,
+    contrasts: contrastAggregates,
+    tieCount,
+  };
+
+  if (provider) {
+    result.provider = provider;
+  } else if (providers.size === 1) {
+    result.provider = [...providers][0];
+  } else if (providers.size > 1) {
+    result.providers = [...providers].sort();
+  }
+
+  return result;
+}
+
+// ─── Cell Variance (t-distribution 95% CI) ───────────────────────────────────
+
+/**
+ * Two-tailed 95% t-distribution critical values for small samples.
+ * For n >= 30, use 1.96 (normal approximation).
+ */
+const T_CRITICAL: Record<number, number> = {
+  2: 12.706,
+  3: 4.303,
+  4: 3.182,
+  5: 2.776,
+  6: 2.571,
+  7: 2.447,
+  8: 2.365,
+  9: 2.306,
+  10: 2.262,
+  11: 2.228,
+  12: 2.201,
+  13: 2.179,
+  14: 2.160,
+  15: 2.145,
+  16: 2.131,
+  17: 2.120,
+  18: 2.110,
+  19: 2.101,
+  20: 2.093,
+  21: 2.086,
+  22: 2.080,
+  23: 2.074,
+  24: 2.069,
+  25: 2.064,
+  26: 2.060,
+  27: 2.056,
+  28: 2.052,
+  29: 2.048,
+};
+
+function tCriticalFor(n: number): number {
+  if (n >= 30) return 1.96;
+  return T_CRITICAL[n] ?? 2.045; // fallback for n > 29
+}
+
+function computeVarianceStats(values: number[]): MetricStats {
+  const n = values.length;
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+  const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
+  const variance = squaredDiffs.reduce((s, d) => s + d, 0) / (n - 1);
+  const stddev = Math.sqrt(variance);
+  const se = stddev / Math.sqrt(n);
+  const t = tCriticalFor(n);
+  const margin = t * se;
+  return {
+    mean,
+    ci95Low: mean - margin,
+    ci95High: mean + margin,
+    n,
+    stddev,
+  };
+}
+
+const VARIANCE_METRICS = ["inputTokens", "outputTokens", "turns", "walltime"] as const;
+
+export function computeCellVariance(resultPath: string): Map<string, Map<string, CellVariance>> {
+  const entries = readNonEmptyLines(resultPath).map(
+    (line) => JSON.parse(line) as BenchmarkResultEntry,
+  );
+
+  // Group entries by (taskId, variant) -> array of entries (repeated observations)
+  const cellMap = new Map<string, BenchmarkResultEntry[]>();
+  for (const entry of entries) {
+    const key = `${entry.taskId}\t${entry.variant}`;
+    if (!cellMap.has(key)) cellMap.set(key, []);
+    cellMap.get(key)!.push(entry);
+  }
+
+  // Build Map<taskId, Map<variant, CellVariance>>
+  const result = new Map<string, Map<string, CellVariance>>();
+  for (const [key, groupEntries] of cellMap) {
+    if (groupEntries.length < 2) continue; // need k>=2 for variance
+    const [taskId, variant] = key.split("\t");
+    if (!result.has(taskId)) result.set(taskId, new Map());
+
+    const cellVar: CellVariance = {
+      inputTokens: computeVarianceStats(
+        groupEntries.map((e) => e.inputTokens),
+      ),
+      outputTokens: computeVarianceStats(
+        groupEntries.map((e) => e.outputTokens),
+      ),
+      turns: computeVarianceStats(groupEntries.map((e) => e.turns)),
+      walltime: computeVarianceStats(groupEntries.map((e) => e.walltime)),
+    };
+
+    result.get(taskId)!.set(variant, cellVar);
+  }
+
+  return result;
+}
+
+// ─── Sign test ────────────────────────────────────────────────────────────────
+
+/**
+ * Two-tailed sign test p-value.
+ * n = number of non-tied pairs, k = count of wins for the larger group.
+ * Public API — renderer uses this for verdict computation.
+ */
+export function signTestP(n: number, k: number): number {
+  if (n === 0) return 1;
+  // Sum of binomial probabilities from k to n
+  let p = 0;
+  for (let i = k; i <= n; i++) {
+    p += binomialCoeff(n, i) * Math.pow(0.5, n);
+  }
+  // Two-tailed
+  return Math.min(2 * p, 1);
+}
+
+function binomialCoeff(n: number, k: number): number {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  if (k > Math.floor(n / 2)) k = n - k;
+  let result = 1;
+  for (let i = 0; i < k; i++) {
+    result = (result * (n - i)) / (i + 1);
+  }
+  return result;
+}
+
+// ─── Wilcoxon signed-rank test (hand-rolled) ──────────────────────────────────
+
+/** Result of a Wilcoxon signed-rank test. */
+export interface WilcoxonResult {
+  W: number;
+  pValue: number;
+}
+
+/**
+ * Wilcoxon signed-rank test on paired differences.
+ * Public API — renderer and other consumers should import this, not duplicate it.
+ */
+export function wilcoxonSignedRank(values: number[]): WilcoxonResult {
+  // Exclude zeros
+  const nonZero = values.filter((v) => v !== 0);
+  const n = nonZero.length;
+
+  if (n === 0) return { W: 0, pValue: 1 };
+
+  // Rank by absolute value
+  const absValues = nonZero.map((v) => Math.abs(v));
+  const sorted = [...absValues].sort((a, b) => a - b);
+
+  // Assign ranks (handle ties by averaging)
+  const rankMap = new Map<number, number>();
+  for (let i = 0; i < sorted.length; i++) {
+    const val = sorted[i];
+    if (!rankMap.has(val)) {
+      // Find all occurrences of this value
+      const start = i;
+      let end = i;
+      while (end < sorted.length && sorted[end] === val) end++;
+      const avgRank = (start + 1 + end) / 2; // 1-based
+      rankMap.set(val, avgRank);
+      i = end - 1;
+    }
+  }
+
+  // Sum ranks for positive values
+  let Wplus = 0;
+  for (const v of nonZero) {
+    if (v > 0) {
+      Wplus += rankMap.get(Math.abs(v))!;
+    }
+  }
+
+  // W is the smaller of sum of positive/negative ranks
+  const totalRank = (n * (n + 1)) / 2;
+  const Wminus = totalRank - Wplus;
+  const W = Math.min(Wplus, Wminus);
+
+  // Normal approximation for p-value (for n >= 5)
+  // For small n, we use exact distribution
+  let pValue: number;
+  if (n >= 20) {
+    // Normal approximation
+    const meanW = (n * (n + 1)) / 4;
+    const varW = (n * (n + 1) * (2 * n + 1)) / 24;
+    const z = Math.abs(W - meanW) / Math.sqrt(varW);
+    pValue = 2 * (1 - normalCDF(z));
+  } else {
+    // Exact: enumerate the distribution
+    pValue = exactWilcoxonP(W, n);
+  }
+
+  return { W, pValue: Math.min(pValue, 1) };
+}
+
+function exactWilcoxonP(W: number, n: number): number {
+  // Count number of ways to assign signs that yield W' <= W
+  const totalRank = (n * (n + 1)) / 2;
+  // Use dynamic programming to count ways to get each possible sum
+  // dp[s] = number of ways to have a positive rank sum of exactly s
+  const dp: number[] = new Array(totalRank + 1).fill(0);
+  dp[0] = 1;
+
+  for (let i = 1; i <= n; i++) {
+    for (let s = totalRank; s >= i; s--) {
+      dp[s] += dp[s - i];
+    }
+  }
+
+  // Total possible sign assignments
+  const total = Math.pow(2, n);
+
+  // Two-tailed: count ways where W' <= W or W' >= totalRank - W
+  let count = 0;
+  for (let s = 0; s <= totalRank; s++) {
+    if (s <= W || s >= totalRank - W) {
+      count += dp[s];
+    }
+  }
+
+  return count / total;
+}
+
+/**
+ * Standard normal CDF approximation (Abramowitz & Stegun 7.1.26)
+ */
+function normalCDF(z: number): number {
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const t = 1 / (1 + p * z);
+  return 1 - (a1 * t + a2 * t * t + a3 * Math.pow(t, 3) + a4 * Math.pow(t, 4) + a5 * Math.pow(t, 5)) * Math.exp(-(z * z) / 2);
+}
+
+// ─── Rubric Score Aggregation ─────────────────────────────────────────────────
+
+export interface TierScoreRow {
+  tier: string;
+  avgScore: number;
+  count: number;
+}
+
+/**
+ * Compute average rubric scores per tier for tasks that have score data.
+ */
+export function computeTierScores(
+  results: BenchmarkRunResult[],
+  tasks: BenchmarkTask[],
+): TierScoreRow[] {
+  const tierMap = new Map<string, BenchmarkRunResult[]>();
+  for (const result of results) {
+    const task = tasks.find((t) => t.id === result.taskId);
+    const tier = task?.difficulty || task?.tier || "unknown";
+    if (!tierMap.has(tier)) tierMap.set(tier, []);
+    tierMap.get(tier)!.push(result);
+  }
+
+  return Array.from(tierMap.entries()).map(([tier, tierResults]) => {
+    const scored = tierResults.filter((r) => r.score !== undefined);
+    return {
+      tier,
+      avgScore:
+        scored.length > 0
+          ? scored.reduce((sum, r) => sum + r.score!, 0) / scored.length
+          : 0,
+      count: scored.length,
+    };
+  });
+}
