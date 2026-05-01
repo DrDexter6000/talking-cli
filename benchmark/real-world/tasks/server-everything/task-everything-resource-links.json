@@ -1,1 +1,0 @@
-{"id":"task-everything-resource-links","prompt":"Use get-resource-links to retrieve 5 resource links. For each link, describe its name, URI, and whether it's a text or blob resource. Also explain what types of resources they point to overall.","checker":"checkEverythingResourceLinks","difficulty":"medium","tier":"medium","hint_trigger":"none"}

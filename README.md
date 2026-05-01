@@ -163,27 +163,30 @@ Static analysis of 823 Composio GitHub tools: same result. The MCP ecosystem tod
 | `server-github` | 25 | 25 | **0** |
 | **Total** | **58** | **68** | **0 / 68** |
 
-### 2×2 Ablation Benchmark (GLM-5.1)
+### Cross-Model Validation (3 providers, 45 tasks)
 
-We ran a 2×2 ablation (Full/Lean Skill × Mute/Hinting Tools) on **GLM-5.1** across 15 curated tasks:
+We ran a full 2×2 ablation (Full/Lean Skill × Mute/Hinting Tools) across **three frontier models** — DeepSeek V4 Pro, Kimi K2.6, and GLM-5.1 — on **45 MCP tasks** (filesystem, memory, fetch, multi-tool) with k=3 trials per cell.
 
-| Cell | Skill | Server | Pass Rate | Avg Input Tokens |
-|------|-------|--------|-----------|-----------------|
-| 1 | Full Skill (873 lines) | Mute Tools | 7/15 (47%) | 122,562 |
-| 2 | Full Skill | Hinting Tools | 8/15 (53%) | 96,829 |
-| 3 | Lean Skill (168 lines) | Mute Tools | 8/15 (53%) | 54,078 |
-| 4 | Lean Skill | Hinting Tools | 11/15 (73%) | 40,815 |
+**1,620 total executions.** Each cell evaluated independently.
 
-**Key findings:**
-- **Combined effect (Cell 4 vs Cell 1): −67% tokens, +26pp pass rate** — both efficiency and quality improve.
-- Skill compression alone: −56% tokens, +6pp
-- Tool hints alone: +6pp
-- **Synergistic interaction**: the combined effect exceeds the sum of individual effects
-- Verdict: **GREAT SUCCESS**
+| Model | C1: Full/Mute | C4: Lean/Hints | C4−C1 Δ | Token Savings |
+|-------|:----------:|:----------:|:-------:|:------------:|
+| DeepSeek V4 Pro | 91.1% | 90.4% | −0.7 pp | **−17%** |
+| Kimi K2.6 | 88.1% | 90.4% | +1.5 pp | **−18%** |
+| GLM-5.1 | 90.4% | 93.3% | +2.2 pp | **−22%** |
 
-**Why compression helps:** The 873-line skill at P99.5 of real-world sizes consumes ~8,700 tokens and accumulates across turns, crowding task data toward the context window's far end where attention is weakest. SkillsBench (arXiv 2602.12670, 36,000 real-world skills) independently found that comprehensive skills at P99.5 degrade performance by −2.9pp while moderate skills improve it by +18.8pp — confirming the direction at ecosystem scale.
+**What the data supports:**
 
-> **Historical context and reproduction instructions → [`benchmark/`](./benchmark/).** Full methodology and limitations → [`docs/BENCHMARK-METHODOLOGY.md`](docs/BENCHMARK-METHODOLOGY.md).
+- **Token efficiency is robust and model-agnostic**: Lean Skill + Hints saves 17–22% input tokens across all three providers, with zero quality degradation. This is the strongest finding.
+- **No harm**: the treatment condition (C4) never catastrophically underperforms the control (C1). Worst case: DeepSeek at −0.7pp, within noise.
+- **Skill bloat is real**: compressing an 873-line skill to 168 lines improves or maintains quality while cutting tokens. SkillsBench (arXiv 2602.12670, 36,000 real-world skills) independently found that comprehensive skills at P99.5 degrade performance by −2.9pp while moderate skills improve it by +18.8pp.
+
+**What the data does not support:**
+
+- Pass-rate improvement is not statistically significant (sign test p = 1.0 for all models). The tasks are too easy for current frontier models — 76% pass at 100% in every condition. Harder tasks are needed to measure a quality effect.
+- **Adding hints to a verbose skill can hurt**: on GLM-5.1, the Full Skill + Hints cell scored 84.4% — 6pp below the Full Skill + Mute control. Distributed Prompting only helps when the skill is compressed; stacking hints on top of an 873-line skill creates information overload.
+
+**Verdict: PARTIAL** — token savings are proven; quality improvement awaits harder benchmarks. We're being honest about what the data says.
 
 ---
 
@@ -198,12 +201,10 @@ Talking CLI is the reference implementation of **Distributed Prompting**: every 
 
 ## What's next
 
-- **Cross-model validation** — replicating the 2×2 ablation on Claude and other providers
+- **Harder benchmarks** — tasks calibrated to 40–60% baseline on current frontier models, to measure the quality signal that is currently buried by ceiling effects
 - **MCP spec proposal** — RFC for a first-class `agent_hints` field in tool responses
 - **H4 semantic upgrade** — replacing the `≥ 10 chars` heuristic with a lightweight classifier
-- **Real-world validation** — auditing and benchmarking real MCP servers with before/after results
-
-See [PHILOSOPHY.md](PHILOSOPHY.md) §Evidence for the full benchmark data including historical DeepSeek-V3.2 results and MiniMax M2.7 validation.
+- **C2 anomaly investigation** — why adding hints to verbose skills hurts some models
 
 ---
 

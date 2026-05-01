@@ -1,1 +1,0 @@
-{"id":"task-everything-invalid-resource","prompt":"Try to get a resource with resourceType 'video' and resourceId 1 using get-resource-reference. Report what happens (it should fail). Then retry with a valid resourceType 'Text' and resourceId 1. Report both results.","checker":"checkEverythingInvalidResource","difficulty":"easy","tier":"easy","hint_trigger":"resource-reference"}

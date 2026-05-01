@@ -1,6 +1,0 @@
-{"taskId":"task-a","variant":"mute","turn":0,"role":"error","tool_name":null,"input_tokens":100,"output_tokens":50,"timestamp":"2024-01-01T00:00:00.000Z"}
-{"taskId":"task-b","variant":"mute","turn":0,"role":"error","tool_name":null,"input_tokens":80,"output_tokens":30,"timestamp":"2024-01-01T00:00:00.000Z"}
-{"taskId":"task-c","variant":"mute","turn":0,"role":"error","tool_name":null,"input_tokens":120,"output_tokens":60,"timestamp":"2024-01-01T00:00:00.000Z"}
-{"taskId":"task-a","variant":"talking","turn":0,"role":"error","tool_name":null,"input_tokens":110,"output_tokens":55,"timestamp":"2024-01-01T00:00:00.000Z"}
-{"taskId":"task-b","variant":"talking","turn":0,"role":"error","tool_name":null,"input_tokens":85,"output_tokens":32,"timestamp":"2024-01-01T00:00:00.000Z"}
-{"taskId":"task-c","variant":"talking","turn":0,"role":"error","tool_name":null,"input_tokens":125,"output_tokens":62,"timestamp":"2024-01-01T00:00:00.000Z"}

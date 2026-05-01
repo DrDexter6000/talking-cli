@@ -316,51 +316,35 @@ Distributed Prompting is not a panacea. We have documented four concrete failure
 
 ---
 
-## Evidence: 2x2 Ablation Benchmark
+## Evidence: Cross-Model Validation
 
-We ran a full 2x2 factorial ablation on GLM-5.1 using 15 curated filesystem tasks. Each cell was evaluated independently, isolating the effect of skill compression and server-side hint infrastructure.
+We ran a full 2×2 factorial ablation (Full/Lean Skill × Mute/Hinting Tools) across **three frontier models** — DeepSeek V4 Pro, Kimi K2.6, and GLM-5.1 — on **45 MCP tasks** with k=3 trials per cell, totaling **1,620 executions**.
 
-**GLM-5.1, 15 curated tasks, 2x2 factorial design**
+### Results
 
-| Cell | Skill | Server | Pass Rate | Avg Input Tokens |
-|------|-------|--------|-----------|-----------------|
-| 1 | Full Skill (873 lines) | Mute Tools | 7/15 (47%) | 122,562 |
-| 2 | Full Skill | Hints in Tools | 8/15 (53%) | 96,829 |
-| 3 | Lean Skill (168 lines) | Mute Tools | 8/15 (53%) | 54,078 |
-| 4 | Lean Skill | Hints in Tools | 11/15 (73%) | 40,815 |
+| Model | C1: Full Skill / Mute Tools | C4: Lean Skill / Hints in Tools | C4−C1 Δ pass rate | Token Savings |
+|-------|:---------------------------:|:-------------------------------:|:-----------------:|:-------------:|
+| DeepSeek V4 Pro | 91.1% | 90.4% | −0.7 pp | **−17%** |
+| Kimi K2.6 | 88.1% | 90.4% | +1.5 pp | **−18%** |
+| GLM-5.1 | 90.4% | 93.3% | +2.2 pp | **−22%** |
 
-### Key observations
+### What the data supports
 
-**Context Budget is Performance Budget**: The surprise finding — Lean Skill + Mute Tools (Cell 3) OUTPERFORMS Full Skill + Mute Tools (Cell 1) — fewer tokens AND higher pass rate. This means skill bloat actively harms agent performance, not just wastes tokens. The mechanism: in a 200K context window, the 873-line skill (~8,700 tokens) accumulates across turns, pushing critical task data toward the attention periphery.
+1. **Token efficiency is robust and model-agnostic**: Lean Skill + Hints saves 17–22% input tokens across all three providers, with zero quality degradation. This is the strongest finding and alone justifies the skill-compression approach.
 
-**Synergistic interaction**: The combined effect (Cell 4 vs Cell 1: +26pp) exceeds the sum of individual effects (skill compression: +6pp, server hints: +6pp from Cell 1 baseline). This means skill compression and server hints are complementary, not redundant.
+2. **No harm from treatment**: C4 never catastrophically underperforms C1. The worst delta is −0.7pp (DeepSeek), within noise for k=3.
 
-**Independent validation**: SkillsBench (arXiv 2602.12670, 36,338 SKILL.md files) independently found that "comprehensive" skills hurt performance (−2.9pp) while "moderate detailed" skills improve it (+18.8pp) — confirming the direction of our finding at ecosystem scale.
+3. **Skill bloat is real**: compressing an 873-line skill to 168 lines improves or maintains quality while cutting tokens. SkillsBench (arXiv 2602.12670, 36,338 real-world skills) independently found that comprehensive skills at P99.5 degrade performance by −2.9pp while moderate skills improve it by +18.8pp — confirming the direction at ecosystem scale.
 
-### Cost projection per 1,000 tasks (GLM-5.1 token ratios)
+### What the data does not support
 
-| Model | Cell 1 (Bloated) | Cell 4 (Optimized) | Savings |
-|-------|-------------------|---------------------|---------|
-| GLM-5.1 | $245.00 | $82.00 | **$163.00 (67%)** |
-| Claude 3.5 Sonnet (est.) | $245.00 | $82.00 | **$163.00 (67%)** |
-| GPT-4o (est.) | $245.00 | $82.00 | **$163.00 (67%)** |
+1. **Pass-rate improvement is not statistically significant**: all sign tests p = 1.0. The tasks are too easy for current frontier models — 76% pass at 100% in every condition. Harder tasks are needed to measure a quality effect.
 
-*GLM-5.1 ratio applied to other providers; actual prices vary.*
+2. **Adding hints to a verbose skill can hurt**: on GLM-5.1, Full Skill + Hints scored 84.4% — 6pp below Full Skill + Mute (90.4%). Distributed Prompting only helps when the skill is compressed; stacking hints on top of an 873-line skill creates information overload.
 
-### Why quality improves with less skill
+### Honest verdict
 
-The root cause is context window pressure. In Cell 1, four tasks exceeded 100% of GLM-5.1's 200K context window — they actually overrun it. In Cell 3, zero tasks did. When the skill is large, it accumulates across turns, and the agent's own working memory (the task context) gets crowded out near the context window's far end, where attention is weakest. Lean Skill keeps the task data close to the attention center throughout the conversation.
-
-### Supporting evidence: MiniMax M2.7 Highspeed
-
-The original benchmark on MiniMax M2.7 Highspeed, run with 10 filesystem tasks, confirmed the same directional pattern:
-
-| Metric | Full Skill | Lean Skill | Delta |
-|--------|------------|------------|-------|
-| Total tokens | 16,228 | 6,137 | **-62.2%** |
-| Pass rate | 80% | 90% | **+10pp** |
-
-MiniMax validated the efficiency claim on a smaller task set; the 2x2 ablation on GLM-5.1 extends this with statistical structure and a stronger model.
+**PARTIAL** — token savings proven; quality improvement awaits harder benchmarks. We report what the data says, not what we hoped it would say.
 
 ---
 
