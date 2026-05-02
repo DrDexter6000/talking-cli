@@ -437,6 +437,165 @@ function checkMemSilentDelete(finalTurn, _fs) {
   return { pass: true, reason: `silent-delete: agent attempted delete${hasCheck ? " and checked entity" : ""}${hasSpecificOutcome ? ", reported specific outcome" : ""}` };
 }
 
+// ─── Round 5 Hard Checkers ────────────────────────────────────────────────────
+
+function checkMemCascadeDelete(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasServerA = text.includes("servera") || text.includes("server a");
+  const hasServerB = text.includes("serverb") || text.includes("server b");
+  const hasDelete = text.includes("delet") || text.includes("remov");
+  const hasVerify = text.includes("verif") || text.includes("remain") || text.includes("after")
+    || text.includes("still") || text.includes("graph") || text.includes("read_graph");
+  const hasRelation = text.includes("relation") || text.includes("connected") || text.includes("depends_on");
+
+  const dimensions = [
+    { name: "entities_created", weight: 0.2, passed: hasServerA && hasServerB },
+    { name: "delete_attempted", weight: 0.25, passed: hasDelete },
+    { name: "cascade_verified", weight: 0.3, passed: hasVerify },
+    { name: "relations_mentioned", weight: 0.25, passed: hasRelation || hasVerify },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `cascade-delete: all dimensions passed (score ${score.toFixed(2)})`
+      : `cascade-delete: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkMemRenameEntity(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasOld = text.includes("usermodel") || text.includes("user model");
+  const hasNew = text.includes("userprofile") || text.includes("user profile") || text.includes("renamed");
+  const hasMigrate = text.includes("migrat") || text.includes("transfer") || text.includes("copy")
+    || text.includes("move") || text.includes("creat") || text.includes("observ");
+  const hasDelete = text.includes("delet") || text.includes("remov") || text.includes("old");
+  const hasVerify = text.includes("verif") || text.includes("confirm") || text.includes("graph")
+    || text.includes("still") || text.includes("exist") || text.includes("check");
+
+  const dimensions = [
+    { name: "old_entity_found", weight: 0.2, passed: hasOld },
+    { name: "new_entity_created", weight: 0.25, passed: hasNew },
+    { name: "data_migrated", weight: 0.25, passed: hasMigrate },
+    { name: "cleanup_or_verify", weight: 0.3, passed: hasDelete || hasVerify },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `rename-entity: all dimensions passed (score ${score.toFixed(2)})`
+      : `rename-entity: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkMemSearchFuzzy(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasK8s = text.includes("kubernetes") || text.includes("k8s") || text.includes("pod");
+  const hasSearch = text.includes("search") || text.includes("found") || text.includes("result");
+  const hasFuzzy = text.includes("substr") || text.includes("partial") || text.includes("fuzzy")
+    || text.includes("close") || text.includes("similar") || text.includes("approx")
+    || text.includes("kuber") || text.includes("kube");
+  const hasCorrectName = text.includes("kubernetespod") || text.includes("kubernetes pod");
+
+  const dimensions = [
+    { name: "search_attempted", weight: 0.25, passed: hasSearch },
+    { name: "fuzzy_approach", weight: 0.25, passed: hasFuzzy || hasSearch },
+    { name: "entity_found", weight: 0.3, passed: hasK8s || hasCorrectName },
+    { name: "observations_reported", weight: 0.2, passed: hasK8s && (text.includes("container") || text.includes("cluster") || text.includes("observ")) },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `search-fuzzy: all dimensions passed (score ${score.toFixed(2)})`
+      : `search-fuzzy: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkMemGraphConsistency(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasServiceX = text.includes("servicex") || text.includes("service x");
+  const hasServiceY = text.includes("servicey") || text.includes("service y");
+  const hasRelation = text.includes("relation") || text.includes("calls") || text.includes("depends");
+  const hasVerify = text.includes("verif") || text.includes("consist") || text.includes("valid")
+    || text.includes("check") || text.includes("read_graph") || text.includes("graph");
+  const hasConsistent = text.includes("consist") || text.includes("valid") || text.includes("correct")
+    || text.includes("intact") || text.includes("all relation");
+
+  const dimensions = [
+    { name: "entities_created", weight: 0.2, passed: hasServiceX && hasServiceY },
+    { name: "relations_created", weight: 0.25, passed: hasRelation },
+    { name: "verification_done", weight: 0.3, passed: hasVerify },
+    { name: "consistency_confirmed", weight: 0.25, passed: hasConsistent || hasVerify },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `graph-consistency: all dimensions passed (score ${score.toFixed(2)})`
+      : `graph-consistency: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkMemObservationUpdate(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasConfig = text.includes("config") || text.includes("entit");
+  const hasProduction = text.includes("production") || text.includes("env");
+  const hasDebug = text.includes("debug") || text.includes("log_level");
+  const hasTimeout = text.includes("timeout") || text.includes("60");
+  const hasDelete = text.includes("delet") || text.includes("remov") || text.includes("old");
+  const hasAdd = text.includes("add") || text.includes("new") || text.includes("60");
+
+  const dimensions = [
+    { name: "entity_created", weight: 0.2, passed: hasConfig },
+    { name: "old_deleted", weight: 0.25, passed: hasDelete && hasDebug },
+    { name: "new_added", weight: 0.25, passed: hasAdd && hasTimeout },
+    { name: "result_verified", weight: 0.3, passed: (hasProduction && hasTimeout) || text.includes("verif") },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `observation-update: all dimensions passed (score ${score.toFixed(2)})`
+      : `observation-update: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   checkMemoryCreateAndQuery,
@@ -459,4 +618,9 @@ module.exports = {
   checkMemJsonCorruptionRecovery,
   checkMemFullCrudVerify,
   checkMemSilentDelete,
+  checkMemCascadeDelete,
+  checkMemRenameEntity,
+  checkMemSearchFuzzy,
+  checkMemGraphConsistency,
+  checkMemObservationUpdate,
 };

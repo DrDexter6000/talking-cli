@@ -115,6 +115,7 @@ const argv = process.argv.slice(2);
 let provider = "stub";
 let target = "memory";
 let taskLimit;
+let taskFilter;
 let runVariants = ["full-skill+mute", "lean-skill+talking"];
 let maxTurns = 20;
 let verbose = false;
@@ -126,6 +127,7 @@ for (let i = 0; i < argv.length; i++) {
   if (argv[i] === "--provider" && argv[i + 1]) { provider = argv[++i]; }
   else if (argv[i] === "--target" && argv[i + 1]) { target = argv[++i]; }
   else if (argv[i] === "--limit" && argv[i + 1]) { taskLimit = parseInt(argv[++i], 10); }
+  else if (argv[i] === "--tasks" && argv[i + 1]) { taskFilter = new Set(argv[++i].split(",").map(v => v.trim())); }
   else if (argv[i] === "--variants" && argv[i + 1]) {
     const raw = argv[++i].split(",").map(v => v.trim());
     // Backward compat: "mute" → "full-skill+mute", "talking" → "lean-skill+talking"
@@ -282,14 +284,24 @@ class McpSubprocess {
   }
 
   async close() {
-    if (this.proc && !this.proc.killed) {
-      this.proc.kill("SIGTERM");
+    const proc = this.proc;
+    this.proc = null;
+    this.dead = true;
+    // Reject any still-pending requests so their timers get cleared
+    for (const [, entry] of this.pending) entry.reject(new Error("Server closed"));
+    this.pending.clear();
+    if (proc && !proc.killed) {
+      // Remove all listeners to prevent event-loop accumulation across 100s of tasks
+      proc.removeAllListeners();
+      proc.stdout?.removeAllListeners();
+      proc.stderr?.removeAllListeners();
+      proc.stdin?.destroy();
+      proc.kill("SIGTERM");
       await new Promise((resolve) => {
-        const timer = setTimeout(() => { this.proc?.kill("SIGKILL"); resolve(); }, 2000);
-        this.proc?.on("exit", () => { clearTimeout(timer); resolve(); });
+        const timer = setTimeout(() => { proc.kill("SIGKILL"); resolve(); }, 2000);
+        proc.once("exit", () => { clearTimeout(timer); resolve(); });
       });
     }
-    this.proc = null;
   }
 
   _request(method, params, timeoutMs = 10000) {
@@ -456,7 +468,8 @@ async function runTask(task, variant, llm, targetCfg) {
     await mcp.initialize(10000, targetCfg.clientName);
     mcpTools = await mcp.listTools(10000);
   } catch (err) {
-    await mcp.close();
+    console.error(`[MCP-ERROR] ${task.id} ${variant}:`, err.message);
+    try { await mcp.close(); } catch { /* ignore */ }
     if (memoryFile) { try { unlinkSync(memoryFile); } catch { /* ignore */ } }
     if (sandboxDir && existsSync(sandboxDir)) { try { rmSync(sandboxDir, { recursive: true }); } catch { /* ignore */ } }
     return {
@@ -479,12 +492,13 @@ async function runTask(task, variant, llm, targetCfg) {
       let response;
       try {
         response = await llm.call(messages, turn, llmTools);
-      } catch {
+      } catch (llmErr) {
+        console.error(`[LLM-ERROR] ${task.id} ${variant} turn=${turnCount}:`, llmErr?.message || llmErr);
         return {
           taskId: task.id, variant, turns: turnCount,
           inputTokens: totalInputTokens, outputTokens: totalOutputTokens,
           walltime: Date.now() - startTime, outcome: "error", pass: false,
-          checkerReason: "LLM call timed out",
+          checkerReason: `LLM call failed: ${llmErr?.message || "unknown"}`,
         };
       }
 
@@ -551,7 +565,7 @@ async function runTask(task, variant, llm, targetCfg) {
       target: targetCfg.name,
     };
   } finally {
-    await mcp.close();
+    try { await mcp.close(); } catch { /* ignore close errors */ }
     if (memoryFile) { try { unlinkSync(memoryFile); } catch { /* ignore */ } }
     if (sandboxDir && existsSync(sandboxDir)) { try { rmSync(sandboxDir, { recursive: true }); } catch { /* ignore */ } }
   }
@@ -664,10 +678,11 @@ async function main() {
     console.log(`${"─".repeat(60)}`);
 
     // Load tasks for this target
-    const tasks = readdirSync(tCfg.taskDir)
+    let tasks = readdirSync(tCfg.taskDir)
       .filter(f => f.endsWith(".json"))
       .sort()
       .map(f => JSON.parse(readFileSync(resolve(tCfg.taskDir, f), "utf-8")));
+    if (taskFilter) tasks = tasks.filter(t => taskFilter.has(t.id));
     const limitedTasks = taskLimit ? tasks.slice(0, taskLimit) : tasks;
 
     if (limitedTasks.length === 0) {

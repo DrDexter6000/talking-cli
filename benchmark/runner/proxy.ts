@@ -219,23 +219,22 @@ export class ProxyMcpServer {
    * Clean shutdown: SIGTERM → 2s grace → SIGKILL.
    */
   async close(): Promise<void> {
-    if (this.proc && !this.proc.killed) {
-      this.proc.kill("SIGTERM");
+    const proc = this.proc;
+    this.proc = null;
+    this.dead = true;
+    for (const [, entry] of this.pending) entry.reject(new Error("Server closed"));
+    this.pending.clear();
+    if (proc && !proc.killed) {
+      proc.removeAllListeners();
+      proc.stdout?.removeAllListeners();
+      proc.stderr?.removeAllListeners();
+      proc.stdin?.destroy();
+      proc.kill("SIGTERM");
       await new Promise<void>((resolve) => {
-        const timer = setTimeout(() => {
-          if (this.proc && !this.proc.killed) this.proc.kill("SIGKILL");
-          resolve();
-        }, 2000);
-        this.proc?.on("exit", () => {
-          clearTimeout(timer);
-          resolve();
-        });
+        const timer = setTimeout(() => { proc.kill("SIGKILL"); resolve(); }, 2000);
+        proc.once("exit", () => { clearTimeout(timer); resolve(); });
       });
     }
-    this.proc = null;
-    this.pending.clear();
-    this.dead = false;
-    this.stderrBuf = "";
   }
 
   /** Return captured stderr (last 50KB) for diagnostics. */

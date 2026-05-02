@@ -113,6 +113,103 @@ function checkFetchPageSimplification(finalTurn, _fs) {
   };
 }
 
+// ─── Round 5 Hard Checkers ────────────────────────────────────────────────────
+
+function checkFetchRedirectChain(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasRedirect = text.includes("redirect") || text.includes("302") || text.includes("301") || text.includes("303");
+  const hasFollowed = text.includes("follow") || text.includes("final") || text.includes("destination")
+    || text.includes("landed") || text.includes("end") || text.includes("after redirect");
+  const hasContent = text.includes("httpbin") || text.includes("content") || text.includes("page")
+    || text.includes("response") || text.includes("html");
+  const hasMultiple = text.includes("twice") || text.includes("2 redirect") || text.includes("chain")
+    || text.includes("first") || text.includes("second");
+
+  const dimensions = [
+    { name: "redirect_detected", weight: 0.25, passed: hasRedirect },
+    { name: "redirects_followed", weight: 0.3, passed: hasFollowed || hasMultiple },
+    { name: "final_content_shown", weight: 0.3, passed: hasContent },
+    { name: "chain_described", weight: 0.15, passed: hasMultiple || hasRedirect },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `redirect-chain: all dimensions passed (score ${score.toFixed(2)})`
+      : `redirect-chain: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFetchComparePages(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasFirst = text.includes("example.com") || text.includes("first") || text.includes("iana");
+  const hasSecond = text.includes("example.org") || text.includes("second") || text.includes(".org");
+  const hasCompare = text.includes("differ") || text.includes("same") || text.includes("compar")
+    || text.includes("similar") || text.includes("both") || text.includes("whereas")
+    || text.includes("while") || text.includes("contrast");
+  const hasContent = text.includes("domain") || text.includes("reserved") || text.includes("iana")
+    || text.includes("internet") || text.includes("example");
+
+  const dimensions = [
+    { name: "both_fetched", weight: 0.3, passed: hasFirst && hasSecond },
+    { name: "content_shown", weight: 0.25, passed: hasContent },
+    { name: "comparison_made", weight: 0.35, passed: hasCompare },
+    { name: "specific_details", weight: 0.1, passed: hasContent && hasCompare },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `compare-pages: all dimensions passed (score ${score.toFixed(2)})`
+      : `compare-pages: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFetchErrorRetry(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const has500 = text.includes("500") || text.includes("server error") || text.includes("internal server");
+  const hasError = text.includes("error") || text.includes("fail") || text.includes("httpbin");
+  const hasRetry = text.includes("retry") || text.includes("again") || text.includes("second attempt")
+    || text.includes("re-attempt") || text.includes("try once more");
+  const hasExplain = text.includes("server") || text.includes("upstream") || text.includes("backend")
+    || text.includes("overload") || text.includes("temporary") || text.includes("explain");
+
+  const dimensions = [
+    { name: "error_detected", weight: 0.25, passed: has500 || hasError },
+    { name: "error_explained", weight: 0.25, passed: hasExplain || has500 },
+    { name: "retry_attempted", weight: 0.25, passed: hasRetry },
+    { name: "outcome_reported", weight: 0.25, passed: hasError || hasRetry },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `error-retry: all dimensions passed (score ${score.toFixed(2)})`
+      : `error-retry: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   checkFetchBasicPage,
@@ -120,4 +217,7 @@ module.exports = {
   checkFetchTruncation,
   checkFetchRobotsDisallow,
   checkFetchPageSimplification,
+  checkFetchRedirectChain,
+  checkFetchComparePages,
+  checkFetchErrorRetry,
 };

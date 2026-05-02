@@ -218,6 +218,72 @@ function checkEverythingMultiToolWorkflow(finalTurn, _fs) {
   };
 }
 
+// ─── Round 5 Hard Checkers ────────────────────────────────────────────────────
+
+function checkEverythingResourceNotFound(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasNotFound = text.includes("not found") || text.includes("error") || text.includes("does not exist")
+    || text.includes("fail") || text.includes("invalid");
+  const hasDiscovery = text.includes("available") || text.includes("list") || text.includes("discover")
+    || text.includes("resource") || text.includes("exist");
+  const hasAlternative = text.includes("try") || text.includes("alternat") || text.includes("instead")
+    || text.includes("suggest") || text.includes("could") || text.includes("other resource");
+  const hasWorking = text.includes("resource") && (text.includes("found") || text.includes("success")
+    || text.includes("exist") || text.includes("available"));
+
+  const dimensions = [
+    { name: "error_detected", weight: 0.25, passed: hasNotFound },
+    { name: "discovery_attempted", weight: 0.3, passed: hasDiscovery },
+    { name: "alternative_offered", weight: 0.25, passed: hasAlternative || hasWorking },
+    { name: "working_resource_found", weight: 0.2, passed: hasWorking },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `resource-not-found: all dimensions passed (score ${score.toFixed(2)})`
+      : `resource-not-found: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkEverythingCalculatorChain(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasStep1 = text.includes("42") || text.includes("15") && text.includes("27");
+  const hasStep2 = text.includes("126") || text.includes("42") && text.includes("3");
+  const hasStep3 = text.includes("114") || text.includes("126") && text.includes("12");
+  const hasFinal = text.includes("28.5") || text.includes("114") && text.includes("4");
+  const hasMultiStep = text.includes("step") || text.includes("first") || text.includes("then")
+    || text.includes("next") || text.includes("after");
+
+  const dimensions = [
+    { name: "step1_correct", weight: 0.2, passed: hasStep1 },
+    { name: "intermediate_shown", weight: 0.2, passed: hasStep2 || hasStep3 },
+    { name: "final_result", weight: 0.35, passed: hasFinal || text.includes("28.5") },
+    { name: "steps_documented", weight: 0.25, passed: hasMultiStep || (hasStep1 && (hasStep2 || hasStep3)) },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `calculator-chain: all dimensions passed (score ${score.toFixed(2)})`
+      : `calculator-chain: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   checkEverythingEchoBasics,
@@ -227,4 +293,6 @@ module.exports = {
   checkEverythingAnnotatedMessages,
   checkEverythingResourceLinks,
   checkEverythingMultiToolWorkflow,
+  checkEverythingResourceNotFound,
+  checkEverythingCalculatorChain,
 };

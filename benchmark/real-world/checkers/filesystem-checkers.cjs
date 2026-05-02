@@ -285,6 +285,163 @@ function checkFsSearchSkipTrees(finalTurn, _fs) {
   };
 }
 
+// ─── Round 5 Hard Checkers ────────────────────────────────────────────────────
+
+function checkFsConcurrentModify(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasRead = text.includes("read") || text.includes("current") || text.includes("content") || text.includes("config");
+  const hasEditAttempt = text.includes("edit") || text.includes("change") || text.includes("status");
+  const hasRetry = text.includes("re-read") || text.includes("read again") || text.includes("re-read") || text.includes("refresh")
+    || text.includes("retry") || text.includes("try again") || text.includes("second attempt") || text.includes("re-attempt");
+  const hasConflict = text.includes("conflict") || text.includes("concurrent") || text.includes("changed") || text.includes("stale")
+    || text.includes("different") || text.includes("no longer") || text.includes("no match") || text.includes("not found")
+    || text.includes("mismatch");
+
+  const dimensions = [
+    { name: "read_original", weight: 0.25, passed: hasRead },
+    { name: "edit_attempted", weight: 0.25, passed: hasEditAttempt },
+    { name: "conflict_detected", weight: 0.25, passed: hasConflict },
+    { name: "retry_or_recovery", weight: 0.25, passed: hasRetry || hasConflict },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `concurrent-modify: all dimensions passed (score ${score.toFixed(2)})`
+      : `concurrent-modify: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFsLargeDirectoryNavigate(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasCreate = text.includes("creat") || text.includes("director") || text.includes("project");
+  const hasSearch = text.includes("search") || text.includes("find") || text.includes("secret") || text.includes("treasure");
+  const hasFileFound = text.includes("secret") || text.includes("treasure") || text.includes("42");
+  const hasStructure = text.includes("src") || text.includes("lib") || text.includes("utils") || text.includes("tests");
+
+  const dimensions = [
+    { name: "dirs_created", weight: 0.2, passed: hasCreate && hasStructure },
+    { name: "search_performed", weight: 0.3, passed: hasSearch },
+    { name: "file_found", weight: 0.3, passed: hasFileFound },
+    { name: "structure_verified", weight: 0.2, passed: hasStructure },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `large-directory-navigate: all dimensions passed (score ${score.toFixed(2)})`
+      : `large-directory-navigate: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFsMultiFileConsistency(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasModule = text.includes("module") || text.includes("directory");
+  const hasFiles = (text.includes("a.ts") || text.includes("a ") || text.includes("max_retries"))
+    && (text.includes("b.ts") || text.includes("b ") || text.includes("api_base_url"))
+    && (text.includes("index") || text.includes("import"));
+  const hasVerify = text.includes("verif") || text.includes("consist") || text.includes("match") || text.includes("read");
+  const hasExport = text.includes("export") || text.includes("const") || text.includes("import");
+
+  const dimensions = [
+    { name: "dir_created", weight: 0.2, passed: hasModule },
+    { name: "all_files_written", weight: 0.3, passed: hasFiles },
+    { name: "imports_verified", weight: 0.3, passed: hasExport && hasVerify },
+    { name: "consistency_checked", weight: 0.2, passed: hasVerify },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `multi-file-consistency: all dimensions passed (score ${score.toFixed(2)})`
+      : `multi-file-consistency: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFsPartialContentMatch(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasWrite = text.includes("wrote") || text.includes("writ") || text.includes("creat") || text.includes("code.py");
+  const hasRead = text.includes("read") || text.includes("content") || text.includes("file");
+  const hasWhitespace = text.includes("whitespace") || text.includes("tab") || text.includes("space") || text.includes("indent")
+    || text.includes("exact") || text.includes("match");
+  const hasCorrectContent = text.includes("main") || text.includes("return") || text.includes("print")
+    || text.includes("hello") || text.includes("world");
+
+  const dimensions = [
+    { name: "file_written", weight: 0.25, passed: hasWrite },
+    { name: "content_verified", weight: 0.3, passed: hasRead && hasCorrectContent },
+    { name: "whitespace_aware", weight: 0.25, passed: hasWhitespace || (hasRead && hasCorrectContent) },
+    { name: "exact_match", weight: 0.2, passed: hasCorrectContent },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `partial-content-match: all dimensions passed (score ${score.toFixed(2)})`
+      : `partial-content-match: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
+function checkFsPermissionBoundary(finalTurn, _fs) {
+  const text = textOf(finalTurn).toLowerCase();
+  const hasDenied = text.includes("denied") || text.includes("forbidden") || text.includes("not allowed")
+    || text.includes("access denied") || text.includes("refused") || text.includes("error");
+  const hasReason = text.includes("outside") || text.includes("sandbox") || text.includes("allowed director")
+    || text.includes("not within") || text.includes("security") || text.includes("permission")
+    || text.includes("/etc") || text.includes("system file");
+  const hasAlternative = text.includes("alternat") || text.includes("instead") || text.includes("suggest")
+    || text.includes("could") || text.includes("can read") || text.includes("allowed path")
+    || text.includes("within") || text.includes("current") || text.includes("working");
+
+  const dimensions = [
+    { name: "denied_detected", weight: 0.3, passed: hasDenied },
+    { name: "reason_explained", weight: 0.35, passed: hasReason },
+    { name: "alternative_offered", weight: 0.35, passed: hasAlternative },
+  ];
+
+  const passedSubchecks = dimensions.filter(d => d.passed).map(d => d.name);
+  const score = dimensions.reduce((sum, d) => sum + (d.passed ? d.weight : 0), 0);
+  const pass = score >= 0.6;
+  const failedNames = dimensions.filter(d => !d.passed).map(d => d.name);
+
+  return {
+    pass,
+    reason: failedNames.length === 0
+      ? `permission-boundary: all dimensions passed (score ${score.toFixed(2)})`
+      : `permission-boundary: passed [${passedSubchecks.join(", ")}], missed [${failedNames.join(", ")}] (score ${score.toFixed(2)})`,
+    score,
+    passedSubchecks,
+  };
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   checkFsReadAndSearch,
@@ -300,4 +457,9 @@ module.exports = {
   checkFsEmptyDirListing,
   checkFsComplexEditVerify,
   checkFsSearchSkipTrees,
+  checkFsConcurrentModify,
+  checkFsLargeDirectoryNavigate,
+  checkFsMultiFileConsistency,
+  checkFsPartialContentMatch,
+  checkFsPermissionBoundary,
 };
