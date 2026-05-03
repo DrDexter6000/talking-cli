@@ -1,9 +1,0 @@
-{
-  "id": "task-list-directory",
-  "prompt": "List all files and directories in '/tmp/benchmark-sandbox/project/src'. How many items are there?",
-  "checker": "checkListDirectory",
-  "difficulty": "easy",
-  "category": "navigate",
-  "tier": "easy",
-  "hint_trigger": "empty"
-}

@@ -34,11 +34,8 @@ benchmark/.env.*.local
 benchmark/.benchmark.env
 benchmark/*.env
 
-# Benchmark artifacts / local runs
-benchmark/results/
-benchmark/tmp/
-benchmark/*.local.json
-benchmark/config.local.json
+# Benchmark (separate private repo)
+benchmark/
 
 github-benchmark/
 
@@ -69,6 +66,9 @@ AGENTS.md
 
 # Claude Code per-project state (settings, session metadata, hooks — dev-only)
 .claude/
+
+# GLM-5.1 learning workflow (session state, dev-only, not for public repo)
+.glm-learnings/
 
 # Windows env-var literal leaks
 %*%
