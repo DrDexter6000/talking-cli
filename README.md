@@ -2,13 +2,14 @@
 
 # Talking CLI
 
+[English](https://github.com/DrDexter6000/talking-cli) · [中文](README.zh-CN.md)
+
 > **Mute tools bloat your prompts. Tool hints fix the budget.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 [![Self-Audit](https://img.shields.io/badge/self--audit-100%2F100-brightgreen)](#core-claim)
 [![CI](https://img.shields.io/github/actions/workflow/status/DrDexter6000/talking-cli/self-audit.yml?branch=master&label=CI)](https://github.com/DrDexter6000/talking-cli/actions)
-[![中文](https://img.shields.io/badge/语言-中文-red)](README.zh-CN.md)
 
 </div>
 
