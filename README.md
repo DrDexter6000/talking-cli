@@ -1,55 +1,72 @@
+<div align="center">
+
 # Talking CLI
 
-> **Tool silence is a design defect. Distributed Prompting is the fix.**
+> **Mute tools bloat your prompts. Tool hints fix the budget.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
-[![Self-Audit](https://img.shields.io/badge/self--audit-100%2F100-brightgreen)](#what-this-project-is)
+[![Self-Audit](https://img.shields.io/badge/self--audit-100%2F100-brightgreen)](#core-claim)
 [![CI](https://img.shields.io/github/actions/workflow/status/DrDexter6000/talking-cli/self-audit.yml?branch=master&label=CI)](https://github.com/DrDexter6000/talking-cli/actions)
+[![中文](https://img.shields.io/badge/语言-中文-red)](README.zh-CN.md)
 
-> The self-audit badge shows talking-cli's own audit score (100/100). CI enforces ≥80 on every PR.
-
-**Sound familiar?**
-
-Your `SKILL.md` is 400 lines. Half of it describes what the agent should do *after* a specific tool returns — "if zero results, broaden the query," "if ambiguous, ask the user," "this field means X, not Y."
-
-The agent loads all 400 lines every single turn, but most of that guidance only matters 10% of the time. The other 90%, it's paying attention rent on scenarios that didn't happen.
-
-Meanwhile, your tools return raw JSON and say nothing. No hint about what just happened. No signal that results were sparse or the query was ambiguous. The tools are mute, so all the guidance gets shoved upstream into `SKILL.md`, which slowly bloats into a monologue describing every possible outcome — most of which the agent promptly forgets or ignores.
-
-**Talking CLI gives your tools a voice.** When the agent calls, the tool talks back — with the right hint, at the right moment, inside the response. We call this **Prompt-On-Call**: guidance that surfaces only when a tool is called, relevant only to what just happened.
-
-The cumulative effect is **Distributed Prompting**: a prompt surface spread across every tool response, not crammed into one bloated document.
+</div>
 
 ---
 
-**Standing on shoulders.** CLI is the native interface for AI agents — [Carmack](https://x.com/ID_AA_Carmack/status/1874124927130886501), [CodeAct](https://arxiv.org/abs/2402.01030) (Wang et al., ICML 2024), and [Karpathy](https://x.com/karpathy/status/2026360908398862478) crystallized it.
+## One-liner
 
-[Progressive disclosure](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) as a skill-loading architecture was formalized by Anthropic (Oct 2025) and is now an [open standard](https://agentskills.io). Anthropic also advocates ["steering agents with helpful instructions in tool responses"](https://www.anthropic.com/engineering/writing-tools-for-agents) — but only as a paragraph-level best practice. Nobody has named it, budgeted it, audited it, or proposed it as a protocol-level primitive. **That gap is what Talking CLI fills.**
+Talking CLI is a linter that audits whether your AI skill and MCP tools have moved guidance out of bloated `SKILL.md` and into the tool responses themselves — giving tools a voice at the moment they are called.
 
 ---
 
-## What this project is
+## The Problem
 
-Talking CLI is built around one idea: **Distributed Prompting** — moving guidance from static `SKILL.md` into the moment of invocation.
+Three chronic diseases in today's AI toolchains:
 
-1. **Methodology** — [PHILOSOPHY.md](PHILOSOPHY.md): Four Channels (C1–C4), Four Rules of Talk, a prompt budget, and five anti-patterns.
-2. **Evidence** — a reproducible 2×2 ablation benchmark across 15 curated tasks (published below).
-3. **Standard** — a proposed `agent_hints` convention we are taking to the MCP spec, backed by the data.
+- **Tools are mute** — they return raw JSON and say nothing about errors, empty results, or ambiguity
+- **Documents bloat** — every *"if zero results, broaden the query"* and *"if ambiguous, ask the user"* gets shoved into `SKILL.md`, 400+ lines loaded in full every turn
+- **Budget leaks** — 90% of that guidance is noise 90% of the time, yet the agent pays token rent on all of it
 
-The linter (`talking-cli audit` / `audit-mcp`) is the **probe**, not the hero. It's how you reproduce the audit numbers on your own skill.
+---
 
-### Core claim
+## Core Claim
 
 > **Prompt Surface = `SKILL.md` ∪ `{tool_result.hints}` — two halves, one budget.**
 
-Anything you write into `SKILL.md` that only applies *after a specific tool call* is mispriced: it costs every turn and earns only on a small fraction of turns. Tool hints fix the pricing.
+Move guidance that only applies after a specific tool call from static documents into dynamic responses. The tool speaks only when called, and only about what just happened. We call this **Prompt-On-Call**; the cumulative effect across every tool is **Distributed Prompting**.
+
+| 🎯 Token Savings | 🧪 Validation Scale | 🤖 Model Coverage | 🔍 Ecosystem Audit |
+|:---:|:---:|:---:|:---:|
+| **17–26%** | **2,340+** executions | **3** frontier models | **0/68** pass |
+| Lean Skill + Tool Hints | Cross-difficulty, cross-model | DeepSeek / Kimi / GLM | 4 official Anthropic MCP servers |
+
+[Anthropic](https://www.anthropic.com/engineering/writing-tools-for-agents) and [Carmack](https://x.com/ID_AA_Carmack/status/1874124927130886501) have pointed at this direction, but nobody has named it, budgeted it, or audited it — until now.
+
+<details>
+<summary><strong>Standing on shoulders</strong> — why now?</summary>
+
+CLI is the native interface for AI agents — [Carmack](https://x.com/ID_AA_Carmack/status/1874124927130886501), [CodeAct](https://arxiv.org/abs/2402.01030) (Wang et al., ICML 2024), and [Karpathy](https://x.com/karpathy/status/2026360908398862478) crystallized it.
+
+[**Progressive Disclosure**](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) as a skill-loading architecture was formalized by Anthropic (Oct 2025) and is now an [open standard](https://agentskills.io). Anthropic also advocates ["steering agents with helpful instructions in tool responses"](https://www.anthropic.com/engineering/writing-tools-for-agents) — but only as a paragraph-level best practice. Nobody has named it, budgeted it, audited it, or proposed it as a protocol-level primitive. **That gap is what Talking CLI fills.** We believe **Prompt-On-Call** / **Distributed Prompting** is the next evolutionary step of this idea.
+
+</details>
 
 ---
 
-## How it works
+## How It Works
 
-### The Prompt Budget Shift
+### Mechanism: The Prompt Budget Shift
+
+| | Mute CLI (Before) | Distributed Prompting (After) |
+|---|---|---|
+| **SKILL.md** | 400+ lines, full load every turn | < 150 lines, generic guidance only |
+| **Tool Response** | Raw JSON, zero hints | JSON + `hints` field, context-aware guidance |
+| **Prompt Cost** | Paying rent on 400 lines per turn | Paying only for precise hints at call time |
+| **Audit** | None | `talking-cli audit` scores four heuristics |
+
+<details>
+<summary>📊 Visual: Before vs After</summary>
 
 ```mermaid
 graph LR
@@ -67,7 +84,21 @@ graph LR
     Before -->|Audit + Optimize| After
 ```
 
+</details>
+
 ### Four Heuristics, One Score
+
+| Heuristic | What It Checks | Pass Threshold |
+|---|---|---|
+| **H1 · Document Budget** | SKILL.md line count | ≤ 150 lines |
+| **H2 · Fixture Coverage** | Error + empty-result scenarios | ≥ 2 fixtures per tool |
+| **H3 · Structured Hints** | Response contains hint fields | `hints` / `suggestions` / `guidance` |
+| **H4 · Actionable Guidance** | Hint content is specific and actionable | ≥ 10 chars with action verbs |
+
+> Total score 0–100. ≥ 80 to pass.
+
+<details>
+<summary>📊 Visual: Scoring Flow</summary>
 
 ```mermaid
 graph TD
@@ -81,18 +112,20 @@ graph TD
     Score -->|< 80| Fail[❌ FAIL]
 ```
 
+</details>
+
 ---
 
 ## Quick Start
 
 ```bash
-# Audit your skill — coach mode (plain language, actionable)
+# Audit your skill — plain language report telling you what to fix
 npx talking-cli audit ./my-skill
 
-# CI mode — machine-readable, exit code driven
+# CI mode — machine-readable, exit-code driven
 npx talking-cli audit ./my-skill --ci
 
-# JSON mode — structured output for tooling
+# JSON mode — structured output for tooling integration
 npx talking-cli audit ./my-skill --json
 
 # Audit an MCP server — static analysis (fast, safe)
@@ -102,117 +135,57 @@ npx talking-cli audit-mcp ./my-mcp-server
 # ⚠️ Only use --deep on servers you trust. See SECURITY.md.
 npx talking-cli audit-mcp ./my-mcp-server --deep
 
-# Generate optimization plan (plan-only, never touches source files)
+# Generate optimization plan (plan-only, never touches source)
 npx talking-cli optimize ./my-skill
 
-# Scaffold a new skill directory with templates that pass audit
+# Scaffold a new skill directory with audit-passing templates
 npx talking-cli init my-skill
-cd my-skill
-npx talking-cli audit .
 ```
 
-All commands are fully local — no API key required.
+All commands run fully local — no API key required.
 
 ---
 
-## What it looks like
+## Experimental Validation
 
-Coach mode running against a bloated, mute skill:
+### MCP Ecosystem Audit
 
-```
-Score: 0/100
-Yikes. Your CLI is so quiet I can hear the tokens screaming in agony.
+**0 / 68.** We scanned 4 official Anthropic MCP servers across 68 error / empty-result scenarios. None returned actionable guidance. Static analysis of 823 Composio tools showed the same result.
 
-H1 · Line Count · FAIL
-Your SKILL.md is 165 lines. The budget is 150.
-→ Just 15 lines over. Tighten the prose and migrate post-call guidance to tool hints.
-
-H2 · Hint Coverage · FAIL
-1 tool(s) have zero fixtures. They don't speak at all: search
-→ Add talking-cli-fixtures for [search]. One error, one empty-result scenario.
-
-H3 · Structured Hints · FAIL
-0/0 passed fixtures contain hint fields.
-→ Make your tools return a "hints" or "suggestions" field alongside raw data.
-
-H4 · Actionable Guidance · FAIL
-0/0 hint fields have actionable content.
-→ Hints should be specific. "Try broadening your query with fewer filters" is actionable.
-
----
-Fix the issues above, then run npx talking-cli audit again to see your new score.
-```
-
-(The real output is colored. We just can't show chalk in a code block.)
-
----
-
-## The finding: MCP Ecosystem Audit
-
-We ran `talking-cli audit-mcp --deep` against **4 official Anthropic MCP servers** across **68 error / empty-result scenarios**. Number of scenarios that returned actionable guidance:
-
-> **0 / 68.**
-
-Static analysis of 823 Composio GitHub tools: same result. The MCP ecosystem today treats tool output as a data pipe, not a dialogue participant.
-
-| Server | Tools | Scenarios | M3 · Guidance |
-|--------|-------|-----------|---------------|
+| Server | Tools | Scenarios | Guidance Returned |
+|---|---|---|:---:|
 | `server-filesystem` | 11 | 21 | **0** |
 | `server-everything` | 13 | 13 | **0** |
 | `server-memory` | 9 | 9 | **0** |
 | `server-github` | 25 | 25 | **0** |
 | **Total** | **58** | **68** | **0 / 68** |
 
-### Cross-Model Validation (3 providers, 45+ tasks)
+### Cross-Model Validation (2,340+ executions)
 
-We ran a full 2×2 ablation (Full/Lean Skill × Mute/Hinting Tools) across **three frontier models** — DeepSeek V4 Pro, Kimi K2.6, and GLM-5.1 — on **45 MCP tasks** (filesystem, memory, fetch, multi-tool) with k=3 trials per cell, then repeated with **15 harder tasks** on 2 models.
+Full 2×2 ablation (Full/Lean Skill × Mute/Hinting Tools) across **3 frontier models** on 45 MCP tasks (k=3 trials per cell), plus 15 harder tasks on 2 models:
 
-**2,340+ total executions.** Each cell evaluated independently.
-
-| Model | C1: Full/Mute | C4: Lean/Hints | C4−C1 Δ | Token Savings |
-|-------|:----------:|:----------:|:-------:|:------------:|
-| DeepSeek V4 Pro | 91.1% | 90.4% | −0.7 pp | **−17%** |
-| Kimi K2.6 | 88.1% | 90.4% | +1.5 pp | **−18%** |
-| GLM-5.1 | 90.4% | 93.3% | +2.2 pp | **−22%** |
-
-Round 5 harder tasks (2 models, ceiling eliminated, 24–26% token savings):
-
-| Model | C1: Full/Mute | C4: Lean/Hints | C4−C1 Δ | Token Savings |
-|-------|:----------:|:----------:|:-------:|:------------:|
-| DeepSeek V4 Pro | 22.2% | 22.2% | 0.0 pp | **−24%** |
-| GLM-5.1 | 20.0% | 20.0% | 0.0 pp | **−26%** |
+| Model | Full/Mute | Lean/Hints | Δ | Token Save | Hard Baseline | Hard Δ | Hard Save |
+|---|---|---:|:---:|:---:|:---:|:---:|:---:|
+| DeepSeek V4 Pro | 91.1% | 90.4% | −0.7 | **−17%** | 22.2% / 22.2% | 0.0 | **−24%** |
+| Kimi K2.6 | 88.1% | 90.4% | +1.5 | **−18%** | — | — | — |
+| GLM-5.1 | 90.4% | 93.3% | +2.2 | **−22%** | 20.0% / 20.0% | 0.0 | **−26%** |
 
 **What the data supports:**
-
-- **Token efficiency is robust and model-agnostic**: Lean Skill + Hints saves 17–26% input tokens across all providers and task difficulties, with zero quality degradation. This is the strongest finding.
-- **No harm**: the treatment condition (C4) never catastrophically underperforms the control (C1). Worst case: DeepSeek at −0.7pp, within noise.
-- **Skill bloat is real**: compressing an 873-line skill to 168 lines improves or maintains quality while cutting tokens. SkillsBench (arXiv 2602.12670, 36,000 real-world skills) independently found that comprehensive skills at P99.5 degrade performance by −2.9pp while moderate skills improve it by +18.8pp.
-- **Ceiling effect is fixable**: Round 5 harder tasks eliminated the 76% ceiling to 0%, confirming task difficulty was the measurement blocker.
+- **Token efficiency is cross-model and cross-difficulty**: 17–26% savings with zero quality degradation
+- **No harm**: worst case is −0.7pp, within noise
+- **Skill bloat is real**: SkillsBench (36K real-world skills) independently found verbose skills degrade by −2.9pp while moderate ones improve by +18.8pp
 
 **What the data does not support:**
-
-- Pass-rate improvement is not statistically significant (sign test p = 1.0 for all models in both rounds). Even with harder tasks, C1 and C4 pass rates are identical.
-- **Adding hints to a verbose skill can hurt**: on GLM-5.1, the Full Skill + Hints cell scored 84.4% — 6pp below the Full Skill + Mute control. Distributed Prompting only helps when the skill is compressed; stacking hints on top of an 873-line skill creates information overload.
-
-**Verdict: PARTIAL** — token savings are proven and scale with task difficulty; quality improvement remains unproven after 2,340+ executions. We're being honest about what the data says.
+- Pass-rate improvement is not statistically significant (p = 1.0) — token savings are proven; quality signal remains unproven
+- **Adding hints to a verbose skill can hurt** (GLM-5.1: −6pp). Distributed Prompting only works when the skill is compressed first
 
 ---
 
-## The Methodology
+## What's Next
 
-Talking CLI is the reference implementation of **Distributed Prompting**: every tool response is a designed prompt surface, not a data dump. **Prompt-On-Call** is the concrete mechanism — guidance that arrives when the tool is called, relevant to what just happened. The cumulative effect across every tool in the system is Distributed Prompting.
-
-- **[PHILOSOPHY.md](PHILOSOPHY.md)** — the methodology: Four Channels, Four Rules, a budget, and five anti-patterns.
-- **[Adversarial Case Study](docs/ADVERSARIAL-CASE-STUDY.md)** — where Distributed Prompting fails, and what to do about it.
-
----
-
-## What's next
-
-- **Harder benchmarks** — tasks calibrated to 40–60% baseline on current frontier models, to measure the quality signal that is currently buried by ceiling effects
-- **MCP spec proposal** — RFC for a first-class `agent_hints` field in tool responses
-- **H4 semantic upgrade** — replacing the `≥ 10 chars` heuristic with a lightweight classifier
-- **C2 anomaly investigation** — why adding hints to verbose skills hurts some models
+1. **Harder benchmarks** — tasks calibrated to 40–60% baseline to surface quality signal currently buried by ceiling effects
+2. **MCP spec proposal** — RFC for a first-class `agent_hints` field in tool responses
+3. **H4 semantic upgrade** — replacing the `≥ 10 chars` heuristic with a lightweight classifier
 
 ---
 
